@@ -1,0 +1,36 @@
+# Compiled Object files
+*.slo
+*.lo
+*.o
+
+# Compiled Dynamic libraries
+*.so
+*.dylib
+
+# Compiled Static libraries
+*.lai
+*.la
+*.a
+
+# VIM stuff
+*.swp
+
+*.user
+*.user.*
+*~
+
+# build system
+build.*/
+extdep/install
+extdep/download
+/cmake-build-*/
+
+*.pyc
+
+# JetBrains stuff
+.idea/
+
+doc/html
+*.autosave
+node_modules/
+

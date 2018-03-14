@@ -1,0 +1,16 @@
+--style=linux
+--indent=tab=4
+--indent-labels
+--pad-oper
+--pad-header
+--unpad-paren
+--align-pointer=type
+--align-reference=type
+--remove-comment-prefix
+--keep-one-line-statements
+--close-templates
+--remove-brackets
+--max-code-length=120
+--suffix=none
+--lineend=linux
+--remove-comment-prefix
