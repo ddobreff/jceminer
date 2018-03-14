@@ -57,13 +57,6 @@ extern bool g_logJson;
 
 class BadArgument: public Exception {};
 
-inline std::string toJS(unsigned long _n)
-{
-	std::string h = toHex(toCompactBigEndian(_n, 1));
-	// remove first 0, if it is necessary;
-	return h[0] != '0' ? h : h.substr(1);
-}
-
 bool g_running = false;
 
 string version()
