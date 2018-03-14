@@ -13,8 +13,6 @@
 #include <libhwmon/wrapnvml.h>
 #include <libhwmon/wrapadl.h>
 #include <libhwmon/wrapamdsysfs.h>
-#include <libdevcore/SHA3.h>
-#include "Exceptions.h"
 
 namespace dev
 {
