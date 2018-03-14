@@ -1,5 +1,4 @@
 set(SOURCES
-	BlockHeader.h
 	EthashAux.h EthashAux.cpp
 	Exceptions.h
 	Farm.h
