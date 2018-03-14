@@ -61,7 +61,7 @@ private:
 
 	std::string m_name;
 
-	mutable Mutex x_work;				///< Lock for the network existance.
+	mutable std::mutex x_work;				///< Lock for the network existance.
 	std::unique_ptr<std::thread> m_work;		///< The network thread.
 	std::atomic<WorkerState> m_state = {WorkerState::Starting};
 };

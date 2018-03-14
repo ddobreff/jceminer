@@ -265,11 +265,11 @@ protected:
 	FarmFace& farm;
 	std::chrono::high_resolution_clock::time_point workSwitchStart;
 	HwMonitorInfo m_hwmoninfo;
+	mutable std::mutex x_work;
 private:
 	std::atomic<uint64_t> m_hashCount = {0};
 
 	WorkPackage m_work;
-	mutable Mutex x_work;
 };
 
 }
