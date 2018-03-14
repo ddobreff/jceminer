@@ -10,10 +10,11 @@
 #include <libdevcore/Common.h>
 #include <libdevcore/Worker.h>
 #include <libethcore/Miner.h>
-#include <libethcore/BlockHeader.h>
 #include <libhwmon/wrapnvml.h>
 #include <libhwmon/wrapadl.h>
 #include <libhwmon/wrapamdsysfs.h>
+#include <libdevcore/SHA3.h>
+#include "Exceptions.h"
 
 namespace dev
 {

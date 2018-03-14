@@ -5,7 +5,10 @@
 #include <condition_variable>
 #include <libethash/ethash.h>
 #include <libdevcore/Worker.h>
-#include "BlockHeader.h"
+#include <libdevcore/Common.h>
+#include <libdevcore/SHA3.h>
+#include "Exceptions.h"
+
 
 namespace dev
 {
@@ -52,11 +55,7 @@ private:
 
 struct WorkPackage {
 	WorkPackage() = default;
-	explicit WorkPackage(BlockHeader const& _bh) :
-		boundary(_bh.boundary()),
-		header(_bh.hashWithout()),
-		seed(EthashAux::seedHash(static_cast<unsigned>(_bh.number())))
-	{ }
+
 	void reset()
 	{
 		header = h256();

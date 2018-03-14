@@ -209,15 +209,14 @@ void PoolManager::stop()
 void PoolManager::workLoop()
 {
 	while (m_running) {
-		this_thread::sleep_for(chrono::seconds(1));
-		m_hashrateReportingTimePassed++;
+		this_thread::sleep_for(chrono::seconds(2));
+		m_hashrateReportingTimePassed += 2;
 		// Hashrate reporting
 		if (m_hashrateReportingTimePassed > m_hashrateReportingTime) {
 			auto mp = m_farm.miningProgress();
-			std::string h = toHex(toCompactBigEndian(mp.rate(), 1));
-			std::string res = h[0] != '0' ? h : h.substr(1);
-
-			p_client->submitHashrate("0x" + res);
+			std::stringstream h;
+			h << "0x" << hex << mp.rate();
+			p_client->submitHashrate(h.str());
 			m_hashrateReportingTimePassed = 0;
 		}
 	}

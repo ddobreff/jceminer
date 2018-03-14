@@ -332,9 +332,9 @@ bool CUDAMiner::cuda_init(
 				return false;
 			}
 			//We need to reset the device and recreate the dag
-			//{Guard l(x_log); logwarn << "Resetting device" << endl << flush;}
-			//CUDA_SAFE_CALL(cudaDeviceReset());
-			//{Guard l(x_log); loginfo << "Device successfully reset" << endl << flush;}
+			{Guard l(x_log); logwarn << "Resetting device" << endl << flush;}
+			CUDA_SAFE_CALL(cudaDeviceReset());
+			{Guard l(x_log); loginfo << "Device successfully reset" << endl << flush;}
 			CUDA_SAFE_CALL(cudaSetDeviceFlags(s_scheduleFlag));
 			CUDA_SAFE_CALL(cudaDeviceSetCacheConfig(cudaFuncCachePreferL1));
 			//We need to reset the light and the Dag for the following code to reallocate
