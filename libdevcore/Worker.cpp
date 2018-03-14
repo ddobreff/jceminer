@@ -57,7 +57,7 @@ void Worker::startWorking()
 
 void Worker::stopWorking()
 {
-	DEV_GUARDED(x_work)
+	Guard l(x_work);
 	if (m_work) {
 		WorkerState ex = WorkerState::Started;
 		m_state.compare_exchange_strong(ex, WorkerState::Stopping);
@@ -69,7 +69,7 @@ void Worker::stopWorking()
 
 Worker::~Worker()
 {
-	DEV_GUARDED(x_work)
+	Guard l(x_work);
 	if (m_work) {
 		m_state.exchange(WorkerState::Killing);
 		m_work->join();

@@ -45,10 +45,10 @@ private:
 	EthashAux() = default;
 	static EthashAux& get();
 
-	Mutex x_lights;
+	mutable std::mutex x_lights;
 	std::unordered_map<h256, LightType> m_lights;
 
-	Mutex x_epochs;
+	mutable std::mutex x_epochs;
 	std::unordered_map<h256, unsigned> m_epochs;
 	h256s m_seedHashes;
 };

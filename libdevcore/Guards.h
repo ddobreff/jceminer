@@ -15,139 +15,26 @@
 #pragma once
 
 #include <mutex>
-#include <condition_variable>
-#include <atomic>
 
 namespace dev
 {
 
-using Mutex = std::mutex;
-using Guard = std::lock_guard<std::mutex>;
-using UniqueGuard = std::unique_lock<std::mutex>;
-
-template <class GuardType, class MutexType>
-struct GenericGuardBool: GuardType {
-	GenericGuardBool(MutexType& _m): GuardType(_m) {}
-	bool b = true;
-};
-
-template <class N>
-class Notified
+class Guard
 {
 public:
-	Notified() {}
-	Notified(N const& _v): m_value(_v) {}
-	Notified(Notified const&) = delete;
-	Notified& operator=(N const& _v)
+	Guard(std::mutex& guard) : m_guard(guard)
 	{
-		UniqueGuard l(m_mutex);
-		m_value = _v;
-		m_cv.notify_all();
-		return *this;
+		m_guard.lock();
 	}
 
-	operator N() const
+	~Guard()
 	{
-		UniqueGuard l(m_mutex);
-		return m_value;
-	}
-
-	void wait() const
-	{
-		N old;
-		{
-			UniqueGuard l(m_mutex);
-			old = m_value;
-		} waitNot(old);
-	}
-	void wait(N const& _v) const
-	{
-		UniqueGuard l(m_mutex);
-		m_cv.wait(l, [&]() {
-			return m_value == _v;
-		});
-	}
-	void waitNot(N const& _v) const
-	{
-		UniqueGuard l(m_mutex);
-		m_cv.wait(l, [&]() {
-			return m_value != _v;
-		});
-	}
-	template <class F> void wait(F const& _f) const
-	{
-		UniqueGuard l(m_mutex);
-		m_cv.wait(l, _f);
-	}
-
-	template <class R, class P> void wait(std::chrono::duration<R, P> _d) const
-	{
-		N old;
-		{
-			UniqueGuard l(m_mutex);
-			old = m_value;
-		} waitNot(_d, old);
-	}
-	template <class R, class P> void wait(std::chrono::duration<R, P> _d, N const& _v) const
-	{
-		UniqueGuard l(m_mutex);
-		m_cv.wait_for(l, _d, [&]() {
-			return m_value == _v;
-		});
-	}
-	template <class R, class P> void waitNot(std::chrono::duration<R, P> _d, N const& _v) const
-	{
-		UniqueGuard l(m_mutex);
-		m_cv.wait_for(l, _d, [&]() {
-			return m_value != _v;
-		});
-	}
-	template <class R, class P, class F> void wait(std::chrono::duration<R, P> _d, F const& _f) const
-	{
-		UniqueGuard l(m_mutex);
-		m_cv.wait_for(l, _d, _f);
+		m_guard.unlock();
 	}
 
 private:
-	mutable Mutex m_mutex;
-	mutable std::condition_variable m_cv;
-	N m_value;
+	std::mutex& m_guard;
 };
 
-/**     @brief Simple block guard.
-        The expression/block following is guarded though the given mutex.
-        Usage:
-        @code
-        Mutex m;
-        unsigned d;
-        ...
-        ETH_(m) d = 1;
-        ...
-        ETH_(m) { for (auto d = 10; d > 0; --d) foo(d); d = 0; }
-        @endcode
-
-        There are several variants of this basic mechanism for different Mutex types and Guards.
-
-        There is also the UNGUARD variant which allows an unguarded expression/block to exist within a
-        guarded expression. eg:
-
-        @code
-        Mutex m;
-        int d;
-        ...
-        ETH_GUARDED(m)
-        {
-        for (auto d = 50; d > 25; --d)
-        foo(d);
-        ETH_UNGUARDED(m)
-        bar();
-        for (; d > 0; --d)
-        foo(d);
-        }
-        @endcode
-*/
-
-#define DEV_GUARDED(MUTEX) \
-	for (GenericGuardBool<Guard, Mutex> __eth_l(MUTEX); __eth_l.b; __eth_l.b = false)
-
 }
+

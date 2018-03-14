@@ -136,7 +136,7 @@ public:
 	{
 		auto now = std::chrono::steady_clock::now();
 
-		std::lock_guard<std::mutex> lock(x_minerWork);
+		Guard l(x_minerWork);
 
 		m_progress.ms = std::chrono::duration_cast<std::chrono::milliseconds>(now - m_lastStart).count();
 		m_lastStart = now;
@@ -174,7 +174,7 @@ public:
 
 	WorkingProgress const& miningProgress(bool hwmon = false, bool power = false) const
 	{
-		std::lock_guard<std::mutex> lock(x_minerWork);
+		Guard l(x_minerWork);
 		m_progress.minerMonitors.clear();
 		for (auto const& i : m_miners) {
 			if (hwmon) {
@@ -322,7 +322,7 @@ private:
 		m_onSolutionFound(_from, _s);
 	}
 
-	mutable Mutex x_minerWork;
+	mutable std::mutex x_minerWork;
 	std::vector<std::shared_ptr<Miner>> m_miners;
 	WorkPackage m_work;
 	std::atomic<bool> m_isMining = {false};
