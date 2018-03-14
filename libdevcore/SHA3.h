@@ -1,16 +1,6 @@
-/*      This program is free software: you can redistribute it and/or modify
-        it under the terms of the GNU General Public License as published by
-        the Free Software Foundation, either version 3 of the License, or
-        (at your option) any later version.
-
-        This program is distributed in the hope that it will be useful,
-        but WITHOUT ANY WARRANTY; without even the implied warranty of
-        MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-        GNU General Public License for more details.
-
-        You should have received a copy of the GNU General Public License
-        along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+/*  Blah, blah, blah.. all this pedantic nonsense to say that this
+    source code is made available under the terms and conditions
+    of the accompanying GNU General Public License */
 
 #pragma once
 
@@ -30,21 +20,21 @@ bool sha3(bytesConstRef _input, bytesRef o_output);
 /// Calculate SHA3-256 hash of the given input, returning as a 256-bit hash.
 inline h256 sha3(bytesConstRef _input)
 {
-	h256 ret;
-	sha3(_input, ret.ref());
-	return ret;
+    h256 ret;
+    sha3(_input, ret.ref());
+    return ret;
 }
 
 /// Calculate SHA3-256 hash of the given input, returning as a 256-bit hash.
 inline h256 sha3(bytes const& _input)
 {
-	return sha3(bytesConstRef(&_input));
+    return sha3(bytesConstRef(&_input));
 }
 
 /// Calculate SHA3-256 hash of the given input (presented as a FixedHash), returns a 256-bit hash.
 template<unsigned N> inline h256 sha3(FixedHash<N> const& _input)
 {
-	return sha3(_input.ref());
+    return sha3(_input.ref());
 }
 
 }

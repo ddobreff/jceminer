@@ -1,26 +1,16 @@
-/*      This program is free software: you can redistribute it and/or modify
-        it under the terms of the GNU General Public License as published by
-        the Free Software Foundation, either version 3 of the License, or
-        (at your option) any later version.
-
-        This program is distributed in the hope that it will be useful,
-        but WITHOUT ANY WARRANTY; without even the implied warranty of
-        MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-        GNU General Public License for more details.
-
-        You should have received a copy of the GNU General Public License
-        along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+/*  Blah, blah, blah.. all this pedantic nonsense to say that this
+    source code is made available under the terms and conditions
+    of the accompanying GNU General Public License */
 
 #pragma once
 
 typedef struct {
-	int sysfs_gpucount;
-	int opencl_gpucount;
-	int* card_sysfs_device_id;  /* map cardidx to filesystem card idx */
-	int* sysfs_hwmon_id;        /* filesystem card idx to filesystem hwmon idx */
-	int* sysfs_opencl_device_id;          /* map ADL dev to OPENCL dev */
-	int* opencl_sysfs_device_id;          /* map OPENCL dev to ADL dev */
+    int sysfs_gpucount;
+    int opencl_gpucount;
+    int* card_sysfs_device_id;  /* map cardidx to filesystem card idx */
+    int* sysfs_hwmon_id;        /* filesystem card idx to filesystem hwmon idx */
+    int* sysfs_opencl_device_id;          /* map ADL dev to OPENCL dev */
+    int* opencl_sysfs_device_id;          /* map OPENCL dev to ADL dev */
 } wrap_amdsysfs_handle;
 
 wrap_amdsysfs_handle* wrap_amdsysfs_create();

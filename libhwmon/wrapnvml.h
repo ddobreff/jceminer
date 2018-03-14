@@ -1,16 +1,6 @@
-/*      This program is free software: you can redistribute it and/or modify
-        it under the terms of the GNU General Public License as published by
-        the Free Software Foundation, either version 3 of the License, or
-        (at your option) any later version.
-
-        This program is distributed in the hope that it will be useful,
-        but WITHOUT ANY WARRANTY; without even the implied warranty of
-        MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-        GNU General Public License for more details.
-
-        You should have received a copy of the GNU General Public License
-        along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+/*  Blah, blah, blah.. all this pedantic nonsense to say that this
+    source code is made available under the terms and conditions
+    of the accompanying GNU General Public License */
 
 #pragma once
 
@@ -24,23 +14,23 @@ extern "C" {
         install location, etc.
 */
 typedef enum wrap_nvmlReturn_enum {
-	WRAPNVML_SUCCESS = 0
+    WRAPNVML_SUCCESS = 0
 } wrap_nvmlReturn_t;
 
 typedef void* wrap_nvmlDevice_t;
 
 /* our own version of the PCI info struct */
 typedef struct {
-	char bus_id_str[16];             /* string form of bus info */
-	unsigned int domain;
-	unsigned int bus;
-	unsigned int device;
-	unsigned int pci_device_id;      /* combined device and vendor id */
-	unsigned int pci_subsystem_id;
-	unsigned int res0;               /* NVML internal use only */
-	unsigned int res1;
-	unsigned int res2;
-	unsigned int res3;
+    char bus_id_str[16];             /* string form of bus info */
+    unsigned int domain;
+    unsigned int bus;
+    unsigned int device;
+    unsigned int pci_device_id;      /* combined device and vendor id */
+    unsigned int pci_subsystem_id;
+    unsigned int res0;               /* NVML internal use only */
+    unsigned int res1;
+    unsigned int res2;
+    unsigned int res3;
 } wrap_nvmlPciInfo_t;
 
 
@@ -49,27 +39,27 @@ typedef struct {
         and the shared library itself.
 */
 typedef struct {
-	void* nvml_dll;
-	int nvml_gpucount;
-	int cuda_gpucount;
-	int opencl_gpucount;
-	unsigned int* nvml_pci_domain_id;
-	unsigned int* nvml_pci_bus_id;
-	unsigned int* nvml_pci_device_id;
-	int* nvml_cuda_device_id;          /* map NVML dev to CUDA dev */
-	int* cuda_nvml_device_id;          /* map CUDA dev to NVML dev */
-	int* nvml_opencl_device_id;          /* map NVML dev to OPENCL dev */
-	int* opencl_nvml_device_id;          /* map OPENCL dev to NVML dev */
-	wrap_nvmlDevice_t* devs;
-	wrap_nvmlReturn_t (*nvmlInit)(void);
-	wrap_nvmlReturn_t (*nvmlDeviceGetCount)(int*);
-	wrap_nvmlReturn_t (*nvmlDeviceGetHandleByIndex)(int, wrap_nvmlDevice_t*);
-	wrap_nvmlReturn_t (*nvmlDeviceGetPciInfo)(wrap_nvmlDevice_t, wrap_nvmlPciInfo_t*);
-	wrap_nvmlReturn_t (*nvmlDeviceGetName)(wrap_nvmlDevice_t, char*, int);
-	wrap_nvmlReturn_t (*nvmlDeviceGetTemperature)(wrap_nvmlDevice_t, int, unsigned int*);
-	wrap_nvmlReturn_t (*nvmlDeviceGetFanSpeed)(wrap_nvmlDevice_t, unsigned int*);
-	wrap_nvmlReturn_t (*nvmlDeviceGetPowerUsage)(wrap_nvmlDevice_t, unsigned int*);
-	wrap_nvmlReturn_t (*nvmlShutdown)(void);
+    void* nvml_dll;
+    int nvml_gpucount;
+    int cuda_gpucount;
+    int opencl_gpucount;
+    unsigned int* nvml_pci_domain_id;
+    unsigned int* nvml_pci_bus_id;
+    unsigned int* nvml_pci_device_id;
+    int* nvml_cuda_device_id;          /* map NVML dev to CUDA dev */
+    int* cuda_nvml_device_id;          /* map CUDA dev to NVML dev */
+    int* nvml_opencl_device_id;          /* map NVML dev to OPENCL dev */
+    int* opencl_nvml_device_id;          /* map OPENCL dev to NVML dev */
+    wrap_nvmlDevice_t* devs;
+    wrap_nvmlReturn_t (*nvmlInit)(void);
+    wrap_nvmlReturn_t (*nvmlDeviceGetCount)(int*);
+    wrap_nvmlReturn_t (*nvmlDeviceGetHandleByIndex)(int, wrap_nvmlDevice_t*);
+    wrap_nvmlReturn_t (*nvmlDeviceGetPciInfo)(wrap_nvmlDevice_t, wrap_nvmlPciInfo_t*);
+    wrap_nvmlReturn_t (*nvmlDeviceGetName)(wrap_nvmlDevice_t, char*, int);
+    wrap_nvmlReturn_t (*nvmlDeviceGetTemperature)(wrap_nvmlDevice_t, int, unsigned int*);
+    wrap_nvmlReturn_t (*nvmlDeviceGetFanSpeed)(wrap_nvmlDevice_t, unsigned int*);
+    wrap_nvmlReturn_t (*nvmlDeviceGetPowerUsage)(wrap_nvmlDevice_t, unsigned int*);
+    wrap_nvmlReturn_t (*nvmlShutdown)(void);
 } wrap_nvml_handle;
 
 

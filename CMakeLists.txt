@@ -42,8 +42,8 @@ if(HUNTER_ENABLED)
 endif()
 
 
-project(ethminer)
-set(PROJECT_VERSION 0.0.1)
+project(miner)
+set(PROJECT_VERSION JCEMiner.1.0.6)
 
 cable_set_build_type(DEFAULT Release CONFIGURATION_TYPES Release RelWithDebInfo Debug)
 
@@ -60,9 +60,7 @@ cmake_policy(SET CMP0054 NEW)
 ######################################################################################################
 
 option(ETHASHCL "Build with OpenCL mining" ON)
-option(ETHASHCUDA "Build with CUDA mining" OFF)
-option(ETHDBUS "Build with D-Bus support" OFF)
-option(APICORE "Build with API Server support" ON)
+option(ETHASHCUDA "Build with CUDA mining" ON)
 
 # propagates CMake configuration options to the compiler
 function(configureProject)
@@ -72,16 +70,10 @@ function(configureProject)
 	if (ETHASHCUDA)
 		add_definitions(-DETH_ETHASHCUDA)
 	endif()
-	if (ETHDBUS)
-		add_definitions(-DETH_DBUS)
-	endif()
-	if (APICORE)
-		add_definitions(-DAPI_CORE)
-	endif()
 endfunction()
 
-hunter_add_package(Boost COMPONENTS system)
-find_package(Boost CONFIG REQUIRED COMPONENTS system)
+hunter_add_package(Boost COMPONENTS system program_options)
+find_package(Boost CONFIG REQUIRED COMPONENTS system program_options)
 
 hunter_add_package(jsoncpp)
 find_package(jsoncpp CONFIG REQUIRED)
@@ -100,15 +92,13 @@ message("-- Build ${CMAKE_BUILD_TYPE} / ${CMAKE_SYSTEM_NAME}")
 message("------------------------------------------------------------- components")
 message("-- ETHASHCL         Build OpenCL components                  ${ETHASHCL}")
 message("-- ETHASHCUDA       Build CUDA components                    ${ETHASHCUDA}")
-message("-- ETHDBUS          Build D-Bus components                   ${ETHDBUS}")
-message("-- APICORE          Build API Server components              ${APICORE}")
 message("------------------------------------------------------------------------")
 message("")
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 include(EthCompilerSettings)
 
-cable_add_buildinfo_library(PREFIX ethminer)
+cable_add_buildinfo_library(PREFIX miner)
 
 add_subdirectory(libdevcore)
 add_subdirectory(libethash)
@@ -122,25 +112,17 @@ endif ()
 if (ETHASHCUDA)
 	add_subdirectory(libcuda)
 endif ()
-if (APICORE)
-	add_subdirectory(libapicore)
-endif()
 
-add_subdirectory(ethminer)
+add_subdirectory(miner)
 
 
 set(CPACK_GENERATOR ZIP)
-set(CPACK_PACKAGE_FILE_NAME ${PROJECT_NAME}-${PROJECT_VERSION}-${CMAKE_SYSTEM_NAME})
+set(CPACK_PACKAGE_FILE_NAME ${PROJECT_VERSION}-${CMAKE_SYSTEM_NAME})
 set(CPACK_PACKAGE_CHECKSUM SHA256)
 set(CPACK_INCLUDE_TOPLEVEL_DIRECTORY FALSE)
 include(CPack)
 
 
 # Export some variables for CIs
-if(PROJECT_VERSION MATCHES "^([0-9]+)\\.([0-9]+)\\.([0-9]+)$")
-	set(PROJECT_VERSION_IS_PRERELEASE false)
-else()
-	set(PROJECT_VERSION_IS_PRERELEASE true)
-endif()
+set(PROJECT_VERSION_IS_PRERELEASE false)
 configure_file(cmake/variables.sh.in variables.sh)
-configure_file(cmake/variables.ps1.in variables.ps1)

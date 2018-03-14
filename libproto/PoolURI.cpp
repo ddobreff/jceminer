@@ -1,20 +1,11 @@
-/*      This program is free software: you can redistribute it and/or modify
-        it under the terms of the GNU General Public License as published by
-        the Free Software Foundation, either version 3 of the License, or
-        (at your option) any later version.
-
-        This program is distributed in the hope that it will be useful,
-        but WITHOUT ANY WARRANTY; without even the implied warranty of
-        MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-        GNU General Public License for more details.
-
-        You should have received a copy of the GNU General Public License
-        along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+/*  Blah, blah, blah.. all this pedantic nonsense to say that this
+    source code is made available under the terms and conditions
+    of the accompanying GNU General Public License */
 
 #include <map>
 #include <boost/optional/optional_io.hpp>
 #include <boost/algorithm/string.hpp>
+#include <network/uri/detail/decode.hpp>
 #include <libproto/PoolURI.h>
 
 using namespace dev;
@@ -25,47 +16,50 @@ typedef struct {
 } SchemeAttributes;
 
 static std::map<std::string, SchemeAttributes> s_schemes = {
-	{"stratum+tcp",	  {SecureLevel::NONE,  0}},
-	{"stratum1+tcp",  {SecureLevel::NONE,  1}},
-	{"stratum2+tcp",  {SecureLevel::NONE,  2}},
-	{"stratum+tls",	  {SecureLevel::TLS,   0}},
-	{"stratum1+tls",  {SecureLevel::TLS,   1}},
-	{"stratum2+tls",  {SecureLevel::TLS,   2}},
-	{"stratum+tls12", {SecureLevel::TLS12, 0}},
-	{"stratum1+tls12", {SecureLevel::TLS12, 1}},
-	{"stratum2+tls12", {SecureLevel::TLS12, 2}},
-	{"stratum+ssl",	  {SecureLevel::TLS12, 0}},
-	{"stratum1+ssl",  {SecureLevel::TLS12, 1}},
-	{"stratum2+ssl",  {SecureLevel::TLS12, 2}}
+	{"stratum+tcp",    {SecureLevel::NONE,  0}},
+	{"ethproxy+tcp",   {SecureLevel::NONE,  1}},
+	{"nicehash+tcp",   {SecureLevel::NONE,  2}},
+	{"stratum+tls",    {SecureLevel::TLS,   0}},
+	{"ethproxy+tls",   {SecureLevel::TLS,   1}},
+	{"nicehash+tls",   {SecureLevel::TLS,   2}},
+	{"stratum+tls12",  {SecureLevel::TLS12, 0}},
+	{"ethproxy+tls12", {SecureLevel::TLS12, 1}},
+	{"nicehash+tls12", {SecureLevel::TLS12, 2}}
 };
 
 URI::URI() {}
 
 URI::URI(const std::string uri)
 {
-	std::string u = uri;
-	if (u.find("://") == std::string::npos)
-		u = std::string("unspecified://") + u;
-	m_uri = network::uri(u);
+	m_uri = network::uri(uri);
 }
 
 bool URI::KnownScheme()
 {
+	if (!m_uri.scheme())
+		return false;
 	std::string s(*m_uri.scheme());
+	s = network::detail::decode(s);
 	boost::trim(s);
 	return s_schemes.find(s) != s_schemes.end();
 }
 
 unsigned URI::ProtoVersion() const
 {
+	if (!m_uri.scheme())
+		return 0;
 	std::string s(*m_uri.scheme());
+	s = network::detail::decode(s);
 	boost::trim(s);
 	return s_schemes[s].version;
 }
 
 SecureLevel URI::ProtoSecureLevel() const
 {
+	if (!m_uri.scheme())
+		return SecureLevel::NONE;
 	std::string s(*m_uri.scheme());
+	s = network::detail::decode(s);
 	boost::trim(s);
 	return s_schemes[s].secure;
 }
@@ -82,36 +76,41 @@ std::string URI::KnownSchemes(SecureLevel secureLevel)
 
 std::string URI::Scheme() const
 {
+	if (!m_uri.scheme())
+		return "stratum+tcp";
 	std::string s(*m_uri.scheme());
+	s = network::detail::decode(s);
 	boost::trim(s);
 	return s;
 }
 
 std::string URI::Host() const
 {
-	std::string s(*m_uri.host());
-	boost::trim(s);
-	if (s == "--")
+	if (!m_uri.host())
 		return "";
+	std::string s(*m_uri.host());
+	s = network::detail::decode(s);
+	boost::trim(s);
 	return s;
 }
 
 unsigned short URI::Port() const
 {
-	std::string s(*m_uri.port());
-	boost::trim(s);
-	if (s == "--")
+	if (!m_uri.port())
 		return 0;
+	std::string s(*m_uri.port());
+	s = network::detail::decode(s);
+	boost::trim(s);
 	return (unsigned short)atoi(s.c_str());
 }
 
 std::string URI::User() const
 {
-	std::stringstream ss;
-	std::string s(*m_uri.user_info());
-	boost::trim(s);
-	if (s == "--")
+	if (!m_uri.user_info())
 		return "";
+	std::string s(*m_uri.user_info());
+	s = network::detail::decode(s);
+	boost::trim(s);
 	size_t f = s.find(":");
 	if (f == std::string::npos)
 		return s;
@@ -120,12 +119,29 @@ std::string URI::User() const
 
 std::string URI::Pswd() const
 {
-	std::string s(*m_uri.user_info());
-	boost::trim(s);
-	if (s == "--")
+	if (!m_uri.user_info())
 		return "";
+	std::string s(*m_uri.user_info());
+	s = network::detail::decode(s);
+	boost::trim(s);
 	size_t f = s.find(":");
 	if (f == std::string::npos)
 		return "";
 	return s.substr(f + 1);
 }
+
+std::string URI::Path() const
+{
+	if (!m_uri.path())
+		return "";
+	std::string s(*m_uri.path());
+	s = network::detail::decode(s);
+	boost::trim(s);
+	return s;
+}
+
+bool URI::Empty()
+{
+	return m_uri.empty();
+}
+

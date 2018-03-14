@@ -1,4 +1,6 @@
-// This source code is licenced under GNU General Public License, Version 3.
+/*  Blah, blah, blah.. all this pedantic nonsense to say that this
+    source code is made available under the terms and conditions
+    of the accompanying GNU General Public License */
 
 #include "Miner.h"
 #include "EthashAux.h"
@@ -13,8 +15,6 @@ unsigned dev::eth::Miner::s_dagLoadIndex = 0;
 unsigned dev::eth::Miner::s_dagCreateDevice = 0;
 
 uint8_t* dev::eth::Miner::s_dagInHostMemory = NULL;
-
-bool dev::eth::Miner::s_exit = false;
 
 bool g_logSwitchTime = false;
 bool g_logJson = false;

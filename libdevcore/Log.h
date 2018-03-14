@@ -1,33 +1,24 @@
-/*      This program is free software: you can redistribute it and/or modify
-        it under the terms of the GNU General Public License as published by
-        the Free Software Foundation, either version 3 of the License, or
-        (at your option) any later version.
+/*  Blah, blah, blah.. all this pedantic nonsense to say that this
+    source code is made available under the terms and conditions
+    of the accompanying GNU General Public License */
 
-        This program is distributed in the hope that it will be useful,
-        but WITHOUT ANY WARRANTY; without even the implied warranty of
-        MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-        GNU General Public License for more details.
-
-        You should have received a copy of the GNU General Public License
-        along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
-
+#include <iostream>
 #include <string>
 #include <mutex>
-#include "Guards.h"
 
 extern std::string timestamp();
 
-#define EthReset	"\x1b[0m"	// Text Reset
-#define EthGray		"\x1b[37m"	// White
-#define EthRed		"\x1b[91m"	// Red
-#define EthLime		"\x1b[92m"	// Green
-#define EthYellow	"\x1b[93m"	// Yellow
-#define EthWhite	"\x1b[97m"	// White
+#define fgReset    "\x1b[0m"   // Text Reset
+#define fgGray     "\x1b[37m"  // White
+#define fgRed      "\x1b[91m"  // Red
+#define fgLime     "\x1b[92m"  // Green
+#define fgYellow   "\x1b[93m"  // Yellow
+#define fgWhite    "\x1b[97m"  // White
 
-extern std::mutex x_log;
-
-#define loginfo std::clog << EthWhite << timestamp() << EthReset << ' '
-#define logwarn std::clog << EthYellow << timestamp() << EthReset << ' '
-#define logerror std::clog << EthRed << timestamp() << EthReset << ' '
+#define loginfo(_x) \
+    {std::clog << fgWhite << timestamp() << fgReset << ' ' << _x << std::endl;}
+#define logwarn(_x) \
+    {std::clog << fgYellow << timestamp() << fgReset << ' ' << _x << std::endl;}
+#define logerror(_x) \
+    {std::clog << fgRed << timestamp() << fgReset << ' ' << _x << std::endl;}
 

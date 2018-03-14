@@ -1,4 +1,6 @@
-// This source code is licenced under GNU General Public License, Version 3.
+/*  Blah, blah, blah.. all this pedantic nonsense to say that this
+    source code is made available under the terms and conditions
+    of the accompanying GNU General Public License */
 
 #pragma once
 

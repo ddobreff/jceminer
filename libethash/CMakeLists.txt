@@ -1,6 +1,4 @@
-if (NOT MSVC)
-	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=gnu99")
-endif()
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=gnu99")
 
 set(FILES
 	internal.c

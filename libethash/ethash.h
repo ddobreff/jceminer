@@ -1,4 +1,6 @@
-// This source code is licenced under GNU General Public License, Version 3.
+/*  Blah, blah, blah.. all this pedantic nonsense to say that this
+    source code is made available under the terms and conditions
+    of the accompanying GNU General Public License */
 
 #pragma once
 
@@ -26,16 +28,16 @@ extern "C" {
 
 /// Type of a seedhash/blockhash e.t.c.
 typedef struct ethash_h256 {
-	uint8_t b[32];
+    uint8_t b[32];
 } ethash_h256_t;
 
 struct ethash_light;
 typedef struct ethash_light* ethash_light_t;
 
 typedef struct ethash_return_value {
-	ethash_h256_t result;
-	ethash_h256_t mix_hash;
-	bool success;
+    ethash_h256_t result;
+    ethash_h256_t mix_hash;
+    bool success;
 } ethash_return_value_t;
 
 /**
