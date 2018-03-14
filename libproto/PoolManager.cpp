@@ -66,6 +66,7 @@ PoolManager::PoolManager(PoolClient* client, Farm& farm, MinerType const& minerT
 				m_farm.start("cuda", false);
 				m_farm.start("opencl", true);
 			}
+			m_farmStarted = true;
 		}
 	});
 	p_client->onDisconnected([&]() {
@@ -79,6 +80,7 @@ PoolManager::PoolManager(PoolClient* client, Farm& farm, MinerType const& minerT
 				Guard l(x_log);
 				loginfo << "Shutting down miners..." << endl << flush;
 			}
+			m_farmStarted = false;
 			m_farm.stop();
 		}
 
@@ -166,6 +168,7 @@ PoolManager::PoolManager(PoolClient* client, Farm& farm, MinerType const& minerT
 				Guard l(x_log);
 				loginfo << "Shutting down miners..." << endl << flush;
 			}
+			m_farmStarted = false;
 			m_farm.stop();
 		}
 
@@ -181,6 +184,7 @@ PoolManager::PoolManager(PoolClient* client, Farm& farm, MinerType const& minerT
 			m_farm.start("cuda", false);
 			m_farm.start("opencl", true);
 		}
+		m_farmStarted = true;
 	});
 }
 
@@ -201,6 +205,7 @@ void PoolManager::stop()
 				Guard l(x_log);
 				loginfo << "Shutting down miners..." << endl << flush;
 			}
+			m_farmStarted = false;
 			m_farm.stop();
 		}
 	}
@@ -213,10 +218,12 @@ void PoolManager::workLoop()
 		m_hashrateReportingTimePassed += 2;
 		// Hashrate reporting
 		if (m_hashrateReportingTimePassed > m_hashrateReportingTime) {
-			auto mp = m_farm.miningProgress();
-			std::stringstream h;
-			h << "0x" << hex << mp.rate();
-			p_client->submitHashrate(h.str());
+			if (m_farmStarted) {
+				auto mp = m_farm.miningProgress();
+				std::stringstream h;
+				h << "0x" << hex << mp.rate();
+				p_client->submitHashrate(h.str());
+			}
 			m_hashrateReportingTimePassed = 0;
 		}
 	}

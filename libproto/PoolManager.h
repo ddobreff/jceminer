@@ -74,6 +74,7 @@ private:
 	list<std::chrono::steady_clock::time_point> m_accepts;
 	double m_difficulty;
 	bool m_running = false;
+	bool m_farmStarted = false;
 };
 }
 }
