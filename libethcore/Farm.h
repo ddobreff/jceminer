@@ -134,7 +134,7 @@ public:
 		auto now = std::chrono::steady_clock::now();
 
 		auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(now - m_lastStart).count();
-		if (ms < 500)
+		if (ms < 2000)
 			return m_progress;
 
 		m_lastStart = now;
