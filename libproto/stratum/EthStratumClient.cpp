@@ -79,7 +79,7 @@ void EthStratumClient::connect()
 	m_connection = m_conn;
 
 	m_authorized = false;
-	m_connected.store(false, memory_order_relaxed);
+	m_connected = false;
 
 	stringstream ssPort;
 	ssPort << m_connection.Port();
@@ -158,7 +158,7 @@ void EthStratumClient::disconnect()
 		delete m_socket;
 
 	m_authorized = false;
-	m_connected.store(false, memory_order_relaxed);
+	m_connected = false;
 
 	if (m_onDisconnected)
 		m_onDisconnected();
@@ -219,7 +219,7 @@ void EthStratumClient::connect_handler(const boost::system::error_code& ec, tcp:
 	//dev::setThreadName("stratum");
 
 	if (!ec) {
-		m_connected.store(true, memory_order_relaxed);
+		m_connected = true;
 		m_linkdown = false;
 
 		if (m_onConnected)
@@ -409,10 +409,10 @@ void EthStratumClient::readResponse(const boost::system::error_code& ec, std::si
 			Guard l(x_log);
 			logerror << "Discarding incomplete response" << endl << flush;
 		}
-		if (m_connected.load(memory_order_relaxed))
+		if (m_connected)
 			readline();
 	} else {
-		if (m_connected.load(memory_order_relaxed)) {
+		if (m_connected) {
 			{
 				Guard l(x_log);
 				logerror << "Read response failed: " + ec.message() << endl << flush;

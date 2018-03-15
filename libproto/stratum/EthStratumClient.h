@@ -45,7 +45,7 @@ public:
 
 	bool isConnected()
 	{
-		return m_connected.load(memory_order_relaxed) && m_authorized;
+		return m_connected && m_authorized;
 	}
 
 	void submitHashrate(uint64_t rate);
@@ -80,7 +80,7 @@ private:
 	string m_worker; // eth-proxy only;
 
 	bool m_authorized;
-	std::atomic<bool> m_connected = {false};
+	bool m_connected = false;
 
 	int m_worktimeout = 60;
 

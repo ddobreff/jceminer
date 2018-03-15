@@ -18,7 +18,6 @@
 #include <boost/bind.hpp>
 #include <thread>
 #include <list>
-#include <atomic>
 #include <libdevcore/Common.h>
 #include <libdevcore/Worker.h>
 #include <libethcore/Miner.h>
@@ -307,7 +306,7 @@ private:
 	mutable std::mutex x_minerWork;
 	std::vector<std::shared_ptr<Miner>> m_miners;
 	WorkPackage m_work;
-	std::atomic<bool> m_isMining = {false};
+	bool m_isMining = false;
 	mutable WorkingProgress m_progress;
 	SolutionFound m_onSolutionFound;
 	std::map<std::string, SealerDescriptor> m_sealers;

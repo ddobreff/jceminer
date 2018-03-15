@@ -233,7 +233,7 @@ public:
 
 	uint64_t hashCount()
 	{
-		return m_hashCount.exchange(0);
+		return m_hashCount.exchange(0, memory_order_relaxed);
 	}
 
 	unsigned Index()
@@ -264,7 +264,7 @@ protected:
 
 	void addHashCount(uint32_t _n)
 	{
-		m_hashCount.fetch_add(_n);
+		m_hashCount.fetch_add(_n, memory_order_relaxed);
 	}
 
 	static unsigned s_dagLoadMode;
