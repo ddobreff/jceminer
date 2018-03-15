@@ -15,6 +15,7 @@
 #include "ApiServer.h"
 
 #include <ethminer-buildinfo.h>
+#include <libethcore/Exceptions.h>
 
 ApiServer::ApiServer(AbstractServerConnector* conn, serverVersion_t type, Farm& farm,
                      bool& readonly) : AbstractServer(*conn, type), m_farm(farm)
@@ -140,7 +141,7 @@ void ApiServer::doMinerRestart(const Json::Value& request, Json::Value& response
 	(void) request; // unused
 	(void) response; // unused
 
-	this->m_farm.restart();
+	BOOST_THROW_EXCEPTION(MinerRestart());
 }
 
 void ApiServer::doMinerReboot(const Json::Value& request, Json::Value& response)

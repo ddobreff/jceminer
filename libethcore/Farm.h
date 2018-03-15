@@ -1,4 +1,16 @@
-// This source code is licenced under GNU General Public License, Version 3.
+/*      This program is free software: you can redistribute it and/or modify
+        it under the terms of the GNU General Public License as published by
+        the Free Software Foundation, either version 3 of the License, or
+        (at your option) any later version.
+
+        This program is distributed in the hope that it will be useful,
+        but WITHOUT ANY WARRANTY; without even the implied warranty of
+        MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+        GNU General Public License for more details.
+
+        You should have received a copy of the GNU General Public License
+        along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
 
 #pragma once
 
@@ -117,39 +129,29 @@ public:
 		return true;
 	}
 
-	void collectHashRate()
-	{
-		auto now = std::chrono::steady_clock::now();
-
-		Guard l(x_minerWork);
-
-		m_progress.ms = std::chrono::duration_cast<std::chrono::milliseconds>(now - m_lastStart).count();
-		m_lastStart = now;
-
-		m_progress.minersHashes.clear();
-		m_progress.hashes = 0;
-		for (auto const& i : m_miners) {
-			uint64_t minerHashCount = i->hashCount();
-			m_progress.hashes += minerHashCount;
-			m_progress.minersHashes.push_back(minerHashCount);
-		}
-	}
-
 	void processHashRate(const boost::system::error_code& ec)
 	{
 
 		if (!ec) {
-			collectHashRate();
+			auto now = std::chrono::steady_clock::now();
+
+			Guard l(x_minerWork);
+
+			m_progress.ms = std::chrono::duration_cast<std::chrono::milliseconds>(now - m_lastStart).count();
+			m_lastStart = now;
+
+			m_progress.minersHashes.clear();
+			m_progress.hashes = 0;
+			for (auto const& i : m_miners) {
+				uint64_t minerHashCount = i->hashCount();
+				m_progress.hashes += minerHashCount;
+				m_progress.minersHashes.push_back(minerHashCount);
+			}
+
 			// Restart timer
 			m_hashrateTimer.expires_from_now(boost::posix_time::milliseconds(1000));
 			m_hashrateTimer.async_wait(boost::bind(&Farm::processHashRate, this, boost::asio::placeholders::error));
 		}
-	}
-
-	void restart()
-	{
-		if (m_onMinerRestart)
-			m_onMinerRestart();
 	}
 
 	bool isMining() const
@@ -246,15 +248,10 @@ public:
 	}
 
 	using SolutionFound = std::function<void(const std::string&, Solution const&)>;
-	using MinerRestart = std::function<void()>;
 
 	void onSolutionFound(SolutionFound const& _handler)
 	{
 		m_onSolutionFound = _handler;
-	}
-	void onMinerRestart(MinerRestart const& _handler)
-	{
-		m_onMinerRestart = _handler;
 	}
 
 	WorkPackage work() const
@@ -313,7 +310,6 @@ private:
 	std::atomic<bool> m_isMining = {false};
 	mutable WorkingProgress m_progress;
 	SolutionFound m_onSolutionFound;
-	MinerRestart m_onMinerRestart;
 	std::map<std::string, SealerDescriptor> m_sealers;
 	std::string m_lastSealer;
 	bool b_lastMixed = false;
