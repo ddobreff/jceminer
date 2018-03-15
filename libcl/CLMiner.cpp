@@ -379,8 +379,7 @@ void CLMiner::workLoop()
 		m_queue.finish();
 	} catch (cl::Error const& _e) {
 		logerror << ethCLErrorHelper("OpenCL Error", _e) << endl << flush;
-		if (s_exit)
-			exit(1);
+		BOOST_THROW_EXCEPTION(GPUFailure());
 	}
 }
 
@@ -451,13 +450,11 @@ bool CLMiner::configureGPU(
     unsigned _platformId,
     uint64_t _currentBlock,
     unsigned _dagLoadMode,
-    unsigned _dagCreateDevice,
-    bool _exit
+    unsigned _dagCreateDevice
 )
 {
 	s_dagLoadMode = _dagLoadMode;
 	s_dagCreateDevice = _dagCreateDevice;
-	s_exit = _exit;
 
 	s_platformId = _platformId;
 
@@ -745,12 +742,12 @@ bool CLMiner::init(const h256& seed)
 		try {
 			{
 				Guard l(x_log);
-				loginfo << "Creating light cache buffer, size " << light->data().size() << endl << flush;
+				loginfo << "Creating light cache buffer, size " << light->data().size() << " bytes\n" << flush;
 			}
 			m_light = cl::Buffer(m_context, CL_MEM_READ_ONLY, light->data().size());
 			{
 				Guard l(x_log);
-				loginfo << "Creating DAG buffer, size " << dagSize << endl << flush;
+				loginfo << "Creating DAG buffer, size " << dagSize << " bytes\n" << flush;
 			}
 			m_dag = cl::Buffer(m_context, CL_MEM_READ_ONLY, dagSize);
 			{
@@ -824,9 +821,7 @@ bool CLMiner::init(const h256& seed)
 		}
 	} catch (cl::Error const& err) {
 		logerror << ethCLErrorHelper("OpenCL init failed", err) << endl << flush;
-		if (s_exit)
-			exit(1);
-		return false;
+		BOOST_THROW_EXCEPTION(GPUFailure());
 	}
 	return true;
 }

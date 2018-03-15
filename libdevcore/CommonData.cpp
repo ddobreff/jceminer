@@ -52,7 +52,7 @@ int dev::fromHex(char _i, WhenError _throw)
 	if (_i >= 'A' && _i <= 'F')
 		return _i - 'A' + 10;
 	if (_throw == WhenError::Throw)
-		BOOST_THROW_EXCEPTION(BadHexCharacter() << errinfo_invalidSymbol(_i));
+		BOOST_THROW_EXCEPTION(BadHexCharacter());
 	else
 		return -1;
 }

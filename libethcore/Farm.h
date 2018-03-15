@@ -52,9 +52,6 @@ public:
 			wrap_amdsysfs_destroy(sysfsh);
 		if (nvmlh)
 			wrap_nvml_destroy(nvmlh);
-
-		// Stop mining
-		stop();
 	}
 
 	void setWork(WorkPackage const& _wp)
@@ -118,18 +115,6 @@ public:
 		m_serviceThread = std::thread{ boost::bind(&boost::asio::io_service::run, &m_io_service) };
 
 		return true;
-	}
-
-	void stop()
-	{
-		{
-			Guard l(x_minerWork);
-			m_miners.clear();
-			m_isMining = false;
-		}
-
-		m_hashrateTimer.cancel();
-		m_io_service.stop();
 	}
 
 	void collectHashRate()
