@@ -68,6 +68,11 @@ public:
 		m_address = address;
 	};
 
+	bool Empty()
+	{
+		return m_uri.Empty();
+	}
+
 private:
 	URI m_uri;
 	boost::asio::ip::address m_address;

@@ -95,21 +95,26 @@ public:
 			if ((i + 1 < argc) && (*argv[i + 1] != '-'))
 				m_show_power = (bool)atoi(argv[++i]);
 		} else if ((arg == "-P") && (i + 1 < argc)) {
-			string url = argv[++i];
-			if (url == "exit") // add fake scheme and port to 'exit' url
-				url = "stratum://exit:1";
-			URI uri;
-			try {
-				uri = url;
-			} catch (...) {
-				cerr << "Bad endpoint address: " << url << endl;
+			if (m_endpoint.Empty()) {
+				string url = argv[++i];
+				if (url == "exit") // add fake scheme and port to 'exit' url
+					url = "stratum://exit:1";
+				URI uri;
+				try {
+					uri = url;
+				} catch (...) {
+					cerr << "Bad endpoint address: " << url << endl;
+					BOOST_THROW_EXCEPTION(BadArgument());
+				}
+				if (!uri.KnownScheme()) {
+					cerr << "Unknown URI scheme " << uri.Scheme() << endl;
+					BOOST_THROW_EXCEPTION(BadArgument());
+				}
+				m_endpoint = PoolConnection(uri);
+			} else {
+				cerr << "Specify only one pool\n";
 				BOOST_THROW_EXCEPTION(BadArgument());
 			}
-			if (!uri.KnownScheme()) {
-				cerr << "Unknown URI scheme " << uri.Scheme() << endl;
-				BOOST_THROW_EXCEPTION(BadArgument());
-			}
-			m_endpoint = PoolConnection(uri);
 		}
 #if API_CORE
 		else if ((arg == "--api-port") && i + 1 < argc)
