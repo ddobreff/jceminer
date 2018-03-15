@@ -38,6 +38,7 @@ public:
 	unsigned	ProtoVersion() const;
 
 	bool		KnownScheme();
+	bool		Empty();
 
 	static std::string KnownSchemes(SecureLevel secureLevel);
 

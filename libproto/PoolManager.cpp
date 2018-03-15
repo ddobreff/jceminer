@@ -167,7 +167,7 @@ void PoolManager::workLoop()
 
 void PoolManager::addConnection(PoolConnection& conn)
 {
-	if (conn.Host().empty())
+	if (conn.Empty())
 		return;
 
 	m_connection = conn;
@@ -178,7 +178,7 @@ void PoolManager::addConnection(PoolConnection& conn)
 
 void PoolManager::start()
 {
-	if (!m_connection.Host().empty()) {
+	if (!m_connection.Empty()) {
 		startWorking();
 		// Try to connect to pool
 		m_client.connect();
@@ -191,7 +191,7 @@ void PoolManager::start()
 void PoolManager::tryReconnect()
 {
 	// No connections available, so why bother trying to reconnect
-	if (m_connection.Host().empty()) {
+	if (m_connection.Empty()) {
 		{
 			Guard l(x_log);
 			logerror << "Manager has no connections defined!" << endl << flush;
