@@ -26,9 +26,7 @@ namespace dev
 enum class WorkerState {
 	Starting,
 	Started,
-	Stopping,
-	Stopped,
-	Killing
+	Stopped
 };
 
 class Worker
@@ -44,13 +42,6 @@ public:
 	/// Starts worker thread; causes startedWorking() to be called.
 	void startWorking();
 
-	/// Stop worker thread; causes call to stopWorking().
-	void stopWorking();
-
-	bool shouldStop() const
-	{
-		return m_state != WorkerState::Started;
-	}
 	const std::string& workerName()
 	{
 		return m_name;

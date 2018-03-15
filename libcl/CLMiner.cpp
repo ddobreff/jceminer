@@ -262,8 +262,6 @@ CLMiner::CLMiner(FarmFace& _farm, unsigned _index):
 
 CLMiner::~CLMiner()
 {
-	stopWorking();
-	kick_miner();
 }
 
 void CLMiner::workLoop()
@@ -279,7 +277,7 @@ void CLMiner::workLoop()
 	current.seed = h256{1u};
 
 	try {
-		while (!shouldStop()) {
+		while (true) {
 			const WorkPackage w = work();
 
 			if (current.header != w.header) {

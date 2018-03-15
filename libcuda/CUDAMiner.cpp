@@ -29,8 +29,6 @@ CUDAMiner::CUDAMiner(FarmFace& _farm, unsigned _index) :
 
 CUDAMiner::~CUDAMiner()
 {
-	stopWorking();
-	kick_miner();
 }
 
 bool CUDAMiner::init(const h256& seed)
@@ -79,7 +77,7 @@ void CUDAMiner::workLoop()
 	current.seed = h256{1u};
 
 	try {
-		while (!shouldStop()) {
+		while (true) {
 			// take local copy of work since it may end up being overwritten.
 			const WorkPackage w = work();
 
@@ -519,10 +517,6 @@ void CUDAMiner::search(
 				loginfo << "Switch time " << std::chrono::duration_cast<std::chrono::milliseconds>
 				        (std::chrono::high_resolution_clock::now() - workSwitchStart).count() << " ms." << endl << flush;
 			}
-			break;
-		}
-		if (shouldStop()) {
-			m_new_work.store(false, memory_order_relaxed);
 			break;
 		}
 		m_current_index++;
