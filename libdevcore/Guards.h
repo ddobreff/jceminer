@@ -19,22 +19,7 @@
 namespace dev
 {
 
-class Guard
-{
-public:
-	Guard(std::mutex& guard) : m_guard(guard)
-	{
-		m_guard.lock();
-	}
-
-	~Guard()
-	{
-		m_guard.unlock();
-	}
-
-private:
-	std::mutex& m_guard;
-};
+typedef std::lock_guard<std::mutex> Guard;
 
 }
 
