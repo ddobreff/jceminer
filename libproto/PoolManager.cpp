@@ -158,9 +158,7 @@ void PoolManager::workLoop()
 		// Hashrate reporting
 		if (m_farmStarted) {
 			auto mp = m_farm.miningProgress();
-			std::stringstream h;
-			h << "0x" << hex << mp.rate();
-			m_client.submitHashrate(h.str());
+			m_client.submitHashrate(mp.rate());
 		}
 	}
 }
