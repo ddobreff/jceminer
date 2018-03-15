@@ -45,10 +45,10 @@ public:
 
 	bool isConnected()
 	{
-		return m_connected.load(std::memory_order_relaxed) && m_authorized;
+		return m_connected.load() && m_authorized;
 	}
 
-	void submitHashrate(string const& rate);
+	void submitHashrate(uint64_t rate);
 	void submitSolution(Solution solution);
 
 	h256 currentHeaderHash()
@@ -66,7 +66,6 @@ private:
 	void connect_handler(const boost::system::error_code& ec, boost::asio::ip::tcp::resolver::iterator i);
 	void work_timeout_handler(const boost::system::error_code& ec);
 	void response_timeout_handler(const boost::system::error_code& ec);
-	void hashrate_event_handler(const boost::system::error_code& ec);
 
 	void reset_work_timeout();
 	void readline();
@@ -98,17 +97,16 @@ private:
 	boost::asio::ssl::stream<boost::asio::ip::tcp::socket>* m_securesocket;
 
 	boost::asio::streambuf m_requestBuffer;
+	boost::asio::streambuf m_requestBuffer2;
 	boost::asio::streambuf m_responseBuffer;
 
 	boost::asio::deadline_timer m_worktimer;
 	boost::asio::deadline_timer m_responsetimer;
-	boost::asio::deadline_timer m_hashrate_event;
 	bool m_response_pending = false;
 
 	boost::asio::ip::tcp::resolver m_resolver;
 
 	string m_email;
-	string m_rate;
 
 	double m_nextWorkDifficulty;
 
@@ -121,4 +119,7 @@ private:
 	void processExtranonce(std::string& enonce);
 
 	bool m_linkdown = true;
+
+	mutable std::mutex x_send;
+	list<std::string> m_pendingSends;
 };

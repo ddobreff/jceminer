@@ -119,7 +119,7 @@ void CUDAMiner::workLoop()
 
 void CUDAMiner::kick_miner()
 {
-	m_new_work.store(true, std::memory_order_relaxed);
+	m_new_work.store(true);
 }
 
 void CUDAMiner::setNumInstances(unsigned _instances)
@@ -522,7 +522,7 @@ void CUDAMiner::search(
 			break;
 		}
 		if (shouldStop()) {
-			m_new_work.store(false, std::memory_order_relaxed);
+			m_new_work.store(false);
 			break;
 		}
 		m_current_index++;

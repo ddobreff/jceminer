@@ -90,7 +90,7 @@ public:
 	virtual void connect() = 0;
 	virtual void disconnect() = 0;
 
-	virtual void submitHashrate(string const& rate) = 0;
+	virtual void submitHashrate(uint64_t rate) = 0;
 	virtual void submitSolution(Solution solution) = 0;
 	virtual bool isConnected() = 0;
 
