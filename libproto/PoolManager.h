@@ -34,22 +34,16 @@ namespace eth
 class PoolManager : public Worker
 {
 public:
-	PoolManager(PoolClient* client, Farm& farm, MinerType const& minerType);
+	PoolManager(PoolClient& client, Farm& farm, MinerType const& minerType);
 	void addConnection(PoolConnection& conn);
-	void clearConnections();
 	void start();
-	void stop();
 	void setReconnectTries(unsigned const& reconnectTries)
 	{
 		m_reconnectTries = reconnectTries;
 	};
 	bool isConnected()
 	{
-		return p_client->isConnected();
-	};
-	bool isRunning()
-	{
-		return m_running;
+		return m_client.isConnected();
 	};
 	bool difficulty()
 	{
@@ -60,20 +54,17 @@ private:
 	void tryReconnect();
 	void workLoop() override;
 
-	PoolClient* p_client;
-	unsigned m_hashrateReportingTime = 60;
-	unsigned m_hashrateReportingTimePassed = 0;
+	PoolClient& m_client;
 	unsigned m_reconnectTries = 3;
 	unsigned m_reconnectTry = 0;
 	unsigned m_activeConnectionIdx = 0;
-	std::vector <PoolConnection> m_connections;
+	PoolConnection m_connection;
 	h256 m_lastBoundary = h256();
 	Farm& m_farm;
 	MinerType m_minerType;
 	std::chrono::steady_clock::time_point m_submit_time;
 	list<std::chrono::steady_clock::time_point> m_accepts;
 	double m_difficulty;
-	bool m_running = false;
 	bool m_farmStarted = false;
 };
 }

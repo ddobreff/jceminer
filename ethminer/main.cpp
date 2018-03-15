@@ -18,7 +18,6 @@
 #include <ethminer-buildinfo.h>
 #include <chrono>
 #include <fstream>
-#include <signal.h>
 #include <random>
 #include <list>
 
@@ -57,8 +56,6 @@ extern bool g_logJson;
 
 class BadArgument: public Exception {};
 
-bool g_running = false;
-
 string version()
 {
 	auto* bi = ethminer_get_buildinfo();
@@ -80,47 +77,24 @@ public:
 
 	MinerCLI() {}
 
-	static void signalHandler(int sig)
-	{
-		(void)sig;
-		g_running = false;
-	}
-
 	bool interpretOption(int& i, int argc, char** argv)
 	{
 		string arg = argv[i];
 		if (arg == "--farm-retries" && i + 1 < argc)
-			try {
-				m_maxFarmRetries = stol(argv[++i]);
-			} catch (...) {
-				cerr << "Bad " << arg << " option: " << argv[i] << endl;
-				BOOST_THROW_EXCEPTION(BadArgument());
-			}
+			m_maxFarmRetries = stol(argv[++i]);
 		else if ((arg == "-SE" || arg == "--stratum-email") && i + 1 < argc)
-			try {
-				m_email = string(argv[++i]);
-			} catch (...) {
-				cerr << "Bad " << arg << " option: " << argv[i] << endl;
-				BOOST_THROW_EXCEPTION(BadArgument());
-			}
+			m_email = string(argv[++i]);
 		else if ((arg == "--work-timeout") && i + 1 < argc)
 			m_worktimeout = atoi(argv[++i]);
 		else if ((arg == "-RH" || arg == "--report-hashrate"))
 			m_report_stratum_hashrate = true;
 		else if (arg == "--stats-interval" && i + 1 < argc)
-			try {
-				m_displayInterval = stol(argv[++i]);
-			} catch (...) {
-				cerr << "Bad " << arg << " option: " << argv[i] << endl;
-				BOOST_THROW_EXCEPTION(BadArgument());
-			}
+			m_displayInterval = stol(argv[++i]);
 		else if (arg == "-HWMON") {
 			m_show_hwmonitors = true;
 			if ((i + 1 < argc) && (*argv[i + 1] != '-'))
 				m_show_power = (bool)atoi(argv[++i]);
-		} else if ((arg == "--exit"))
-			m_exit = true;
-		else if ((arg == "-P") && (i + 1 < argc)) {
+		} else if ((arg == "-P") && (i + 1 < argc)) {
 			string url = argv[++i];
 			if (url == "exit") // add fake scheme and port to 'exit' url
 				url = "stratum://exit:1";
@@ -135,7 +109,7 @@ public:
 				cerr << "Unknown URI scheme " << uri.Scheme() << endl;
 				BOOST_THROW_EXCEPTION(BadArgument());
 			}
-			m_endpoints.push_back(PoolConnection(uri));
+			m_endpoint = PoolConnection(uri);
 		}
 #if API_CORE
 		else if ((arg == "--api-port") && i + 1 < argc)
@@ -143,62 +117,27 @@ public:
 #endif
 #if ETH_ETHASHCL
 		else if (arg == "--cl-platform" && i + 1 < argc)
-			try {
-				m_openclPlatform = stol(argv[++i]);
-			} catch (...) {
-				cerr << "Bad " << arg << " option: " << argv[i] << endl;
-				BOOST_THROW_EXCEPTION(BadArgument());
-			}
+			m_openclPlatform = stol(argv[++i]);
 		else if (arg == "--cl-devices" || arg == "--cl-device")
 			while (m_openclDeviceCount < MAX_MINERS && i + 1 < argc) {
-				try {
-					m_openclDevices[m_openclDeviceCount] = stol(argv[++i]);
-					++m_openclDeviceCount;
-				} catch (...) {
-					i--;
-					break;
-				}
+				m_openclDevices[m_openclDeviceCount] = stol(argv[++i]);
+				++m_openclDeviceCount;
 			}
 		else if (arg == "--cl-parallel-hash" && i + 1 < argc) {
-			try {
-				m_openclThreadsPerHash = stol(argv[++i]);
-				if (m_openclThreadsPerHash != 1 && m_openclThreadsPerHash != 2 &&
-				    m_openclThreadsPerHash != 4 && m_openclThreadsPerHash != 8)
-					BOOST_THROW_EXCEPTION(BadArgument());
-			} catch (...) {
-				cerr << "Bad " << arg << " option: " << argv[i] << endl;
+			m_openclThreadsPerHash = stol(argv[++i]);
+			if (m_openclThreadsPerHash != 1 && m_openclThreadsPerHash != 2 && m_openclThreadsPerHash != 4
+			    && m_openclThreadsPerHash != 8)
 				BOOST_THROW_EXCEPTION(BadArgument());
-			}
-		} else if (arg == "--cl-kernel" && i + 1 < argc) {
-			try {
-				m_openclSelectedKernel = stol(argv[++i]);
-			} catch (...) {
-				cerr << "Bad " << arg << " option: " << argv[i] << endl;
-				BOOST_THROW_EXCEPTION(BadArgument());
-			}
-		} else if (arg == "--cl-wavetweak" && i + 1 < argc) {
-			try {
-				m_openclWavetweak = stol(argv[++i]);
-			} catch (...) {
-				cerr << "Bad " << arg << " option: " << argv[i] << endl;
-				BOOST_THROW_EXCEPTION(BadArgument());
-			}
-		} else if (arg == "--cl-global-work"  && i + 1 < argc) {
-			try {
-				i++;
-				m_globalWorkSizeMultiplier =
-				    (strcmp(argv[i], "auto") == 0) ? 0 : stol(argv[i]);
-			} catch (...) {
-				cerr << "Bad " << arg << " option: " << argv[i] << endl;
-				BOOST_THROW_EXCEPTION(BadArgument());
-			}
+		} else if (arg == "--cl-kernel" && i + 1 < argc)
+			m_openclSelectedKernel = stol(argv[++i]);
+		else if (arg == "--cl-wavetweak" && i + 1 < argc)
+			m_openclWavetweak = stol(argv[++i]);
+		else if (arg == "--cl-global-work"  && i + 1 < argc) {
+			i++;
+			m_globalWorkSizeMultiplier =
+			    (strcmp(argv[i], "auto") == 0) ? 0 : stol(argv[i]);
 		} else if (arg == "--cl-local-work" && i + 1 < argc)
-			try {
-				m_localWorkSize = stol(argv[++i]);
-			} catch (...) {
-				cerr << "Bad " << arg << " option: " << argv[i] << endl;
-				BOOST_THROW_EXCEPTION(BadArgument());
-			}
+			m_localWorkSize = stol(argv[++i]);
 #endif
 #if ETH_ETHASHCL || ETH_ETHASHCUDA
 		else if ((arg == "-l") || (arg == "--list-devices"))
@@ -206,38 +145,18 @@ public:
 #endif
 #if ETH_ETHASHCUDA
 		else if (arg == "--cu-grid-size" && i + 1 < argc)
-			try {
-				m_cudaGridSize = stol(argv[++i]);
-			} catch (...) {
-				cerr << "Bad " << arg << " option: " << argv[i] << endl;
-				BOOST_THROW_EXCEPTION(BadArgument());
-			}
+			m_cudaGridSize = stol(argv[++i]);
 		else if (arg == "--cu-block-size" && i + 1 < argc)
-			try {
-				m_cudaBlockSize = stol(argv[++i]);
-			} catch (...) {
-				cerr << "Bad " << arg << " option: " << argv[i] << endl;
-				BOOST_THROW_EXCEPTION(BadArgument());
-			}
+			m_cudaBlockSize = stol(argv[++i]);
 		else if (arg == "--cu-devices") {
 			while (m_cudaDeviceCount < MAX_MINERS && i + 1 < argc) {
-				try {
-					m_cudaDevices[m_cudaDeviceCount] = stol(argv[++i]);
-					++m_cudaDeviceCount;
-				} catch (...) {
-					i--;
-					break;
-				}
+				m_cudaDevices[m_cudaDeviceCount] = stol(argv[++i]);
+				++m_cudaDeviceCount;
 			}
 		} else if (arg == "--cu-parallel-hash" && i + 1 < argc) {
-			try {
-				m_parallelHash = stol(argv[++i]);
-				if (m_parallelHash == 0 || m_parallelHash > 8)
-					throw BadArgument();
-			} catch (...) {
-				cerr << "Bad " << arg << " option: " << argv[i] << endl;
-				BOOST_THROW_EXCEPTION(BadArgument());
-			}
+			m_parallelHash = stol(argv[++i]);
+			if (m_parallelHash == 0 || m_parallelHash > 8)
+				throw BadArgument();
 		} else if (arg == "--cu-schedule" && i + 1 < argc) {
 			string mode = argv[++i];
 			if (mode == "auto") m_cudaSchedule = 0;
@@ -265,26 +184,11 @@ public:
 				BOOST_THROW_EXCEPTION(BadArgument());
 			}
 		} else if (arg == "--benchmark-warmup" && i + 1 < argc)
-			try {
-				m_benchmarkWarmup = stol(argv[++i]);
-			} catch (...) {
-				cerr << "Bad " << arg << " option: " << argv[i] << endl;
-				BOOST_THROW_EXCEPTION(BadArgument());
-			}
+			m_benchmarkWarmup = stol(argv[++i]);
 		else if (arg == "--benchmark-trial" && i + 1 < argc)
-			try {
-				m_benchmarkTrial = stol(argv[++i]);
-			} catch (...) {
-				cerr << "Bad " << arg << " option: " << argv[i] << endl;
-				BOOST_THROW_EXCEPTION(BadArgument());
-			}
+			m_benchmarkTrial = stol(argv[++i]);
 		else if (arg == "--benchmark-trials" && i + 1 < argc)
-			try {
-				m_benchmarkTrials = stol(argv[++i]);
-			} catch (...) {
-				cerr << "Bad " << arg << " option: " << argv[i] << endl;
-				BOOST_THROW_EXCEPTION(BadArgument());
-			}
+			m_benchmarkTrials = stol(argv[++i]);
 		else if (arg == "--log-switch")
 			g_logSwitchTime = true;
 		else if (arg == "--log-json")
@@ -336,8 +240,7 @@ public:
 			        m_openclPlatform,
 			        0,
 			        m_dagLoadMode,
-			        m_dagCreateDevice,
-			        m_exit
+			        m_dagCreateDevice
 			    ))
 				exit(1);
 			CLMiner::setNumInstances(m_miningThreads);
@@ -362,8 +265,7 @@ public:
 			        0,
 			        m_dagLoadMode,
 			        m_dagCreateDevice,
-			        m_cudaNoEval,
-			        m_exit
+			        m_cudaNoEval
 			    ))
 				exit(1);
 
@@ -373,10 +275,6 @@ public:
 			exit(1);
 #endif
 		}
-
-		g_running = true;
-		signal(SIGINT, MinerCLI::signalHandler);
-		signal(SIGTERM, MinerCLI::signalHandler);
 
 		map<string, Farm::SealerDescriptor> sealers;
 #if ETH_ETHASHCL
@@ -402,11 +300,10 @@ public:
 		Farm f;
 		f.setSealers(sealers);
 
-		PoolManager mgr(client, f, m_minerType);
+		PoolManager mgr(*client, f, m_minerType);
 		mgr.setReconnectTries(m_maxFarmRetries);
 
-		for (auto ep : m_endpoints)
-			mgr.addConnection(ep);
+		mgr.addConnection(m_endpoint);
 
 #if API_CORE
 		Api api(this->m_api_port, f);
@@ -416,7 +313,7 @@ public:
 		mgr.start();
 
 		// Run CLI in loop
-		while (g_running && mgr.isRunning()) {
+		while (true) {
 			if (mgr.isConnected()) {
 				auto mp = f.miningProgress(m_show_hwmonitors, m_show_power);
 				{
@@ -429,10 +326,6 @@ public:
 			}
 			this_thread::sleep_for(chrono::seconds(m_displayInterval));
 		}
-
-		mgr.stop();
-
-		exit(0);
 	}
 
 	static void streamHelp(ostream& _out)
@@ -542,14 +435,13 @@ private:
 #endif
 	unsigned m_dagLoadMode = 0; // parallel
 	unsigned m_dagCreateDevice = 0;
-	bool m_exit = false;
 	/// Benchmarking params
 	unsigned m_benchmarkWarmup = 15;
 	unsigned m_benchmarkTrial = 3;
 	unsigned m_benchmarkTrials = 5;
 	unsigned m_benchmarkBlock = 0;
 
-	list<PoolConnection> m_endpoints;
+	PoolConnection m_endpoint;
 
 	unsigned m_maxFarmRetries = 3;
 	unsigned m_farmRecheckPeriod = 500;

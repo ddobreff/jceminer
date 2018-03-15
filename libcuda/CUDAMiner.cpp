@@ -68,9 +68,7 @@ bool CUDAMiner::init(const h256& seed)
 		return true;
 	} catch (std::runtime_error const& _e) {
 		logerror << "Error CUDA mining: " << _e.what() << endl << flush;
-		if (s_exit)
-			exit(1);
-		return false;
+		BOOST_THROW_EXCEPTION(GPUFailure());
 	}
 }
 
@@ -112,12 +110,10 @@ void CUDAMiner::workLoop()
 		CUDA_SAFE_CALL(cudaDeviceReset());
 	} catch (cuda_runtime_error const& _e) {
 		logerror << "Fatal GPU error: " << _e.what() << endl << flush;
-		logerror << "Terminating." << endl << flush;
-		exit(-1);
+		BOOST_THROW_EXCEPTION(GPUFailure());
 	} catch (std::runtime_error const& _e) {
 		logerror << "Error CUDA mining: " << _e.what() << endl << flush;
-		if (s_exit)
-			exit(1);
+		BOOST_THROW_EXCEPTION(GPUFailure());
 	}
 }
 
@@ -172,8 +168,7 @@ void CUDAMiner::listDevices()
 		}
 	} catch (std::runtime_error const& err) {
 		logerror << "CUDA error: " << err.what() << endl << flush;
-		if (s_exit)
-			exit(1);
+		BOOST_THROW_EXCEPTION(GPUFailure());
 	}
 }
 
@@ -185,13 +180,11 @@ bool CUDAMiner::configureGPU(
     uint64_t _currentBlock,
     unsigned _dagLoadMode,
     unsigned _dagCreateDevice,
-    bool _noeval,
-    bool _exit
+    bool _noeval
 )
 {
 	s_dagLoadMode = _dagLoadMode;
 	s_dagCreateDevice = _dagCreateDevice;
-	s_exit  = _exit;
 
 	if (!cuda_configureGPU(
 	        getNumDevices(),
@@ -265,9 +258,7 @@ bool CUDAMiner::cuda_configureGPU(
 		}
 		return true;
 	} catch (runtime_error) {
-		if (s_exit)
-			exit(1);
-		return false;
+		BOOST_THROW_EXCEPTION(GPUFailure());
 	}
 }
 
@@ -332,9 +323,15 @@ bool CUDAMiner::cuda_init(
 				return false;
 			}
 			//We need to reset the device and recreate the dag
-			{Guard l(x_log); logwarn << "Resetting device" << endl << flush;}
+			{
+				Guard l(x_log);
+				logwarn << "Resetting device" << endl << flush;
+			}
 			CUDA_SAFE_CALL(cudaDeviceReset());
-			{Guard l(x_log); loginfo << "Device successfully reset" << endl << flush;}
+			{
+				Guard l(x_log);
+				loginfo << "Device successfully reset" << endl << flush;
+			}
 			CUDA_SAFE_CALL(cudaSetDeviceFlags(s_scheduleFlag));
 			CUDA_SAFE_CALL(cudaDeviceSetCacheConfig(cudaFuncCachePreferL1));
 			//We need to reset the light and the Dag for the following code to reallocate
@@ -349,7 +346,7 @@ bool CUDAMiner::cuda_init(
 		if (!light) {
 			{
 				Guard l(x_log);
-				loginfo << "Allocating light with size: " << _lightSize << endl << flush;
+				loginfo << "Allocating light with size: " << _lightSize << " bytes\n" << flush;
 			}
 			CUDA_SAFE_CALL(cudaMalloc(reinterpret_cast<void**>(&light), _lightSize));
 		}
@@ -378,7 +375,7 @@ bool CUDAMiner::cuda_init(
 				if ((m_device_num == dagCreateDevice) || !_cpyToHost) { //if !cpyToHost -> All devices shall generate their DAG
 					{
 						Guard l(x_log);
-						loginfo << "Generating DAG for GPU" << m_device_num << " with dagSize: " << dagSize << endl << flush;
+						loginfo << "Generating DAG for GPU" << m_device_num << " with dagSize: " << dagSize << " bytes\n" << flush;
 					}
 					ethash_generate_dag(dagSize, s_gridSize, s_blockSize, m_streams[0], m_device_num);
 
@@ -411,9 +408,7 @@ bool CUDAMiner::cuda_init(
 		m_dag_size = dagSize128;
 		return true;
 	} catch (runtime_error const&) {
-		if (s_exit)
-			exit(1);
-		return false;
+		BOOST_THROW_EXCEPTION(GPUFailure());
 	}
 }
 

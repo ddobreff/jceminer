@@ -14,9 +14,11 @@
 
 #include "Worker.h"
 #include "Log.h"
+#include "Exceptions.h"
 #include <iostream>
 #include <chrono>
 #include <thread>
+
 using namespace std;
 using namespace dev;
 
@@ -39,6 +41,7 @@ void Worker::startWorking()
 					workLoop();
 				} catch (std::exception const& _e) {
 					logerror << "Exception thrown in Worker thread: " << _e.what() << endl;
+					BOOST_THROW_EXCEPTION(WorkerFailure());
 				}
 
 

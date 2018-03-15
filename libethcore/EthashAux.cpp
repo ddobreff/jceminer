@@ -67,7 +67,7 @@ EthashAux::LightAllocation::LightAllocation(h256 const& _seedHash)
 	uint64_t blockNumber = EthashAux::number(_seedHash);
 	light = ethash_light_new(blockNumber);
 	if (!light)
-		BOOST_THROW_EXCEPTION(ExternalFunctionFailure("ethash_light_new()"));
+		BOOST_THROW_EXCEPTION(LiteCreationFailure());
 	size = ethash_get_cachesize(blockNumber);
 }
 

@@ -259,7 +259,6 @@ protected:
 	static unsigned s_dagLoadIndex;
 	static unsigned s_dagCreateDevice;
 	static uint8_t* s_dagInHostMemory;
-	static bool s_exit;
 
 	const size_t index = 0;
 	FarmFace& farm;
