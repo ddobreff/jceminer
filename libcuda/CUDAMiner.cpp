@@ -119,7 +119,7 @@ void CUDAMiner::workLoop()
 
 void CUDAMiner::kick_miner()
 {
-	m_new_work.store(true);
+	m_new_work.store(true, memory_order_relaxed);
 }
 
 void CUDAMiner::setNumInstances(unsigned _instances)
@@ -513,7 +513,7 @@ void CUDAMiner::search(
 
 		addHashCount(batch_size);
 		bool t = true;
-		if (m_new_work.compare_exchange_strong(t, false)) {
+		if (m_new_work.compare_exchange_strong(t, false, memory_order_relaxed)) {
 			if (g_logSwitchTime) {
 				Guard l(x_log);
 				loginfo << "Switch time " << std::chrono::duration_cast<std::chrono::milliseconds>
@@ -522,7 +522,7 @@ void CUDAMiner::search(
 			break;
 		}
 		if (shouldStop()) {
-			m_new_work.store(false);
+			m_new_work.store(false, memory_order_relaxed);
 			break;
 		}
 		m_current_index++;

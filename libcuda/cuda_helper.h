@@ -16,31 +16,6 @@
 
 #include <cuda.h>
 #include <cuda_runtime.h>
-
-#ifdef __INTELLISENSE__
-/* reduce vstudio warnings (__byteperm, blockIdx...) */
-#include <device_functions.h>
-#include <device_launch_parameters.h>
-#define __launch_bounds__(max_tpb, min_blocks)
-#define asm("a" : "=l"(result) : "l"(a))
-#define __CUDA_ARCH__ 520 // highlight shuffle code by default.
-
-uint32_t __byte_perm(uint32_t x, uint32_t y, uint32_t z);
-uint32_t __shfl(uint32_t x, uint32_t y, uint32_t z);
-uint32_t atomicExch(uint32_t* x, uint32_t y);
-uint32_t atomicAdd(uint32_t* x, uint32_t y);
-void __syncthreads(void);
-void __threadfence(void);
-void __threadfence_block(void);
-
-uint32_t __byte_perm(uint32_t x, uint32_t y, uint32_t z);
-uint32_t __shfl(uint32_t x, uint32_t y, uint32_t z);
-uint32_t atomicExch(uint32_t* x, uint32_t y);
-uint32_t atomicAdd(uint32_t* x, uint32_t y);
-void __syncthreads(void);
-void __threadfence(void);
-#endif
-
 #include <stdint.h>
 
 #ifndef MAX_GPUS

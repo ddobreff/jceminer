@@ -45,7 +45,7 @@ public:
 
 	bool isConnected()
 	{
-		return m_connected.load() && m_authorized;
+		return m_connected.load(memory_order_relaxed) && m_authorized;
 	}
 
 	void submitHashrate(uint64_t rate);

@@ -123,7 +123,6 @@ public:
 
 protected:
 	bool m_authorized = false;
-	bool m_connected = false;
 	PoolConnection m_conn;
 	bool m_connection_changed = false;
 
