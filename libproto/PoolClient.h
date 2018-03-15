@@ -31,31 +31,28 @@ class PoolConnection
 public:
 	PoolConnection() {};
 	PoolConnection(const URI& uri)
-		: m_host(uri.Host()),
-		  m_port(uri.Port()),
-		  m_user(uri.User()),
-		  m_pass(uri.Pswd()),
-		  m_secLevel(uri.ProtoSecureLevel()),
-		  m_version(uri.ProtoVersion()) {};
+	{
+		m_uri = uri;
+	};
 	string Host() const
 	{
-		return m_host;
+		return m_uri.Host();
 	};
 	unsigned short Port() const
 	{
-		return m_port;
+		return m_uri.Port();
 	};
 	string User() const
 	{
-		return m_user;
+		return m_uri.User();
 	};
 	string Pass() const
 	{
-		return m_pass;
+		return m_uri.Pswd();
 	};
 	SecureLevel SecLevel() const
 	{
-		return m_secLevel;
+		return m_uri.ProtoSecureLevel();
 	};
 	boost::asio::ip::address Address() const
 	{
@@ -63,50 +60,16 @@ public:
 	};
 	unsigned Version() const
 	{
-		return m_version;
+		return m_uri.ProtoVersion();
 	};
 
-
-	void Host(string host)
-	{
-		m_host = host;
-	};
-	void Port(unsigned short port)
-	{
-		m_port = port;
-	};
-	void User(string user)
-	{
-		m_user = user;
-	};
-	void Pass(string pass)
-	{
-		m_pass = pass;
-	};
-	void SecLevel(SecureLevel secLevel)
-	{
-		m_secLevel = secLevel;
-	};
-	void Address(boost::asio::ip::address address)
+	void Address(boost::asio::ip::address& address)
 	{
 		m_address = address;
 	};
-	void Version(unsigned version)
-	{
-		m_version = version;
-	};
 
 private:
-	// Normally we'd replace the following with a single URI variable
-	// But URI attributes are read only, and to support legacy arameters
-	// we need to update these connection attributes individually.
-	string m_host;
-	unsigned short m_port = 0;
-	string m_user;
-	string m_pass;
-	SecureLevel m_secLevel = SecureLevel::NONE;
-	unsigned m_version = 0;
-
+	URI m_uri;
 	boost::asio::ip::address m_address;
 };
 
