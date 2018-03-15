@@ -225,7 +225,7 @@ public:
 
 		{
 			Guard l(x_log);
-			loginfo << version() << endl;
+			loginfo << EthLime << version() << EthReset << endl << flush;
 		}
 
 		if (m_minerType == MinerType::CL || m_minerType == MinerType::Mixed) {
