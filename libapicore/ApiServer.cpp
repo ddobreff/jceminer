@@ -14,7 +14,7 @@
 
 #include "ApiServer.h"
 
-#include <theminer-buildinfo.h>
+#include <miner-buildinfo.h>
 #include <libethcore/Exceptions.h>
 
 ApiServer::ApiServer(AbstractServerConnector* conn, serverVersion_t type, Farm& farm,
@@ -68,7 +68,7 @@ void ApiServer::getMinerStat1(const Json::Value& request, Json::Value& response)
 		gpuIndex++;
 	}
 
-	response[0] = theminer_get_buildinfo()->project_version;  //miner version.
+	response[0] = miner_get_buildinfo()->project_version;  //miner version.
 	response[1] = toString(runningTime.count()); // running time, in minutes.
 	response[2] =
 	    totalMhEth.str();              // total ETH hashrate in MH/s, number of ETH shares, number of ETH rejected shares.
@@ -101,7 +101,7 @@ void ApiServer::getMinerStatHR(const Json::Value& request, Json::Value& response
 	Json::Value powers;
 	ostringstream poolAddresses;
 
-	version << theminer_get_buildinfo()->project_version;
+	version << miner_get_buildinfo()->project_version;
 	runtime << toString(runningTime.count());
 	poolAddresses << m_farm.get_pool_addresses();
 

@@ -42,7 +42,7 @@ if(HUNTER_ENABLED)
 endif()
 
 
-project(theminer)
+project(miner)
 set(PROJECT_VERSION 1.0.1.dev)
 
 cable_set_build_type(DEFAULT Release CONFIGURATION_TYPES Release RelWithDebInfo Debug)
@@ -103,7 +103,7 @@ message("")
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 include(EthCompilerSettings)
 
-cable_add_buildinfo_library(PREFIX theminer)
+cable_add_buildinfo_library(PREFIX miner)
 
 add_subdirectory(libdevcore)
 add_subdirectory(libethash)
@@ -121,7 +121,7 @@ if (APICORE)
 	add_subdirectory(libapicore)
 endif()
 
-add_subdirectory(theminer)
+add_subdirectory(miner)
 
 
 set(CPACK_GENERATOR ZIP)
