@@ -69,11 +69,8 @@ public:
 	{
 		// Set work to each miner
 		Guard l(x_minerWork);
-		if (_wp.header == m_work.header && _wp.startNonce == m_work.startNonce)
-			return;
-		m_work = _wp;
 		for (auto const& m : m_miners)
-			m->setWork(m_work);
+			m->setWork(_wp);
 	}
 
 	void setSealers(std::map<std::string, SealerDescriptor> const& _sealers)
@@ -237,12 +234,6 @@ public:
 		m_onSolutionFound = _handler;
 	}
 
-	WorkPackage work() const
-	{
-		Guard l(x_minerWork);
-		return m_work;
-	}
-
 	std::chrono::steady_clock::time_point farmLaunched()
 	{
 		return m_farm_launched;
@@ -289,7 +280,6 @@ private:
 
 	mutable std::mutex x_minerWork;
 	std::vector<std::shared_ptr<Miner>> m_miners;
-	WorkPackage m_work;
 	bool m_isMining = false;
 	mutable WorkingProgress m_progress;
 	SolutionFound m_onSolutionFound;
