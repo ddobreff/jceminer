@@ -42,7 +42,7 @@ if(HUNTER_ENABLED)
 endif()
 
 
-project(ethminer)
+project(theminer)
 set(PROJECT_VERSION 1.0.1.dev)
 
 cable_set_build_type(DEFAULT Release CONFIGURATION_TYPES Release RelWithDebInfo Debug)
@@ -61,7 +61,6 @@ cmake_policy(SET CMP0054 NEW)
 
 option(ETHASHCL "Build with OpenCL mining" ON)
 option(ETHASHCUDA "Build with CUDA mining" OFF)
-option(ETHDBUS "Build with D-Bus support" OFF)
 option(APICORE "Build with API Server support" ON)
 
 # propagates CMake configuration options to the compiler
@@ -71,9 +70,6 @@ function(configureProject)
 	endif()
 	if (ETHASHCUDA)
 		add_definitions(-DETH_ETHASHCUDA)
-	endif()
-	if (ETHDBUS)
-		add_definitions(-DETH_DBUS)
 	endif()
 	if (APICORE)
 		add_definitions(-DAPI_CORE)
@@ -100,7 +96,6 @@ message("-- Build ${CMAKE_BUILD_TYPE} / ${CMAKE_SYSTEM_NAME}")
 message("------------------------------------------------------------- components")
 message("-- ETHASHCL         Build OpenCL components                  ${ETHASHCL}")
 message("-- ETHASHCUDA       Build CUDA components                    ${ETHASHCUDA}")
-message("-- ETHDBUS          Build D-Bus components                   ${ETHDBUS}")
 message("-- APICORE          Build API Server components              ${APICORE}")
 message("------------------------------------------------------------------------")
 message("")
@@ -108,7 +103,7 @@ message("")
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 include(EthCompilerSettings)
 
-cable_add_buildinfo_library(PREFIX ethminer)
+cable_add_buildinfo_library(PREFIX theminer)
 
 add_subdirectory(libdevcore)
 add_subdirectory(libethash)
@@ -126,7 +121,7 @@ if (APICORE)
 	add_subdirectory(libapicore)
 endif()
 
-add_subdirectory(ethminer)
+add_subdirectory(theminer)
 
 
 set(CPACK_GENERATOR ZIP)

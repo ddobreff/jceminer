@@ -15,7 +15,7 @@
 #include <thread>
 #include <fstream>
 #include <iostream>
-#include <ethminer-buildinfo.h>
+#include <theminer-buildinfo.h>
 #include <chrono>
 #include <fstream>
 #include <random>
@@ -30,7 +30,6 @@
 #include <libdevcore/SHA3.h>
 #include <libethcore/EthashAux.h>
 #include <libethcore/Farm.h>
-#include <ethminer-buildinfo.h>
 #if ETH_ETHASHCL
 #include <libcl/CLMiner.h>
 #endif
@@ -39,9 +38,6 @@
 #endif
 #include <libproto/PoolManager.h>
 #include <libproto/stratum/EthStratumClient.h>
-#if ETH_DBUS
-#include "DBusInt.h"
-#endif
 #if API_CORE
 #include <libapicore/Api.h>
 #endif
@@ -63,9 +59,9 @@ class BadArgument: public Exception {};
 
 string version()
 {
-	auto* bi = ethminer_get_buildinfo();
+	auto* bi = theminer_get_buildinfo();
 	stringstream ss;
-	ss << string("ethminer version ") + bi->project_version + "+git." + string(bi->git_commit_hash).substr(0, 7);
+	ss << string("miner version ") + bi->project_version + "+git." + string(bi->git_commit_hash).substr(0, 7);
 	return ss.str();
 }
 
@@ -337,9 +333,6 @@ public:
 					Guard l(x_log);
 					loginfo << mp << f.getSolutionStats() << ' ' << f.farmLaunchedFormatted() << endl;
 				}
-#if ETH_DBUS
-				dbusint.send(toString(mp).data());
-#endif
 			}
 			this_thread::sleep_for(chrono::seconds(m_displayInterval));
 		}
@@ -387,10 +380,6 @@ private:
 	unsigned m_api_port = 0;
 #endif
 
-
-#if ETH_DBUS
-	DBusInt dbusint;
-#endif
 };
 
 #ifndef ENABLE_VIRTUAL_TERMINAL_PROCESSING
