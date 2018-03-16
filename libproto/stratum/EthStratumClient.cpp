@@ -15,7 +15,7 @@
 #include "EthStratumClient.h"
 #include "libethash/endian.h"
 #include "libdevcore/Log.h"
-#include <theminer-buildinfo.h>
+#include <miner-buildinfo.h>
 
 using boost::asio::ip::tcp;
 
@@ -304,8 +304,8 @@ void EthStratumClient::connect_handler(const boost::system::error_code& ec, tcp:
 			break;
 		case EthStratumClient::ETHEREUMSTRATUM:
 			m_authorized = true;
-			json << "{\"id\": 1, \"method\": \"mining.subscribe\", \"params\": [\"theminer/" <<
-			     theminer_get_buildinfo()->project_version << "\",\"EthereumStratum/1.0.0\"]}\n";
+			json << "{\"id\": 1, \"method\": \"mining.subscribe\", \"params\": [\"miner/" <<
+			     miner_get_buildinfo()->project_version << "\",\"EthereumStratum/1.0.0\"]}\n";
 			break;
 		}
 		std::ostream os(&m_requestBuffer);
@@ -592,7 +592,7 @@ void EthStratumClient::processReponse(Json::Value& responseObject)
 				processExtranonce(enonce);
 			}
 		} else if (method == "client.get_version") {
-			json << "{\"error\": null, \"id\" : " << id << ", \"result\" : \"" << theminer_get_buildinfo()->project_version <<
+			json << "{\"error\": null, \"id\" : " << id << ", \"result\" : \"" << miner_get_buildinfo()->project_version <<
 			     "\"}\n";
 			os << json.str();
 
