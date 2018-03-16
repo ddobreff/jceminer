@@ -19,6 +19,9 @@
 
 using boost::asio::ip::tcp;
 
+extern bool g_report_stratum_hashrate;
+extern string g_email;
+extern unsigned g_worktimeout;
 
 static void diffToTarget(uint32_t* target, double diff)
 {
@@ -42,8 +45,7 @@ static void diffToTarget(uint32_t* target, double diff)
 }
 
 
-EthStratumClient::EthStratumClient(int const& worktimeout, string const& email,
-                                   bool const& submitHashrate) : PoolClient(),
+EthStratumClient::EthStratumClient() : PoolClient(),
 	m_socket(nullptr),
 	m_securesocket(nullptr),
 	m_worktimer(m_io_service),
@@ -52,11 +54,6 @@ EthStratumClient::EthStratumClient(int const& worktimeout, string const& email,
 {
 	m_authorized = false;
 	m_pending = 0;
-	m_worktimeout = worktimeout;
-
-	m_email = email;
-
-	m_submit_hashrate = submitHashrate;
 	m_submit_hashrate_id = h256::random().hex();
 }
 
@@ -186,7 +183,7 @@ void EthStratumClient::resolve_handler(const boost::system::error_code& ec, tcp:
 void EthStratumClient::reset_work_timeout()
 {
 	m_worktimer.cancel();
-	m_worktimer.expires_from_now(boost::posix_time::seconds(m_worktimeout));
+	m_worktimer.expires_from_now(boost::posix_time::seconds(g_worktimeout));
 	m_worktimer.async_wait(boost::bind(&EthStratumClient::work_timeout_handler, this, boost::asio::placeholders::error));
 }
 
@@ -613,7 +610,7 @@ void EthStratumClient::work_timeout_handler(const boost::system::error_code& ec)
 	if (!ec) {
 		{
 			Guard l(x_log);
-			logerror << "No new work received in " << m_worktimeout << " seconds." << endl << flush;
+			logerror << "No new work received in " << g_worktimeout << " seconds." << endl << flush;
 		}
 		disconnect();
 	}

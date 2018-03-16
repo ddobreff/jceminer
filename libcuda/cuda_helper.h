@@ -18,10 +18,6 @@
 #include <cuda_runtime.h>
 #include <stdint.h>
 
-#ifndef MAX_GPUS
-#define MAX_GPUS 32
-#endif
-
 extern "C" int device_map[MAX_GPUS];
 extern "C"  long device_sm[MAX_GPUS];
 extern cudaStream_t gpustream[MAX_GPUS];

@@ -37,7 +37,7 @@ public:
 
 	typedef enum { STRATUM = 0, ETHPROXY, ETHEREUMSTRATUM } StratumProtocol;
 
-	EthStratumClient(int const& worktimeout, string const& email, bool const& submitHashrate);
+	EthStratumClient();
 	~EthStratumClient();
 
 	void connect();
@@ -81,8 +81,6 @@ private:
 
 	bool m_authorized;
 	bool m_connected = false;
-
-	int m_worktimeout = 60;
 
 	std::mutex x_pending;
 	int m_pending;

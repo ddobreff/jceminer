@@ -513,7 +513,7 @@ void CUDAMiner::search(
 		if (m_new_work.compare_exchange_strong(t, false, memory_order_relaxed)) {
 			if (g_logSwitchTime) {
 				Guard l(x_log);
-				loginfo << "Switch time " << std::chrono::duration_cast<std::chrono::milliseconds>
+				loginfo << workerName() << " - switch time " << std::chrono::duration_cast<std::chrono::milliseconds>
 				        (std::chrono::high_resolution_clock::now() - workSwitchStart).count() << " ms." << endl << flush;
 			}
 			break;

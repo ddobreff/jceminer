@@ -55,6 +55,10 @@ using namespace boost::algorithm;
 extern bool g_logSwitchTime;
 extern bool g_logJson;
 
+bool g_report_stratum_hashrate = false;
+string g_email;
+unsigned g_worktimeout = 180;
+
 class BadArgument: public Exception {};
 
 string version()
@@ -82,16 +86,16 @@ public:
 	{
 		namespace po = boost::program_options;
 
-		po::options_description desc("Allowed options");
+		po::options_description desc("Options");
 		desc.add_options()
-		("help,h", "produce help message.")
-		("list-devices,l", "List devices.")
-		("version,v", "list version.")
+		("help,h", po::bool_switch()->default_value(false), "produce help message.")
+		("devices,d", po::bool_switch()->default_value(false), "List devices.")
+		("version,v", po::bool_switch()->default_value(false), "list version.")
 		("retries,r", po::value<unsigned>(&m_maxFarmRetries)->default_value(3), "Connection retries.")
-		("email,e", po::value<string>(&m_email), "Stratum email.")
-		("work-timeout,w", po::value<unsigned>(&m_worktimeout)->default_value(180), "Work timeout.")
-		("report-hash", po::bool_switch()->default_value(false), "Report hashrate to pool.")
-		("stats-interval,s", po::value<unsigned>(&m_displayInterval)->default_value(15), "statistics display interval.")
+		("email,e", po::value<string>(&g_email), "Stratum email.")
+		("timeout,w", po::value<unsigned>(&g_worktimeout)->default_value(180), "Work timeout.")
+		("hash", po::bool_switch()->default_value(false), "Report hashrate to pool.")
+		("stats-intvl,s", po::value<unsigned>(&m_displayInterval)->default_value(15), "statistics display interval.")
 		("stats-level,l", po::value<unsigned>(&m_show_level)->default_value(0),
 		 "statistics display interval. 0 - HR only, 1 - + fan & temp, 2 - + power.")
 		("pool,p", po::value<string>(&m_endpoint_url), "Pool URL.\n"
@@ -108,29 +112,29 @@ public:
 		("api-port,a", po::value<unsigned>(&m_api_port)->default_value(80), "API port number.")
 #endif
 #if ETH_ETHASHCL
-		("cl-platform", po::value<unsigned>(&m_openclPlatform), "Opencl platform.")
-		("cl-devices", po::value<std::vector<unsigned>>()->multitoken(), "Opencl device list.")
-		("cl-parallel-hash", po::value<unsigned>(&m_openclThreadsPerHash), "Opencl parallel hashes.")
+		("cl-plat", po::value<unsigned>(&m_openclPlatform), "Opencl platform.")
+		("cl-devs", po::value<std::vector<unsigned>>()->multitoken(), "Opencl device list.")
+		("cl-parallel", po::value<unsigned>(&m_openclThreadsPerHash), "Opencl parallel hashes.")
 		("cl-kernel", po::value<unsigned>(&m_openclSelectedKernel), "Opencl kernel. 0 - Stable, 1 - Experimental, 2 - binary.")
-		("cl-wave-tweak", po::value<unsigned>(&m_openclWavetweak), "Opencl wave tweak.")
-		("cl-global-work", po::value<unsigned>(&m_globalWorkSizeMultiplier), "Opencl global work size. 0 - Auto.")
-		("cl-local-work", po::value<unsigned>(&m_localWorkSize), "Opencl local work size.")
+		("cl-tweak", po::value<unsigned>(&m_openclWavetweak), "Opencl wave tweak.")
+		("cl-global", po::value<unsigned>(&m_globalWorkSizeMultiplier), "Opencl global work size. 0 - Auto.")
+		("cl-local", po::value<unsigned>(&m_localWorkSize), "Opencl local work size.")
 #endif
 #if ETH_ETHASHCUDA
-		("cu-grid-size", po::value<unsigned>(&m_cudaGridSize), "Cuda grid size.")
-		("cu-block-size", po::value<unsigned>(&m_cudaBlockSize), "Cuda block size.")
-		("cu-devices", po::value<std::vector<unsigned>>()->multitoken(), "Cuda device list.")
-		("cu-parallel-hash", po::value<unsigned>(&m_parallelHash), "Cuda parallel hashes.")
-		("cu-schedule", po::value<unsigned>(&m_cudaSchedule), "Cuda schedule mode. 0 - auto, 1 - spin, 2 - yield, 4 - sync")
-		("cu-streams", po::value<unsigned>(&m_numStreams), "Cuda streams")
+		("cu-grid", po::value<unsigned>(&m_cudaGridSize), "Cuda grid size.")
+		("cu-block", po::value<unsigned>(&m_cudaBlockSize), "Cuda block size.")
+		("cu-devs", po::value<std::vector<unsigned>>()->multitoken(), "Cuda device list.")
+		("cu-parallel", po::value<unsigned>(&m_parallelHash), "Cuda parallel hashes.")
+		("cu-sched", po::value<unsigned>(&m_cudaSchedule), "Cuda schedule mode. 0 - auto, 1 - spin, 2 - yield, 4 - sync")
+		("cu-stream", po::value<unsigned>(&m_numStreams), "Cuda streams")
 		("cu-noeval", po::bool_switch()->default_value(false), "Cuda bypass software result evaluation.")
 #endif
-		("dag-load-mode", po::value<unsigned>(&m_dagLoadMode), "DAG load mode. 0 - parallel, 1 - sequential, 2 - single.")
-		("log_switch", po::bool_switch()->default_value(false), "Log job switch time.")
-		("log_json", po::bool_switch()->default_value(false), "Log formatted json messaging.")
-		("cl", po::bool_switch()->default_value(false), "Opencl mode.") // set m_minerType = MinerType::CL;
-		("cu", po::bool_switch()->default_value(false), "Cuda mode.") // set m_minerType = MinerType::CUDA;
-		("mixed", po::bool_switch()->default_value(false),
+		("dag-mode", po::value<unsigned>(&m_dagLoadMode), "DAG load mode. 0 - parallel, 1 - sequential, 2 - single.")
+		("log-switch", po::bool_switch()->default_value(false), "Log job switch time.")
+		("log-json", po::bool_switch()->default_value(false), "Log formatted json messaging.")
+		("cl,G", po::bool_switch()->default_value(false), "Opencl mode.") // set m_minerType = MinerType::CL;
+		("cu,U", po::bool_switch()->default_value(false), "Cuda mode.") // set m_minerType = MinerType::CUDA;
+		("mixed,X", po::bool_switch()->default_value(false),
 		 "Mixed opencl and cuda mode. Use OpenCL + CUDA in a system with mixed AMD/Nvidia cards. May require setting --cl-platform 1 or 2.")
 		;
 
@@ -138,22 +142,26 @@ public:
 		po::store(po::parse_command_line(argc, argv, desc), vm);
 		po::notify(vm);
 
-		if (vm.find("help") != vm.end()) {
+		if (vm["help"].as<bool>()) {
 			cout << desc << "\n";
 			exit(0);
 		}
-		if (vm.find("version") != vm.end()) {
+
+		if (vm["version"].as<bool>()) {
 			cout << version() << "\n";
 			exit(0);
 		}
-		if (vm.find("list-devices") != vm.end()) {
+
+		if (vm["devices"].as<bool>()) {
 			m_shouldListDevices = true;
 			return;
 		}
+
 		if (vm.count("pool") != 1) {
 			cerr << "Specify a single pool URL\n";
 			BOOST_THROW_EXCEPTION(BadArgument());
 		}
+
 		string url = vm["pool"].as<string>();
 		URI uri;
 		try {
@@ -168,18 +176,28 @@ public:
 		}
 		m_endpoint = PoolConnection(uri);
 
-		if (vm.find("cl-devices") != vm.end()) {
+		if (vm.find("cl-devs") != vm.end()) {
 			m_openclDeviceCount = vm["cl-devices"].as<vector<unsigned>>().size();
 			m_openclDevices = vm["cl-devices"].as<vector<unsigned>>();
 		}
-		if (vm.find("cu-devices") != vm.end()) {
+
+		if (vm.find("cu-devs") != vm.end()) {
 			m_cudaDeviceCount = vm["cu-devices"].as<vector<unsigned>>().size();
 			m_cudaDevices = vm["cu-devices"].as<vector<unsigned>>();
 		}
+		if ((m_openclDeviceCount + m_cudaDeviceCount) > MAX_GPUS) {
+			cerr << "Can only support up to " << MAX_GPUS << ".\n";
+			BOOST_THROW_EXCEPTION(BadArgument());
+		}
+
 		m_cudaNoEval = vm["cu-noeval"].as<bool>();
-		g_logSwitchTime = vm["log_switch"].as<bool>();
-		g_logJson = vm["log_json"].as<bool>();
-		m_report_stratum_hashrate = vm["report-hash"].as<bool>();
+
+		g_logSwitchTime = vm["log-switch"].as<bool>();
+
+		g_logJson = vm["log-json"].as<bool>();
+
+		g_report_stratum_hashrate = vm["hash"].as<bool>();
+
 		if (vm["cl"].as<bool>())
 			m_minerType = MinerType::CL;
 		else if (vm["cu"].as<bool>())
@@ -190,11 +208,13 @@ public:
 			cerr << "Specify a miner type\n";
 			BOOST_THROW_EXCEPTION(BadArgument());
 		}
+
 		if (m_openclThreadsPerHash != 1 && m_openclThreadsPerHash != 2 && m_openclThreadsPerHash != 4
 		    && m_openclThreadsPerHash != 8) {
 			cerr << "Opencl parallel hash must be 1, 2, 4, or 8.\n";
 			BOOST_THROW_EXCEPTION(BadArgument());
 		}
+
 		if (m_parallelHash == 0 || m_parallelHash > 8) {
 			cerr << "Cuda parallel hash must be greater than 0 and less than or equal to 8.\n";
 			BOOST_THROW_EXCEPTION(BadArgument());
@@ -291,7 +311,7 @@ public:
 
 		PoolClient* client = nullptr;
 
-		client = new EthStratumClient(m_worktimeout, m_email, m_report_stratum_hashrate);
+		client = new EthStratumClient();
 
 		//sealers, m_minerType
 		Farm f;
@@ -362,14 +382,11 @@ private:
 	unsigned m_farmRecheckPeriod = 500;
 	unsigned m_displayInterval = 5;
 	bool m_farmRecheckSet = false;
-	unsigned m_worktimeout = 180;
 	unsigned m_show_level = 0;
 #if API_CORE
 	unsigned m_api_port = 0;
 #endif
 
-	bool m_report_stratum_hashrate = false;
-	string m_email;
 
 #if ETH_DBUS
 	DBusInt dbusint;
