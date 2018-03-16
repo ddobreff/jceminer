@@ -10,7 +10,7 @@ file(GLOB HEADERS "*.h")
 
 add_executable(${EXECUTABLE} ${SRC_LIST} ${HEADERS})
 
-target_link_libraries(ethminer PRIVATE ethcore ethash proto devcore ethminer-buildinfo)
+target_link_libraries(ethminer PRIVATE ethcore ethash proto devcore ethminer-buildinfo Boost::program_options)
 
 if(ETHDBUS)
 	find_package(PkgConfig)

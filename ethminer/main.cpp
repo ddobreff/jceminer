@@ -24,6 +24,7 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/algorithm/string/trim_all.hpp>
 #include <boost/optional.hpp>
+#include <boost/program_options.hpp>
 
 #include <libethcore/Exceptions.h>
 #include <libdevcore/SHA3.h>
@@ -77,136 +78,127 @@ public:
 
 	MinerCLI() {}
 
-	bool interpretOption(int& i, int argc, char** argv)
+	void interpretOption(int argc, char** argv)
 	{
-		string arg = argv[i];
-		if (arg == "--farm-retries" && i + 1 < argc)
-			m_maxFarmRetries = stol(argv[++i]);
-		else if ((arg == "-SE" || arg == "--stratum-email") && i + 1 < argc)
-			m_email = string(argv[++i]);
-		else if ((arg == "--work-timeout") && i + 1 < argc)
-			m_worktimeout = atoi(argv[++i]);
-		else if ((arg == "-RH" || arg == "--report-hashrate"))
-			m_report_stratum_hashrate = true;
-		else if (arg == "--stats-interval" && i + 1 < argc)
-			m_displayInterval = stol(argv[++i]);
-		else if (arg == "-HWMON") {
-			m_show_hwmonitors = true;
-			if ((i + 1 < argc) && (*argv[i + 1] != '-'))
-				m_show_power = (bool)atoi(argv[++i]);
-		} else if ((arg == "-P") && (i + 1 < argc)) {
-			if (m_endpoint.Empty()) {
-				string url = argv[++i];
-				if (url == "exit") // add fake scheme and port to 'exit' url
-					url = "stratum://exit:1";
-				URI uri;
-				try {
-					uri = url;
-				} catch (...) {
-					cerr << "Bad endpoint address: " << url << endl;
-					BOOST_THROW_EXCEPTION(BadArgument());
-				}
-				if (!uri.KnownScheme()) {
-					cerr << "Unknown URI scheme " << uri.Scheme() << endl;
-					BOOST_THROW_EXCEPTION(BadArgument());
-				}
-				m_endpoint = PoolConnection(uri);
-			} else {
-				cerr << "Specify only one pool\n";
-				BOOST_THROW_EXCEPTION(BadArgument());
-			}
-		}
+		namespace po = boost::program_options;
+
+		po::options_description desc("Allowed options");
+		desc.add_options()
+		("help,h", "produce help message.")
+		("list-devices,l", "List devices.")
+		("version,v", "list version.")
+		("retries,r", po::value<unsigned>(&m_maxFarmRetries)->default_value(3), "Connection retries.")
+		("email,e", po::value<string>(&m_email), "Stratum email.")
+		("work-timeout,w", po::value<unsigned>(&m_worktimeout)->default_value(180), "Work timeout.")
+		("report-hash", po::bool_switch()->default_value(false), "Report hashrate to pool.")
+		("stats-interval,s", po::value<unsigned>(&m_displayInterval)->default_value(15), "statistics display interval.")
+		("stats-level,l", po::value<unsigned>(&m_show_level)->default_value(0),
+		 "statistics display interval. 0 - HR only, 1 - + fan & temp, 2 - + power.")
+		("pool,p", po::value<string>(&m_endpoint_url), "Pool URL.\n"
+		 "URL takes the form: scheme://[user[:password]@]hostname:port.\n"
+		 "unsecured schemes:    stratum+tcp stratum1+tcp stratum2+tcp\n"
+		 "secured with any TLS: stratum+tls stratum1+tls stratum2+tls stratum+ssl stratum1+ssl stratum2+ssl\n"
+		 "secured with TLS 1.2: stratum+tls12 stratum1+tls12 stratum2+tls12\n"
+		 "Example: stratum+ssl://0x012345678901234567890234567890123.miner1@ethermine.org:5555\n"
+		 "Stratum versions:\n"
+		 "stratum  - official stratum spec: ethpool, ethermine, coinotron, mph, nanopool\n"
+		 "stratum1 - eth-proxy compatible: dwarfpool, f2pool, nanopool (required for hashrate reporting to work with nanopool)\n"
+		 "stratum2 - EthereumStratum/1.0.0: nicehash\n\n")
 #if API_CORE
-		else if ((arg == "--api-port") && i + 1 < argc)
-			m_api_port = atoi(argv[++i]);
+		("api-port,a", po::value<unsigned>(&m_api_port)->default_value(80), "API port number.")
 #endif
 #if ETH_ETHASHCL
-		else if (arg == "--cl-platform" && i + 1 < argc)
-			m_openclPlatform = stol(argv[++i]);
-		else if (arg == "--cl-devices" || arg == "--cl-device")
-			while (m_openclDeviceCount < MAX_MINERS && i + 1 < argc) {
-				m_openclDevices[m_openclDeviceCount] = stol(argv[++i]);
-				++m_openclDeviceCount;
-			}
-		else if (arg == "--cl-parallel-hash" && i + 1 < argc) {
-			m_openclThreadsPerHash = stol(argv[++i]);
-			if (m_openclThreadsPerHash != 1 && m_openclThreadsPerHash != 2 && m_openclThreadsPerHash != 4
-			    && m_openclThreadsPerHash != 8)
-				BOOST_THROW_EXCEPTION(BadArgument());
-		} else if (arg == "--cl-kernel" && i + 1 < argc)
-			m_openclSelectedKernel = stol(argv[++i]);
-		else if (arg == "--cl-wavetweak" && i + 1 < argc)
-			m_openclWavetweak = stol(argv[++i]);
-		else if (arg == "--cl-global-work"  && i + 1 < argc) {
-			i++;
-			m_globalWorkSizeMultiplier =
-			    (strcmp(argv[i], "auto") == 0) ? 0 : stol(argv[i]);
-		} else if (arg == "--cl-local-work" && i + 1 < argc)
-			m_localWorkSize = stol(argv[++i]);
-#endif
-#if ETH_ETHASHCL || ETH_ETHASHCUDA
-		else if ((arg == "-l") || (arg == "--list-devices"))
-			m_shouldListDevices = true;
+		("cl-platform", po::value<unsigned>(&m_openclPlatform), "Opencl platform.")
+		("cl-devices", po::value<std::vector<unsigned>>()->multitoken(), "Opencl device list.")
+		("cl-parallel-hash", po::value<unsigned>(&m_openclThreadsPerHash), "Opencl parallel hashes.")
+		("cl-kernel", po::value<unsigned>(&m_openclSelectedKernel), "Opencl kernel. 0 - Stable, 1 - Experimental, 2 - binary.")
+		("cl-wave-tweak", po::value<unsigned>(&m_openclWavetweak), "Opencl wave tweak.")
+		("cl-global-work", po::value<unsigned>(&m_globalWorkSizeMultiplier), "Opencl global work size. 0 - Auto.")
+		("cl-local-work", po::value<unsigned>(&m_localWorkSize), "Opencl local work size.")
 #endif
 #if ETH_ETHASHCUDA
-		else if (arg == "--cu-grid-size" && i + 1 < argc)
-			m_cudaGridSize = stol(argv[++i]);
-		else if (arg == "--cu-block-size" && i + 1 < argc)
-			m_cudaBlockSize = stol(argv[++i]);
-		else if (arg == "--cu-devices") {
-			while (m_cudaDeviceCount < MAX_MINERS && i + 1 < argc) {
-				m_cudaDevices[m_cudaDeviceCount] = stol(argv[++i]);
-				++m_cudaDeviceCount;
-			}
-		} else if (arg == "--cu-parallel-hash" && i + 1 < argc) {
-			m_parallelHash = stol(argv[++i]);
-			if (m_parallelHash == 0 || m_parallelHash > 8)
-				throw BadArgument();
-		} else if (arg == "--cu-schedule" && i + 1 < argc) {
-			string mode = argv[++i];
-			if (mode == "auto") m_cudaSchedule = 0;
-			else if (mode == "spin") m_cudaSchedule = 1;
-			else if (mode == "yield") m_cudaSchedule = 2;
-			else if (mode == "sync") m_cudaSchedule = 4;
-			else {
-				cerr << "Bad " << arg << " option: " << argv[i] << endl;
-				BOOST_THROW_EXCEPTION(BadArgument());
-			}
-		} else if (arg == "--cu-streams" && i + 1 < argc)
-			m_numStreams = stol(argv[++i]);
-		else if (arg == "--cu-noeval")
-			m_cudaNoEval = true;
+		("cu-grid-size", po::value<unsigned>(&m_cudaGridSize), "Cuda grid size.")
+		("cu-block-size", po::value<unsigned>(&m_cudaBlockSize), "Cuda block size.")
+		("cu-devices", po::value<std::vector<unsigned>>()->multitoken(), "Cuda device list.")
+		("cu-parallel-hash", po::value<unsigned>(&m_parallelHash), "Cuda parallel hashes.")
+		("cu-schedule", po::value<unsigned>(&m_cudaSchedule), "Cuda schedule mode. 0 - auto, 1 - spin, 2 - yield, 4 - sync")
+		("cu-streams", po::value<unsigned>(&m_numStreams), "Cuda streams")
+		("cu-noeval", po::bool_switch()->default_value(false), "Cuda bypass software result evaluation.")
 #endif
-		else if ((arg == "-L" || arg == "--dag-load-mode") && i + 1 < argc) {
-			string mode = argv[++i];
-			if (mode == "parallel") m_dagLoadMode = DAG_LOAD_MODE_PARALLEL;
-			else if (mode == "sequential") m_dagLoadMode = DAG_LOAD_MODE_SEQUENTIAL;
-			else if (mode == "single") {
-				m_dagLoadMode = DAG_LOAD_MODE_SINGLE;
-				m_dagCreateDevice = stol(argv[++i]);
-			} else {
-				cerr << "Bad " << arg << " option: " << argv[i] << endl;
-				BOOST_THROW_EXCEPTION(BadArgument());
-			}
-		} else if (arg == "--benchmark-warmup" && i + 1 < argc)
-			m_benchmarkWarmup = stol(argv[++i]);
-		else if (arg == "--benchmark-trial" && i + 1 < argc)
-			m_benchmarkTrial = stol(argv[++i]);
-		else if (arg == "--benchmark-trials" && i + 1 < argc)
-			m_benchmarkTrials = stol(argv[++i]);
-		else if (arg == "--log-switch")
-			g_logSwitchTime = true;
-		else if (arg == "--log-json")
-			g_logJson = true;
-		else if (arg == "-G" || arg == "--cl")
+		("dag-load-mode", po::value<unsigned>(&m_dagLoadMode), "DAG load mode. 0 - parallel, 1 - sequential, 2 - single.")
+		("log_switch", po::bool_switch()->default_value(false), "Log job switch time.")
+		("log_json", po::bool_switch()->default_value(false), "Log formatted json messaging.")
+		("cl", po::bool_switch()->default_value(false), "Opencl mode.") // set m_minerType = MinerType::CL;
+		("cu", po::bool_switch()->default_value(false), "Cuda mode.") // set m_minerType = MinerType::CUDA;
+		("mixed", po::bool_switch()->default_value(false),
+		 "Mixed opencl and cuda mode. Use OpenCL + CUDA in a system with mixed AMD/Nvidia cards. May require setting --cl-platform 1 or 2.")
+		;
+
+		po::variables_map vm;
+		po::store(po::parse_command_line(argc, argv, desc), vm);
+		po::notify(vm);
+
+		if (vm.find("help") != vm.end()) {
+			cout << desc << "\n";
+			exit(0);
+		}
+		if (vm.find("version") != vm.end()) {
+			cout << version() << "\n";
+			exit(0);
+		}
+		if (vm.find("list-devices") != vm.end()) {
+			m_shouldListDevices = true;
+			return;
+		}
+		if (vm.count("pool") != 1) {
+			cerr << "Specify a single pool URL\n";
+			BOOST_THROW_EXCEPTION(BadArgument());
+		}
+		string url = vm["pool"].as<string>();
+		URI uri;
+		try {
+			uri = url;
+		} catch (...) {
+			cerr << "Bad endpoint address: " << url << endl;
+			BOOST_THROW_EXCEPTION(BadArgument());
+		}
+		if (!uri.KnownScheme()) {
+			cerr << "Unknown URI scheme " << uri.Scheme() << endl;
+			BOOST_THROW_EXCEPTION(BadArgument());
+		}
+		m_endpoint = PoolConnection(uri);
+
+		if (vm.find("cl-devices") != vm.end()) {
+			m_openclDeviceCount = vm["cl-devices"].as<vector<unsigned>>().size();
+			m_openclDevices = vm["cl-devices"].as<vector<unsigned>>();
+		}
+		if (vm.find("cu-devices") != vm.end()) {
+			m_cudaDeviceCount = vm["cu-devices"].as<vector<unsigned>>().size();
+			m_cudaDevices = vm["cu-devices"].as<vector<unsigned>>();
+		}
+		m_cudaNoEval = vm["cu-noeval"].as<bool>();
+		g_logSwitchTime = vm["log_switch"].as<bool>();
+		g_logJson = vm["log_json"].as<bool>();
+		m_report_stratum_hashrate = vm["report-hash"].as<bool>();
+		if (vm["cl"].as<bool>())
 			m_minerType = MinerType::CL;
-		else if (arg == "-U" || arg == "--cua")
+		else if (vm["cu"].as<bool>())
 			m_minerType = MinerType::CUDA;
-		else if (arg == "-X" || arg == "--cu-cl")
+		else if (vm["mixed"].as<bool>())
 			m_minerType = MinerType::Mixed;
-		else
-			return false;
-		return true;
+		else {
+			cerr << "Specify a miner type\n";
+			BOOST_THROW_EXCEPTION(BadArgument());
+		}
+		if (m_openclThreadsPerHash != 1 && m_openclThreadsPerHash != 2 && m_openclThreadsPerHash != 4
+		    && m_openclThreadsPerHash != 8) {
+			cerr << "Opencl parallel hash must be 1, 2, 4, or 8.\n";
+			BOOST_THROW_EXCEPTION(BadArgument());
+		}
+		if (m_parallelHash == 0 || m_parallelHash > 8) {
+			cerr << "Cuda parallel hash must be greater than 0 and less than or equal to 8.\n";
+			BOOST_THROW_EXCEPTION(BadArgument());
+		}
 	}
 
 	void execute()
@@ -320,7 +312,7 @@ public:
 		// Run CLI in loop
 		while (true) {
 			if (mgr.isConnected()) {
-				auto mp = f.miningProgress(m_show_hwmonitors, m_show_power);
+				auto mp = f.miningProgress(m_show_level > 0, m_show_level > 1);
 				{
 					Guard l(x_log);
 					loginfo << mp << f.getSolutionStats() << ' ' << f.farmLaunchedFormatted() << endl;
@@ -331,85 +323,6 @@ public:
 			}
 			this_thread::sleep_for(chrono::seconds(m_displayInterval));
 		}
-	}
-
-	static void streamHelp(ostream& _out)
-	{
-		_out << " Mining configuration:\n"
-		     "    -G,--cl  When mining use the GPU via OpenCL.\n"
-		     "    -U,--cu  When mining use the GPU via CUDA.\n"
-		     "    -X,--cu-cl Use OpenCL + CUDA in a system with mixed AMD/Nvidia cards. May require setting --cl-platform 1 or 2.\n"
-		     "        Use --list-devices option to check which platform is your AMD.\n"
-		     "    -l, --list-devices List the detected OpenCL/CUDA devices and exit. Should be combined with -G or -U flag\n"
-		     "    --stats-interval <n> Set mining stats display interval in seconds. (default: every 5 seconds)\n"
-		     "    -L, --dag-load-mode <mode> DAG generation mode.\n"
-		     "        parallel    - load DAG on all GPUs at the same time (default)\n"
-		     "        sequential  - load DAG on GPUs one after another. Use this when the miner crashes during DAG generation\n"
-		     "        single <n>  - generate DAG on device n, then copy to other devices\n"
-		     "    --work-timeout <n> reconnect/failover after n seconds of working on the same job. Defaults to 180. Don't set lower\n"
-		     "        than max. avg. block time\n"
-		     "    -RH, --report-hashrate Report current hashrate to pool (please only enable on pools supporting this)\n"
-		     "    -HWMON [<n>], Displays gpu temp, fan percent and power usage. Note: In linux, the program uses sysfs, which may\n"
-		     "        require running with root priviledges.\n"
-		     "        0: Displays only temp and fan percent (default)\n"
-		     "        1: Also displays power usage\n"
-		     "    --exit Stops the miner whenever an error is encountered\n"
-		     "    -SE, --stratum-email <s> Email address used in eth-proxy (optional)\n"
-		     "    -P URL Specify a pool URL. Can be used multiple times. The 1st for for the primary pool, and the 2nd for the failover pool.\n"
-		     "        URL takes the form: scheme://[user[:password]@]hostname:port.\n"
-		     "          unsecured schemes:    " << URI::KnownSchemes(SecureLevel::NONE) << endl;
-		_out << "          secured with any TLS: " << URI::KnownSchemes(SecureLevel::TLS) << endl;
-		_out << "          secured with TLS 1.2: " << URI::KnownSchemes(SecureLevel::TLS12) << endl;
-		_out << "        Example: stratum+ssl://0x012345678901234567890234567890123.miner1@ethermine.org:5555\n"
-		     "        Stratum versions:\n"
-		     "          stratum  - official stratum spec: ethpool, ethermine, coinotron, mph, nanopool\n"
-		     "          stratum1 - eth-proxy compatible: dwarfpool, f2pool, nanopool (required for hashrate reporting to work with nanopool)\n"
-		     "          stratum2 - EthereumStratum/1.0.0: nicehash\n\n";
-#if ETH_ETHASHCL
-		_out << " OpenCL configuration:\n"
-		     "    --cl-platform <n>  When mining using -G/--cl use OpenCL platform n (default: 0).\n"
-		     "    --cl-device <n>  When mining using -G/--cl use OpenCL device n (default: 0).\n"
-		     "    --cl-devices <0 1 ..n> Select which OpenCL devices to mine on. Default is to use all\n"
-		     "    --cl-kernel <n>  Use a different OpenCL kernel (default: use stable kernel)\n"
-		     "        0: stable kernel\n"
-		     "        1: experimental kernel\n"
-		     "        2: binary kernel\n";
-		_out << "    --cl-local-work Set the OpenCL local work size. Default is " << CLMiner::c_defaultLocalWorkSize << endl
-		     << "    --cl-global-work Set the OpenCL global work size as a multiple of the local work size. Default is "
-		     << CLMiner::c_defaultGlobalWorkSizeMultiplier << " * " << CLMiner::c_defaultLocalWorkSize << endl;
-		_out << "        You may also specify auto for optimal Radeon value based on configuration.\n"
-		     "    --cl-parallel-hash <1 2 ..8> Define how many threads to associate per hash. Default=8\n"
-		     "    --cl-wavetweak 0-100 \n\n";
-#endif
-#if ETH_ETHASHCUDA
-		_out << " CUDA configuration:\n"
-		     "    --cu-block-size Set the CUDA block work size. Default is " << toString(CUDAMiner::c_defaultBlockSize) << endl
-		     << "    --cu-grid-size Set the CUDA grid size. Default is " << toString(CUDAMiner::c_defaultGridSize) << endl
-		     << "    --cu-streams Set the number of CUDA streams. Default is " << toString(CUDAMiner::c_defaultNumStreams) << endl
-		     << "    --cu-schedule <mode> Set the schedule mode for CUDA threads waiting for CUDA devices to finish work.\n"
-		     "         Default is 'sync'. Possible values are:\n"
-		     "        auto  - Uses a heuristic based on the number of active CUDA contexts in the process C and the number of logical\n"
-		     "            processors in the system P. If C > P, then yield else spin.\n"
-		     "        spin  - Instruct CUDA to actively spin when waiting for results from the device.\n"
-		     "        yield - Instruct CUDA to yield its thread when waiting for results from the device.\n"
-		     "        sync  - Instruct CUDA to block the CPU thread on a synchronization primitive when waiting for the results\n"
-		     "            from the device.\n"
-		     "    --cu-devices <0 1 ..n> Select which CUDA GPUs to mine on. Default is to use all\n"
-		     "    --cu-parallel-hash <1 2 ..8> Define how many hashes to calculate in a kernel, can be scaled to achieve better\n"
-		     "            performance. Default=4\n"
-		     "    --cu-noeval  bypass host software re-evalution of GPU solutions.\n"
-		     "        This will trim some milliseconds off the time it takes to send a result to the pool.\n"
-		     "        Use at your own risk! If GPU generates errored results they WILL be forwarded to the pool\n"
-		     "        Not recommended at high overclock.\n\n";
-#endif
-#if API_CORE
-		_out << " API core configuration:\n"
-		     "    --api-port Set the api port, the miner should listen to. Use 0 to disable. Default=0, use negative numbers to\n"
-		     "         run in readonly mode. for example -3333.\n\n"
-		     " Logging:\n"
-		     "    --log-switch Display per card switch time.\n"
-		     "    --log-json Display formatted json I/O.\n\n";
-#endif
 	}
 
 private:
@@ -441,22 +354,18 @@ private:
 	unsigned m_dagLoadMode = 0; // parallel
 	unsigned m_dagCreateDevice = 0;
 	/// Benchmarking params
-	unsigned m_benchmarkWarmup = 15;
-	unsigned m_benchmarkTrial = 3;
-	unsigned m_benchmarkTrials = 5;
-	unsigned m_benchmarkBlock = 0;
 
 	PoolConnection m_endpoint;
+	string m_endpoint_url;
 
 	unsigned m_maxFarmRetries = 3;
 	unsigned m_farmRecheckPeriod = 500;
 	unsigned m_displayInterval = 5;
 	bool m_farmRecheckSet = false;
-	int m_worktimeout = 180;
-	bool m_show_hwmonitors = false;
-	bool m_show_power = false;
+	unsigned m_worktimeout = 180;
+	unsigned m_show_level = 0;
 #if API_CORE
-	int m_api_port = 0;
+	unsigned m_api_port = 0;
 #endif
 
 	bool m_report_stratum_hashrate = false;
@@ -472,18 +381,6 @@ private:
 #endif
 
 
-void help()
-{
-	cout << "Usage ethminer [OPTIONS]\n"
-	     "Options:\n\n";
-	MinerCLI::streamHelp(cout);
-	cout << " General Options:\n"
-	     "\n"
-	     "    -V,--version  Show the version and exit.\n"
-	     "    -h,--help  Show this help message and exit.\n\n";
-	exit(0);
-}
-
 int main(int argc, char** argv)
 {
 	// Set env vars controlling GPU driver behavior.
@@ -495,23 +392,9 @@ int main(int argc, char** argv)
 	MinerCLI m;
 
 	try {
-		for (int i = 1; i < argc; ++i) {
-			// Mining options:
-			if (m.interpretOption(i, argc, argv))
-				continue;
+		// Mining options:
+		m.interpretOption(argc, argv);
 
-			// Standard options:
-			string arg = argv[i];
-			if (arg == "-h" || arg == "--help")
-				help();
-			else if (arg == "-V" || arg == "--version") {
-				cout << version();
-				exit(0);
-			} else {
-				cerr << "Invalid argument: " << arg << endl;
-				exit(-1);
-			}
-		}
 	} catch (BadArgument ex) {
 		cerr << "Error: " << ex.what() << "\n";
 		exit(-1);
