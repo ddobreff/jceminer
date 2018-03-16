@@ -325,7 +325,7 @@ void CLMiner::workLoop()
 
 				if (g_logSwitchTime) {
 					Guard l(x_log);
-					loginfo << "Switch time "
+					loginfo << workerName() << " - switch time "
 					        << std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() -
 					                workSwitchStart).count() << " ms." << endl << flush;
 				}
