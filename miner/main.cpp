@@ -25,6 +25,7 @@
 #include <boost/algorithm/string/trim_all.hpp>
 #include <boost/optional.hpp>
 #include <boost/program_options.hpp>
+#include <boost/tokenizer.hpp>
 
 #include <libethcore/Exceptions.h>
 #include <libdevcore/SHA3.h>
@@ -80,21 +81,22 @@ public:
 
 	void interpretOption(int argc, char** argv)
 	{
-		namespace po = boost::program_options;
+		using namespace boost::program_options;
 
-		po::options_description desc("Options");
+		options_description desc("Options");
 		desc.add_options()
-		("help,h", po::bool_switch()->default_value(false), "produce help message.")
-		("devices,d", po::bool_switch()->default_value(false), "List devices.")
-		("version,v", po::bool_switch()->default_value(false), "list version.")
-		("retries,r", po::value<unsigned>(&m_maxFarmRetries)->default_value(3), "Connection retries.")
-		("email,e", po::value<string>(&g_email), "Stratum email.")
-		("timeout,w", po::value<unsigned>(&g_worktimeout)->default_value(180), "Work timeout.")
-		("hash", po::bool_switch()->default_value(false), "Report hashrate to pool.")
-		("stats-intvl,s", po::value<unsigned>(&m_displayInterval)->default_value(15), "statistics display interval.")
-		("stats-level,l", po::value<unsigned>(&m_show_level)->default_value(0),
+		("help,h", bool_switch()->default_value(false), "produce help message.")
+		("devices,d", bool_switch()->default_value(false), "List devices.")
+		("version,v", bool_switch()->default_value(false), "list version.")
+		("file,f", value<string>(), "Read parameters from file.")
+		("retries,r", value<unsigned>(&m_maxFarmRetries)->default_value(3), "Connection retries.")
+		("email,e", value<string>(&g_email), "Stratum email.")
+		("timeout,w", value<unsigned>(&g_worktimeout)->default_value(180), "Work timeout.")
+		("hash", bool_switch()->default_value(false), "Report hashrate to pool.")
+		("stats-intvl,s", value<unsigned>(&m_displayInterval)->default_value(15), "statistics display interval.")
+		("stats-level,l", value<unsigned>(&m_show_level)->default_value(0),
 		 "statistics display interval. 0 - HR only, 1 - + fan & temp, 2 - + power.")
-		("pool,p", po::value<string>(&m_endpoint_url), "Pool URL.\n"
+		("pool,p", value<string>(&m_endpoint_url), "Pool URL.\n"
 		 "URL takes the form: scheme://[user[:password]@]hostname:port.\n"
 		 "unsecured schemes:    stratum+tcp stratum1+tcp stratum2+tcp\n"
 		 "secured with any TLS: stratum+tls stratum1+tls stratum2+tls stratum+ssl stratum1+ssl stratum2+ssl\n"
@@ -105,38 +107,59 @@ public:
 		 "stratum1 - eth-proxy compatible: dwarfpool, f2pool, nanopool (required for hashrate reporting to work with nanopool)\n"
 		 "stratum2 - EthereumStratum/1.0.0: nicehash\n\n")
 #if API_CORE
-		("api-port,a", po::value<unsigned>(&m_api_port)->default_value(80), "API port number.")
+		("api-port,a", value<unsigned>(&m_api_port)->default_value(80), "API port number.")
 #endif
 #if ETH_ETHASHCL
-		("cl-plat", po::value<unsigned>(&m_openclPlatform), "Opencl platform.")
-		("cl-devs", po::value<std::vector<unsigned>>()->multitoken(), "Opencl device list.")
-		("cl-parallel", po::value<unsigned>(&m_openclThreadsPerHash), "Opencl parallel hashes.")
-		("cl-kernel", po::value<unsigned>(&m_openclSelectedKernel), "Opencl kernel. 0 - Stable, 1 - Experimental, 2 - binary.")
-		("cl-tweak", po::value<unsigned>(&m_openclWavetweak), "Opencl wave tweak.")
-		("cl-global", po::value<unsigned>(&m_globalWorkSizeMultiplier), "Opencl global work size. 0 - Auto.")
-		("cl-local", po::value<unsigned>(&m_localWorkSize), "Opencl local work size.")
+		("cl-plat", value<unsigned>(&m_openclPlatform), "Opencl platform.")
+		("cl-devs", value<std::vector<unsigned>>()->multitoken(), "Opencl device list.")
+		("cl-parallel", value<unsigned>(&m_openclThreadsPerHash), "Opencl parallel hashes.")
+		("cl-kernel", value<unsigned>(&m_openclSelectedKernel), "Opencl kernel. 0 - Stable, 1 - Experimental, 2 - binary.")
+		("cl-tweak", value<unsigned>(&m_openclWavetweak), "Opencl wave tweak.")
+		("cl-global", value<unsigned>(&m_globalWorkSizeMultiplier), "Opencl global work size. 0 - Auto.")
+		("cl-local", value<unsigned>(&m_localWorkSize), "Opencl local work size.")
 #endif
 #if ETH_ETHASHCUDA
-		("cu-grid", po::value<unsigned>(&m_cudaGridSize), "Cuda grid size.")
-		("cu-block", po::value<unsigned>(&m_cudaBlockSize), "Cuda block size.")
-		("cu-devs", po::value<std::vector<unsigned>>()->multitoken(), "Cuda device list.")
-		("cu-parallel", po::value<unsigned>(&m_parallelHash), "Cuda parallel hashes.")
-		("cu-sched", po::value<unsigned>(&m_cudaSchedule), "Cuda schedule mode. 0 - auto, 1 - spin, 2 - yield, 4 - sync")
-		("cu-stream", po::value<unsigned>(&m_numStreams), "Cuda streams")
-		("cu-noeval", po::bool_switch()->default_value(false), "Cuda bypass software result evaluation.")
+		("cu-grid", value<unsigned>(&m_cudaGridSize), "Cuda grid size.")
+		("cu-block", value<unsigned>(&m_cudaBlockSize), "Cuda block size.")
+		("cu-devs", value<std::vector<unsigned>>()->multitoken(), "Cuda device list.")
+		("cu-parallel", value<unsigned>(&m_parallelHash), "Cuda parallel hashes.")
+		("cu-sched", value<unsigned>(&m_cudaSchedule), "Cuda schedule mode. 0 - auto, 1 - spin, 2 - yield, 4 - sync")
+		("cu-stream", value<unsigned>(&m_numStreams), "Cuda streams")
+		("cu-noeval", bool_switch()->default_value(false), "Cuda bypass software result evaluation.")
 #endif
-		("dag-mode", po::value<unsigned>(&m_dagLoadMode), "DAG load mode. 0 - parallel, 1 - sequential, 2 - single.")
-		("log-switch", po::bool_switch()->default_value(false), "Log job switch time.")
-		("log-json", po::bool_switch()->default_value(false), "Log formatted json messaging.")
-		("cl,G", po::bool_switch()->default_value(false), "Opencl mode.") // set m_minerType = MinerType::CL;
-		("cu,U", po::bool_switch()->default_value(false), "Cuda mode.") // set m_minerType = MinerType::CUDA;
-		("mixed,X", po::bool_switch()->default_value(false),
+		("dag-mode", value<unsigned>(&m_dagLoadMode), "DAG load mode. 0 - parallel, 1 - sequential, 2 - single.")
+		("log-switch", bool_switch()->default_value(false), "Log job switch time.")
+		("log-json", bool_switch()->default_value(false), "Log formatted json messaging.")
+		("cl,G", bool_switch()->default_value(false), "Opencl mode.") // set m_minerType = MinerType::CL;
+		("cu,U", bool_switch()->default_value(false), "Cuda mode.") // set m_minerType = MinerType::CUDA;
+		("mixed,X", bool_switch()->default_value(false),
 		 "Mixed opencl and cuda mode. Use OpenCL + CUDA in a system with mixed AMD/Nvidia cards. May require setting --cl-platform 1 or 2.")
 		;
 
-		po::variables_map vm;
-		po::store(po::parse_command_line(argc, argv, desc), vm);
-		po::notify(vm);
+		variables_map vm;
+		store(parse_command_line(argc, argv, desc), vm);
+
+		if (vm.find("file") != vm.end()) {
+			// Load the file and tokenize it
+			ifstream ifs(vm["file"].as<string>().c_str());
+			if (!ifs) {
+				cerr << "Couldn't read file " << vm["file"].as<string>() << ".\n";
+				BOOST_THROW_EXCEPTION(BadArgument());
+			}
+			// Read the whole file into a string
+			stringstream ss;
+			ss << ifs.rdbuf();
+			// Split the file content
+			boost::char_separator<char> sep(" \n\r");
+			string ResponsefileContents(ss.str());
+			boost::tokenizer<boost::char_separator<char>> tok(ResponsefileContents, sep);
+			vector<string> args;
+			copy(tok.begin(), tok.end(), back_inserter(args));
+			// Parse the file and store the options
+			store(command_line_parser(args).options(desc).run(), vm);
+		}
+
+		notify(vm);
 
 		if (vm["help"].as<bool>()) {
 			cout << desc << "\n";
@@ -181,6 +204,7 @@ public:
 			m_cudaDeviceCount = vm["cu-devices"].as<vector<unsigned>>().size();
 			m_cudaDevices = vm["cu-devices"].as<vector<unsigned>>();
 		}
+
 		if ((m_openclDeviceCount + m_cudaDeviceCount) > MAX_GPUS) {
 			cerr << "Can only support up to " << MAX_GPUS << ".\n";
 			BOOST_THROW_EXCEPTION(BadArgument());

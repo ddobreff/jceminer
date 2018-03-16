@@ -14,20 +14,22 @@ For a full list of available command options, please run
 ```
 ethminer --help
 
+
 Options:
-  -h [ --help ]                  produce help message.
+  -h [ --help ]                  Produce help message.
   -d [ --devices ]               List devices.
   -v [ --version ]               list version.
+  -f [ --file ] arg              Read parameters from file.
   -r [ --retries ] arg (=3)      Connection retries.
   -e [ --email ] arg             Stratum email.
   -w [ --timeout ] arg (=180)    Work timeout.
   --hash                         Report hashrate to pool.
   -s [ --stats-intvl ] arg (=15) statistics display interval.
-  -l [ --stats-level ] arg (=0)  statistics display interval. 0 - HR only, 1 -
+  -l [ --stats-level ] arg (=0)  statistics display interval. 0 - HR only, 1 - 
                                  + fan & temp, 2 - + power.
   -p [ --pool ] arg              Pool URL.
                                  URL takes the form: scheme://[user[:password]@]hostname:port.
-                                 unsecured schemes: stratum+tcp stratum1+tcp stratum2+tcp
+                                 unsecured schemes:    stratum+tcp stratum1+tcp stratum2+tcp
                                  secured with any TLS: stratum+tls stratum1+tls stratum2+tls stratum+ssl stratum1+ssl stratum2+ssl
                                  secured with TLS 1.2: stratum+tls12 stratum1+tls12 stratum2+tls12
                                  Example: stratum+ssl://0x012345678901234567890234567890123.miner1@ethermine.org:5555
