@@ -18,7 +18,7 @@
 #include <thread>
 #include <atomic>
 #include <cassert>
-#include "Guards.h"
+#include <mutex>
 
 namespace dev
 {

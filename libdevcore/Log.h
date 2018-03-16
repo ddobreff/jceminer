@@ -14,7 +14,6 @@
 
 #include <string>
 #include <mutex>
-#include "Guards.h"
 
 extern std::string timestamp();
 

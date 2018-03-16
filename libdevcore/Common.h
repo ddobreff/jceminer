@@ -27,6 +27,7 @@
 #include <functional>
 #include <string>
 #include <chrono>
+#include <mutex>
 #include <boost/functional/hash.hpp>
 #include <boost/multiprecision/cpp_int.hpp>
 #include "vector_ref.h"
@@ -35,6 +36,9 @@ using byte = uint8_t;
 
 namespace dev
 {
+
+
+typedef std::lock_guard<std::mutex> Guard;
 
 // Binary data types.
 using bytes = std::vector<byte>;
