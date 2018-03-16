@@ -80,8 +80,8 @@ function(configureProject)
 	endif()
 endfunction()
 
-hunter_add_package(Boost COMPONENTS system)
-find_package(Boost CONFIG REQUIRED COMPONENTS system)
+hunter_add_package(Boost COMPONENTS system program_options)
+find_package(Boost CONFIG REQUIRED COMPONENTS system program_options)
 
 hunter_add_package(jsoncpp)
 find_package(jsoncpp CONFIG REQUIRED)

@@ -164,9 +164,8 @@ void CUDAMiner::listDevices()
 			cout << "\tPci: " << setw(4) << setfill('0') << hex << props.pciDomainID << ':' << setw(2)
 			     << props.pciBusID << ':' << setw(2) << props.pciDeviceID << '\n';
 		}
-	} catch (std::runtime_error const& err) {
+	} catch (std::exception const& err) {
 		logerror << "CUDA error: " << err.what() << endl << flush;
-		BOOST_THROW_EXCEPTION(GPUFailure());
 	}
 }
 
