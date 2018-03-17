@@ -56,14 +56,6 @@ enum CLKernelName : unsigned int {
 class CLMiner: public Miner
 {
 public:
-	/* -- default values -- */
-	/// Default value of the local work size. Also known as workgroup size.
-	static const unsigned c_defaultLocalWorkSize = 128;
-	/// Default value of the global work size as a multiplier of the local work size
-	static const unsigned c_defaultGlobalWorkSizeMultiplier = 8192;
-
-	/// Default value of the kernel is the original one
-	static const CLKernelName c_defaultKernelName = CLKernelName::Stable;
 
 	CLMiner(FarmFace& _farm, unsigned _index);
 	~CLMiner() override;

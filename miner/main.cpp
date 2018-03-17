@@ -107,27 +107,30 @@ public:
 		 "stratum1 - eth-proxy compatible: dwarfpool, f2pool, nanopool (required for hashrate reporting to work with nanopool)\n"
 		 "stratum2 - EthereumStratum/1.0.0: nicehash\n\n")
 #if API_CORE
-		("api-port,a", value<unsigned>(&m_api_port)->default_value(80), "API port number.")
+		("api-port,a", value<unsigned>(&m_api_port)->default_value(0), "API port number.")
 #endif
 #if ETH_ETHASHCL
-		("cl-plat", value<unsigned>(&m_openclPlatform), "Opencl platform.")
+		("cl-plat", value<unsigned>(&m_openclPlatform)->default_value(0), "Opencl platform.")
 		("cl-devs", value<std::vector<unsigned>>()->multitoken(), "Opencl device list.")
-		("cl-parallel", value<unsigned>(&m_openclThreadsPerHash), "Opencl parallel hashes.")
-		("cl-kernel", value<unsigned>(&m_openclSelectedKernel), "Opencl kernel. 0 - Stable, 1 - Experimental, 2 - binary.")
-		("cl-tweak", value<unsigned>(&m_openclWavetweak), "Opencl wave tweak.")
-		("cl-global", value<unsigned>(&m_globalWorkSizeMultiplier), "Opencl global work size. 0 - Auto.")
-		("cl-local", value<unsigned>(&m_localWorkSize), "Opencl local work size.")
+		("cl-parallel", value<unsigned>(&m_openclThreadsPerHash)->default_value(8), "Opencl parallel hashes.")
+		("cl-kernel", value<unsigned>(&m_openclSelectedKernel)->default_value(1),
+		 "Opencl kernel. 0 - Stable, 1 - Experimental, 2 - binary.")
+		("cl-tweak", value<unsigned>(&m_openclWavetweak)->default_value(7), "Opencl wave tweak.")
+		("cl-global", value<unsigned>(&m_globalWorkSizeMultiplier)->default_value(8192), "Opencl global work size. 0 - Auto.")
+		("cl-local", value<unsigned>(&m_localWorkSize)->default_value(64), "Opencl local work size.")
 #endif
 #if ETH_ETHASHCUDA
-		("cu-grid", value<unsigned>(&m_cudaGridSize), "Cuda grid size.")
-		("cu-block", value<unsigned>(&m_cudaBlockSize), "Cuda block size.")
+		("cu-grid", value<unsigned>(&m_cudaGridSize)->default_value(8192), "Cuda grid size.")
+		("cu-block", value<unsigned>(&m_cudaBlockSize)->default_value(128), "Cuda block size.")
 		("cu-devs", value<std::vector<unsigned>>()->multitoken(), "Cuda device list.")
-		("cu-parallel", value<unsigned>(&m_parallelHash), "Cuda parallel hashes.")
-		("cu-sched", value<unsigned>(&m_cudaSchedule), "Cuda schedule mode. 0 - auto, 1 - spin, 2 - yield, 4 - sync")
-		("cu-stream", value<unsigned>(&m_numStreams), "Cuda streams")
+		("cu-parallel", value<unsigned>(&m_parallelHash)->default_value(4), "Cuda parallel hashes.")
+		("cu-sched", value<unsigned>(&m_cudaSchedule)->default_value(4),
+		 "Cuda schedule mode. 0 - auto, 1 - spin, 2 - yield, 4 - sync")
+		("cu-stream", value<unsigned>(&m_numStreams)->default_value(2), "Cuda streams")
 		("cu-noeval", bool_switch()->default_value(false), "Cuda bypass software result evaluation.")
 #endif
-		("dag-mode", value<unsigned>(&m_dagLoadMode), "DAG load mode. 0 - parallel, 1 - sequential, 2 - single.")
+		("dag-mode", value<unsigned>(&m_dagLoadMode)->default_value(0),
+		 "DAG load mode. 0 - parallel, 1 - sequential, 2 - single.")
 		("log-switch", bool_switch()->default_value(false), "Log job switch time.")
 		("log-json", bool_switch()->default_value(false), "Log formatted json messaging.")
 		("cl,G", bool_switch()->default_value(false), "Opencl mode.") // set m_minerType = MinerType::CL;
@@ -375,16 +378,16 @@ private:
 	vector<unsigned> m_openclDevices = vector<unsigned>(MAX_MINERS, -1);
 	unsigned m_openclThreadsPerHash = 8;
 	unsigned m_openclWavetweak = 7;
-	unsigned m_globalWorkSizeMultiplier = CLMiner::c_defaultGlobalWorkSizeMultiplier;
-	unsigned m_localWorkSize = CLMiner::c_defaultLocalWorkSize;
+	unsigned m_globalWorkSizeMultiplier;
+	unsigned m_localWorkSize;
 #endif
 #if ETH_ETHASHCUDA
 	unsigned m_cudaDeviceCount = 0;
 	vector<unsigned> m_cudaDevices = vector<unsigned>(MAX_MINERS, -1);
-	unsigned m_numStreams = CUDAMiner::c_defaultNumStreams;
-	unsigned m_cudaSchedule = 4; // sync
-	unsigned m_cudaGridSize = CUDAMiner::c_defaultGridSize;
-	unsigned m_cudaBlockSize = CUDAMiner::c_defaultBlockSize;
+	unsigned m_numStreams;
+	unsigned m_cudaSchedule;
+	unsigned m_cudaGridSize;
+	unsigned m_cudaBlockSize;
 	bool m_cudaNoEval = false;
 	unsigned m_parallelHash    = 4;
 #endif

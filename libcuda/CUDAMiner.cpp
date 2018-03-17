@@ -98,7 +98,7 @@ void CUDAMiner::workLoop()
 			uint64_t upper64OfBoundary = (uint64_t)(u64)((u256)current.boundary >> 192);
 			uint64_t startN = current.startNonce;
 			if (current.exSizeBits >= 0) {
-				// this can support up to 2^c_log2Max_miners devices
+				// this can support up to 2^MAX_GPU devices
 				startN = current.startNonce | ((uint64_t)index << (64 - LOG2_MAX_MINERS - current.exSizeBits));
 			}
 			search(current.header.data(), upper64OfBoundary, (current.exSizeBits >= 0), startN, w);
@@ -204,10 +204,6 @@ void CUDAMiner::setParallelHash(unsigned _parallelHash)
 	m_parallelHash = _parallelHash;
 }
 
-unsigned const CUDAMiner::c_defaultBlockSize = 128;
-unsigned const CUDAMiner::c_defaultGridSize = 8192; // * CL_DEFAULT_LOCAL_WORK_SIZE
-unsigned const CUDAMiner::c_defaultNumStreams = 2;
-
 bool CUDAMiner::cuda_configureGPU(
     size_t numDevices,
     const vector<int>& _devices,
@@ -259,11 +255,11 @@ bool CUDAMiner::cuda_configureGPU(
 	}
 }
 
-unsigned CUDAMiner::m_parallelHash = 4;
-unsigned CUDAMiner::s_blockSize = CUDAMiner::c_defaultBlockSize;
-unsigned CUDAMiner::s_gridSize = CUDAMiner::c_defaultGridSize;
-unsigned CUDAMiner::s_numStreams = CUDAMiner::c_defaultNumStreams;
-unsigned CUDAMiner::s_scheduleFlag = 0;
+unsigned CUDAMiner::m_parallelHash;
+unsigned CUDAMiner::s_blockSize;
+unsigned CUDAMiner::s_gridSize;
+unsigned CUDAMiner::s_numStreams;
+unsigned CUDAMiner::s_scheduleFlag;
 bool CUDAMiner::s_noeval = false;
 
 bool CUDAMiner::cuda_init(

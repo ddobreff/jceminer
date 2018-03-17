@@ -26,12 +26,11 @@ namespace dev
 namespace eth
 {
 
-unsigned CLMiner::s_workgroupSize = CLMiner::c_defaultLocalWorkSize;
-unsigned CLMiner::s_initialGlobalWorkSize = CLMiner::c_defaultGlobalWorkSizeMultiplier *
-        CLMiner::c_defaultLocalWorkSize;
-unsigned CLMiner::s_threadsPerHash = 8;
-unsigned CLMiner::s_threadTweak = 7;
-CLKernelName CLMiner::s_clKernelName = CLMiner::c_defaultKernelName;
+unsigned CLMiner::s_workgroupSize;
+unsigned CLMiner::s_initialGlobalWorkSize;
+unsigned CLMiner::s_threadsPerHash;
+unsigned CLMiner::s_threadTweak;
+CLKernelName CLMiner::s_clKernelName;
 
 constexpr size_t c_maxSearchResults = 1;
 

@@ -84,14 +84,6 @@ public:
 	    uint64_t _startN,
 	    const dev::eth::WorkPackage& w);
 
-	/* -- default values -- */
-	/// Default value of the block size. Also known as workgroup size.
-	static unsigned const c_defaultBlockSize;
-	/// Default value of the grid size
-	static unsigned const c_defaultGridSize;
-	// default number of CUDA streams
-	static unsigned const c_defaultNumStreams;
-
 protected:
 	void kick_miner() override;
 
