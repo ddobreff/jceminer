@@ -17,6 +17,7 @@
 #include "libdevcore/Log.h"
 #include "CLMiner_kernel_stable.h"
 #include "CLMiner_kernel_experimental.h"
+#include <boost/dll.hpp>
 
 using namespace dev;
 using namespace eth;
@@ -621,21 +622,20 @@ bool CLMiner::init(const h256& seed)
 				loginfo << "OpenCL kernel: Experimental kernel" << endl << flush;
 			}
 			code = string(CLMiner_kernel_experimental, CLMiner_kernel_experimental + sizeof(CLMiner_kernel_experimental));
-		} else { // Fallback to experimental kernel if binary loader fails
+		} else if (s_clKernelName == CLKernelName::Binary) {
+			Guard l(x_log);
+			loginfo << "OpenCL kernel: Binary kernel" << endl << flush;
+		} else {
 			{
 				Guard l(x_log);
 				loginfo << "OpenCL kernel: " << (s_clKernelName == CLKernelName::Binary ?  "Binary" : "Experimental") << " kernel" <<
 				        endl << flush;
 			}
 
-			//CLMiner_kernel_stable.cl will do a #undef THREADS_PER_HASH
 			if (s_threadsPerHash != 8) {
-				//
-				{
-					Guard l(x_log);
-					logwarn << "The current stable OpenCL kernel only supports exactly 8 threads. Thread parameter will be ignored." <<
-					        endl << flush;
-				}
+				Guard l(x_log);
+				logwarn << "The current stable OpenCL kernel only supports exactly 8 threads. Thread parameter will be ignored." <<
+				        endl << flush;
 			}
 
 			code = string(CLMiner_kernel_stable, CLMiner_kernel_stable + sizeof(CLMiner_kernel_stable));
@@ -649,37 +649,38 @@ bool CLMiner::init(const h256& seed)
 		addDefinition(code, "COMPUTE", computeCapability);
 		addDefinition(code, "THREADS_PER_HASH", s_threadsPerHash);
 
-		// create miner OpenCL program
-		cl::Program::Sources sources{{code.data(), code.size()}};
-		cl::Program program(m_context, sources), binaryProgram;
-		try {
-			program.build({device}, options);
-			{
-				Guard l(x_log);
-				loginfo << "Build info: " << program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(device) << endl << flush;
-			}
-		} catch (cl::Error const&) {
-			{
-				Guard l(x_log);
-				logerror << "Build info: " << program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(device) << endl << flush;
-			}
-			return false;
-		}
-
-		/*      If we have a binary kernel, we load it in tandem with the opencl,
-		        that way, we can use the dag generate opencl code */
+		cl::Program binaryProgram;
 		bool loadedBinary = false;
-		unsigned int computeUnits = device.getInfo<CL_DEVICE_MAX_COMPUTE_UNITS>();
+		cl::Program::Sources sources{{code.data(), code.size()}};
+		cl::Program program(m_context, sources);
 
-		if (s_clKernelName >= CLKernelName::Binary) {
+		// create miner OpenCL program
+		if (s_clKernelName != CLKernelName::Binary) {
+			try {
+				program.build({device}, options);
+				{
+					Guard l(x_log);
+					loginfo << "Build info: " << program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(device) << endl << flush;
+				}
+			} catch (cl::Error const&) {
+				logerror << "Build info: " << program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(device) << endl << flush;
+				exit(-1);
+			}
+		} else {
+
+			/*      If we have a binary kernel, we load it in tandem with the opencl,
+			        that way, we can use the dag generate opencl code */
+			unsigned int computeUnits = device.getInfo<CL_DEVICE_MAX_COMPUTE_UNITS>();
+
 			std::ifstream kernel_file;
 			vector<unsigned char> bin_data;
 			std::stringstream fname_strm;
 
-			/* Open kernels/{device.getInfo<CL_DEVICE_VERSION>}.bin */
-			std::transform(device.getInfo<CL_DEVICE_VERSION>().begin(), device.getInfo<CL_DEVICE_VERSION>().end(),
-			               device.getInfo<CL_DEVICE_VERSION>().begin(), ::tolower);
-			fname_strm << "kernels/" << device.getInfo<CL_DEVICE_VERSION>() << ".bin";
+			/* Open kernels/{device.getInfo<CL_DEVICE_NAME>}.bin */
+			std::string v = device.getInfo<CL_DEVICE_NAME>();
+			std::transform(v.begin(), v.end(), v.begin(), ::tolower);
+			fname_strm << boost::dll::program_location().parent_path().string()  << "/kernels/" << v << ".bin";
+			std::cerr << fname_strm.str() << std::endl << std::flush;
 
 			kernel_file.open(
 			    fname_strm.str(),
@@ -707,19 +708,14 @@ bool CLMiner::init(const h256& seed)
 					loadedBinary = true;
 				} catch (cl::Error const&) {
 					logerror << "Build info: " << program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(device) << endl << flush;
+					exit(-1);
 				}
 
 				computeUnits = computeUnits == 14 ? 36 : computeUnits;
 				m_globalWorkSize = computeUnits << 17;
 			} else {
-				{
-					Guard l(x_log);
-					logwarn << "Instructed to load binary kernel, but failed to load kernel: " << fname_strm.str() << endl << flush;
-				}
-				{
-					Guard l(x_log);
-					logwarn << "Falling back to OpenCL kernel..." << endl << flush;
-				}
+				logerror << "Instructed to load binary kernel, but failed to load kernel: " << fname_strm.str() << endl << flush;
+				exit(-1);
 			}
 		}
 
