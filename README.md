@@ -26,8 +26,7 @@ Options:
   -w [ --timeout ] arg (=180)    Work timeout.
   --hash                         Report hashrate to pool.
   -s [ --stats-intvl ] arg (=15) statistics display interval.
-  -l [ --stats-level ] arg (=0)  statistics display interval. 0 - HR only, 1 - 
-                                 + fan & temp, 2 - + power.
+  -l [ --stats-level ] arg (=0)  statistics display interval. 0 - HR only, 1 - + fan & temp, 2 - + power.
   -p [ --pool ] arg              Pool URL.
                                  URL takes the form: scheme://[user[:password]@]hostname:port.
                                  unsecured schemes: stratum+tcp stratum1+tcp stratum2+tcp
@@ -38,7 +37,7 @@ Options:
                                  stratum  - official stratum spec: ethpool, ethermine, coinotron, mph, nanopool
                                  stratum1 - eth-proxy compatible: dwarfpool, f2pool, nanopool (required for hashrate reporting to work with nanopool)
                                  stratum2 - EthereumStratum/1.0.0: nicehash
-  -a [ --api-port ] arg (=0)     API port number.
+  -a [ --api-port ] arg (=0)     API port number. 0 - disable, < 0 - read-only.
   --cl-plat arg (=0)             Opencl platform.
   --cl-devs arg                  Opencl device list.
   --cl-parallel arg (=8)         Opencl parallel hashes.
@@ -59,6 +58,7 @@ Options:
   -G [ --cl ]                    Opencl mode.
   -U [ --cu ]                    Cuda mode.
   -X [ --mixed ]                 Mixed opencl and cuda mode. Use OpenCL + CUDA in a system with mixed AMD/Nvidia cards. May require setting --cl-platform 1 or 2.
+
 ```
 
 ### Building from source

@@ -12,6 +12,7 @@
         along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include "../libethcore/MinerCommon.h"
 #include "ethash_cuda_miner_kernel.h"
 #include "ethash_cuda_miner_kernel_globals.h"
 #include "cuda_helper.h"

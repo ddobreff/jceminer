@@ -27,6 +27,7 @@
 #include <boost/program_options.hpp>
 #include <boost/tokenizer.hpp>
 
+#include <libethcore/MinerCommon.h>
 #include <libethcore/Exceptions.h>
 #include <libdevcore/SHA3.h>
 #include <libethcore/EthashAux.h>
@@ -107,7 +108,7 @@ public:
 		 "stratum1 - eth-proxy compatible: dwarfpool, f2pool, nanopool (required for hashrate reporting to work with nanopool)\n"
 		 "stratum2 - EthereumStratum/1.0.0: nicehash\n\n")
 #if API_CORE
-		("api-port,a", value<unsigned>(&m_api_port)->default_value(0), "API port number.")
+		("api-port,a", value<unsigned>(&m_api_port)->default_value(0), "API port number. 0 - disable, < 0 - read-only.")
 #endif
 #if ETH_ETHASHCL
 		("cl-plat", value<unsigned>(&m_openclPlatform)->default_value(0), "Opencl platform.")
@@ -198,22 +199,51 @@ public:
 		}
 		m_endpoint = PoolConnection(uri);
 
-		if (vm.find("cl-devs") != vm.end()) {
-			m_openclDeviceCount = vm["cl-devices"].as<vector<unsigned>>().size();
-			m_openclDevices = vm["cl-devices"].as<vector<unsigned>>();
-		}
-
+#if ETH_ETHASHCUDA
 		if (vm.find("cu-devs") != vm.end()) {
 			m_cudaDeviceCount = vm["cu-devices"].as<vector<unsigned>>().size();
 			m_cudaDevices = vm["cu-devices"].as<vector<unsigned>>();
 		}
 
-		if ((m_openclDeviceCount + m_cudaDeviceCount) > MAX_GPUS) {
-			cerr << "Can only support up to " << MAX_GPUS << ".\n";
+		if (m_parallelHash == 0 || m_parallelHash > 8) {
+			cerr << "Cuda parallel hash must be greater than 0 and less than or equal to 8.\n";
 			BOOST_THROW_EXCEPTION(BadArgument());
 		}
 
 		m_cudaNoEval = vm["cu-noeval"].as<bool>();
+#endif
+
+#if ETH_ETHASHCL
+		if (vm.find("cl-devs") != vm.end()) {
+			m_openclDeviceCount = vm["cl-devices"].as<vector<unsigned>>().size();
+			m_openclDevices = vm["cl-devices"].as<vector<unsigned>>();
+		}
+
+		if (m_openclThreadsPerHash != 1 && m_openclThreadsPerHash != 2 && m_openclThreadsPerHash != 4
+		    && m_openclThreadsPerHash != 8) {
+			cerr << "Opencl parallel hash must be 1, 2, 4, or 8.\n";
+			BOOST_THROW_EXCEPTION(BadArgument());
+		}
+#endif
+
+#if ETH_ETHASHCL && ETH_ETHASHCUDA
+		if ((m_openclDeviceCount + m_cudaDeviceCount) > MAX_GPUS) {
+			cerr << "Can only support up to " << MAX_GPUS << ".\n";
+			BOOST_THROW_EXCEPTION(BadArgument());
+		}
+#endif
+#if ETH_ETHASHCL && !ETH_ETHASHCUDA
+		if (m_openclDeviceCount > MAX_GPUS) {
+			cerr << "Can only support up to " << MAX_GPUS << ".\n";
+			BOOST_THROW_EXCEPTION(BadArgument());
+		}
+#endif
+#if !ETH_ETHASHCL && ETH_ETHASHCUDA
+		if (m_cudaDeviceCount > MAX_GPUS) {
+			cerr << "Can only support up to " << MAX_GPUS << ".\n";
+			BOOST_THROW_EXCEPTION(BadArgument());
+		}
+#endif
 
 		g_logSwitchTime = vm["log-switch"].as<bool>();
 
@@ -232,16 +262,6 @@ public:
 			BOOST_THROW_EXCEPTION(BadArgument());
 		}
 
-		if (m_openclThreadsPerHash != 1 && m_openclThreadsPerHash != 2 && m_openclThreadsPerHash != 4
-		    && m_openclThreadsPerHash != 8) {
-			cerr << "Opencl parallel hash must be 1, 2, 4, or 8.\n";
-			BOOST_THROW_EXCEPTION(BadArgument());
-		}
-
-		if (m_parallelHash == 0 || m_parallelHash > 8) {
-			cerr << "Cuda parallel hash must be greater than 0 and less than or equal to 8.\n";
-			BOOST_THROW_EXCEPTION(BadArgument());
-		}
 	}
 
 	void execute()
