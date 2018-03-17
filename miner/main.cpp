@@ -84,37 +84,40 @@ public:
 	{
 		using namespace boost::program_options;
 
+		stringstream poolDesc;
+		poolDesc
+		        << "URL takes the form:\nscheme://[user[:password]@]hostname:port\n\n"
+		        << "unsecured schemes: " << URI::KnownSchemes(SecureLevel::NONE) << '\n'
+		        << "secured with any TLS: " << URI::KnownSchemes(SecureLevel::TLS) << '\n'
+		        << "secured with TLS 1.2: " << URI::KnownSchemes(SecureLevel::TLS12) << "\n\n"
+		        << "Example:\n"
+		        << "stratum+ssl://0x0123456...7890190123.miner1@ethermine.org:5555\n\n"
+		        << "Stratum versions:\n"
+		        << "stratum  - ethpool, ethermine, coinotron, mph, nanopool\n"
+		        << "eth-proxy - dwarfpool, f2pool, nanopool (required for hashrate reporting to work with nanopool)\n"
+		        << "nicehash - Ethereum Stratum\n";
+
 		options_description desc("Options");
 		desc.add_options()
 		("help,h", bool_switch()->default_value(false), "produce help message.\n")
-		("devices,d", bool_switch()->default_value(false), "List devices.\n")
-		("version,v", bool_switch()->default_value(false), "list version.\n")
+		("devs,d", bool_switch()->default_value(false), "List devices.\n")
+		("vers,v", bool_switch()->default_value(false), "list version.\n")
 		("file,f", value<string>(), "Read parameters from file.\n")
 		("retries,r", value<unsigned>(&m_maxFarmRetries)->default_value(3), "Connection retries.\n")
 		("email,e", value<string>(&g_email), "Stratum email.\n")
 		("timeout,w", value<unsigned>(&g_worktimeout)->default_value(180), "Work timeout.\n")
 		("hash", bool_switch()->default_value(false), "Report hashrate to pool.\n")
-		("stats-intvl,s", value<unsigned>(&m_displayInterval)->default_value(15), "statistics display interval.\n")
-		("stats-level,l", value<unsigned>(&m_show_level)->default_value(0),
+		("s-intvl,s", value<unsigned>(&m_displayInterval)->default_value(15), "statistics display interval.\n")
+		("s-level,l", value<unsigned>(&m_show_level)->default_value(0),
 		 "statistics display interval. 0 - HR only, 1 - + fan & temp, 2 - + power.\n")
-		("pool,p", value<string>(&m_endpoint_url), "Pool URL.\n"
-		 "URL takes the form:\nscheme://[user[:password]@]hostname:port\n\n"
-		 "unsecured schemes: stratum+tcp stratum1+tcp stratum2+tcp\n"
-		 "secured with any TLS: stratum+tls stratum1+tls stratum2+tls stratum+ssl stratum1+ssl stratum2+ssl\n"
-		 "secured with TLS 1.2: stratum+tls12 stratum1+tls12 stratum2+tls12\n\n"
-		 "Example:\n"
-		 "stratum+ssl://0x0123456...7890190123.miner1@ethermine.org:5555\n\n"
-		 "Stratum versions:\n"
-		 "stratum  - official stratum spec: ethpool, ethermine, coinotron, mph, nanopool\n"
-		 "stratum1 - eth-proxy compatible: dwarfpool, f2pool, nanopool (required for hashrate reporting to work with nanopool)\n"
-		 "stratum2 - EthereumStratum/1.0.0: nicehash\n")
-		("dag-mode", value<unsigned>(&m_dagLoadMode)->default_value(0),
+		("pool,p", value<string>(&m_endpoint_url), poolDesc.str().c_str())
+		("dag", value<unsigned>(&m_dagLoadMode)->default_value(0),
 		 "DAG load mode. 0 - parallel, 1 - sequential, 2 - single.\n")
-		("log-switch", bool_switch()->default_value(false), "Log job switch time.\n")
-		("log-json", bool_switch()->default_value(false), "Log formatted json messaging.\n")
+		("l-switch", bool_switch()->default_value(false), "Log job switch time.\n")
+		("l-json", bool_switch()->default_value(false), "Log formatted json messaging.\n")
 		("cl,G", bool_switch()->default_value(false), "Opencl mode.\n") // set m_minerType = MinerType::CL;
 		("cu,U", bool_switch()->default_value(false), "Cuda mode.\n") // set m_minerType = MinerType::CUDA;
-		("mixed,X", bool_switch()->default_value(false),
+		("mix,X", bool_switch()->default_value(false),
 		 "Mixed opencl and cuda mode. Use OpenCL + CUDA in a system with mixed AMD/Nvidia cards. May require setting --cl-platform 1 or 2.\n")
 #if API_CORE
 		("api-port,a", value<unsigned>(&m_api_port)->default_value(0), "API port number. 0 - disable, < 0 - read-only.\n")
@@ -122,8 +125,8 @@ public:
 #if ETH_ETHASHCL
 		("cl-plat", value<unsigned>(&m_openclPlatform)->default_value(0), "Opencl platform.\n")
 		("cl-devs", value<std::vector<unsigned>>()->multitoken(), "Opencl device list.\n")
-		("cl-parallel", value<unsigned>(&m_openclThreadsPerHash)->default_value(8), "Opencl parallel hashes.\n")
-		("cl-kernel", value<unsigned>(&m_openclSelectedKernel)->default_value(1),
+		("cl-para", value<unsigned>(&m_openclThreadsPerHash)->default_value(8), "Opencl parallel hashes.\n")
+		("cl-kern", value<unsigned>(&m_openclSelectedKernel)->default_value(1),
 		 "Opencl kernel. 0 - Stable, 1 - Experimental, 2 - binary.\n")
 		("cl-tweak", value<unsigned>(&m_openclWavetweak)->default_value(7), "Opencl wave tweak.\n")
 		("cl-global", value<unsigned>(&m_globalWorkSizeMultiplier)->default_value(8192), "Opencl global work size. 0 - Auto.\n")
@@ -131,10 +134,10 @@ public:
 #endif
 #if ETH_ETHASHCUDA
 		("cu-grid", value<unsigned>(&m_cudaGridSize)->default_value(8192), "Cuda grid size.\n")
-		("cu-block", value<unsigned>(&m_cudaBlockSize)->default_value(128), "Cuda block size\n.")
+		("cu-block", value<unsigned>(&m_cudaBlockSize)->default_value(128), "Cuda block size.\n")
 		("cu-devs", value<std::vector<unsigned>>()->multitoken(), "Cuda device list.\n")
-		("cu-parallel", value<unsigned>(&m_parallelHash)->default_value(4), "Cuda parallel hashes.\n")
-		("cu-sched", value<unsigned>(&m_cudaSchedule)->default_value(4),
+		("cu-para", value<unsigned>(&m_parallelHash)->default_value(4), "Cuda parallel hashes.\n")
+		("cu-sch", value<unsigned>(&m_cudaSchedule)->default_value(4),
 		 "Cuda schedule mode. 0 - auto, 1 - spin, 2 - yield, 4 - sync\n")
 		("cu-stream", value<unsigned>(&m_numStreams)->default_value(2), "Cuda streams\n")
 		("cu-noeval", bool_switch()->default_value(false), "Cuda bypass software result evaluation.\n")
