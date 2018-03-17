@@ -20,10 +20,6 @@
 #include <stdint.h>
 #include <cuda_runtime.h>
 
-#ifndef MAX_GPUS
-#define MAX_GPUS 32
-#endif
-
 // It is virtually impossible to get more than
 // one solution per stream hash calculation
 // Leave room for up to 4 results. A power
