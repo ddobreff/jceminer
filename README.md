@@ -28,7 +28,7 @@ Options:
   -s [ --stats-intvl ] arg (=15) statistics display interval.
   -l [ --stats-level ] arg (=0)  statistics display interval. 0 - HR only, 1 - + fan & temp, 2 - + power.
   -p [ --pool ] arg              Pool URL.
-                                 URL takes the form: scheme://[user[:password]@]hostname:port
+                                 URL takes the form: scheme://[user[:password]@]hostname:port.
                                  unsecured schemes: stratum+tcp stratum1+tcp stratum2+tcp
                                  secured with any TLS: stratum+tls stratum1+tls stratum2+tls stratum+ssl stratum1+ssl stratum2+ssl
                                  secured with TLS 1.2: stratum+tls12 stratum1+tls12 stratum2+tls12
@@ -45,13 +45,20 @@ Options:
   --cl-tweak arg (=7)            Opencl wave tweak.
   --cl-global arg (=8192)        Opencl global work size. 0 - Auto.
   --cl-local arg (=64)           Opencl local work size.
+  --cu-grid arg (=8192)          Cuda grid size.
+  --cu-block arg (=128)          Cuda block size.
+  --cu-devs arg                  Cuda device list.
+  --cu-parallel arg (=4)         Cuda parallel hashes.
+  --cu-sched arg (=4)            Cuda schedule mode. 0 - auto, 1 - spin, 2 - yield, 4 - sync
+  --cu-stream arg (=2)           Cuda streams
+  --cu-noeval                    Cuda bypass software result evaluation.
   --dag-mode arg (=0)            DAG load mode. 0 - parallel, 1 - sequential, 2 - single.
   --log-switch                   Log job switch time.
   --log-json                     Log formatted json messaging.
   -G [ --cl ]                    Opencl mode.
   -U [ --cu ]                    Cuda mode.
-  -X [ --mixed ]                 Mixed opencl and cuda mode. Use OpenCL + CUDA 
-                                 in a system with mixed AMD/Nvidia cards. May require setting --cl-platform 1 or 2.
+  -X [ --mixed ]                 Mixed opencl and cuda mode. Use OpenCL + CUDA in a system with mixed AMD/Nvidia cards. May require setting --cl-platform 1 or 2.
+
 ```
 
 ### Building from source
