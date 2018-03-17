@@ -26,17 +26,14 @@ typedef struct {
 
 static std::map<std::string, SchemeAttributes> s_schemes = {
 	{"stratum+tcp",	   {SecureLevel::NONE,  0}},
-	{"stratum1+tcp",   {SecureLevel::NONE,  1}},
-	{"stratum2+tcp",   {SecureLevel::NONE,  2}},
+	{"ethproxy+tcp",   {SecureLevel::NONE,  1}},
+	{"nicehash+tcp",   {SecureLevel::NONE,  2}},
 	{"stratum+tls",	   {SecureLevel::TLS,   0}},
-	{"stratum1+tls",   {SecureLevel::TLS,   1}},
-	{"stratum2+tls",   {SecureLevel::TLS,   2}},
+	{"ethproxy+tls",   {SecureLevel::TLS,   1}},
+	{"nicehash+tls",   {SecureLevel::TLS,   2}},
 	{"stratum+tls12",  {SecureLevel::TLS12, 0}},
-	{"stratum1+tls12", {SecureLevel::TLS12, 1}},
-	{"stratum2+tls12", {SecureLevel::TLS12, 2}},
-	{"stratum+ssl",	   {SecureLevel::TLS12, 0}},
-	{"stratum1+ssl",   {SecureLevel::TLS12, 1}},
-	{"stratum2+ssl",   {SecureLevel::TLS12, 2}}
+	{"ethproxy+tls12", {SecureLevel::TLS12, 1}},
+	{"nicehash+tls12", {SecureLevel::TLS12, 2}}
 };
 
 URI::URI() {}
