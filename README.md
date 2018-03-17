@@ -7,6 +7,8 @@
 This is adapted for personal use. I make no claims of viability, and likely won't respond to bug reports or requests. Should
 someone go to the trouble of pushing a decent change, I'll certainly take a look.
 
+If you're going to try to use this, the release branches (1.0.0, 1.0.1, etc...) should be stable.
+
 ## Usage
 
 For a full list of available command options, please run
