@@ -44,17 +44,23 @@ static void diffToTarget(uint32_t* target, double diff)
 		((uint8_t*)target)[31 - i] = ((uint8_t*)target2)[i];
 }
 
+extern unsigned g_stopAfter;
 
 EthStratumClient::EthStratumClient() : PoolClient(),
 	m_socket(nullptr),
 	m_securesocket(nullptr),
 	m_worktimer(m_io_service),
 	m_responsetimer(m_io_service),
+	m_stoptimer(m_io_service),
 	m_resolver(m_io_service)
 {
 	m_authorized = false;
 	m_pending = 0;
 	m_submit_hashrate_id = h256::random().hex();
+	if (g_stopAfter) {
+		m_stoptimer.expires_from_now(boost::posix_time::minutes(g_stopAfter));
+		m_stoptimer.async_wait(boost::bind(&EthStratumClient::stop_timeout_handler, this, boost::asio::placeholders::error));
+	}
 }
 
 EthStratumClient::~EthStratumClient()
@@ -130,37 +136,6 @@ void EthStratumClient::connect()
 
 #define BOOST_ASIO_ENABLE_CANCELIO
 
-void EthStratumClient::disconnect()
-{
-	m_worktimer.cancel();
-	m_responsetimer.cancel();
-	m_response_pending = false;
-	m_linkdown = true;
-
-	try {
-		if (m_connection.SecLevel() != SecureLevel::NONE) {
-			boost::system::error_code sec;
-			m_securesocket->shutdown(sec);
-		}
-
-		m_socket->close();
-		m_io_service.stop();
-	} catch (std::exception const& _e) {
-		logerror << "Error while disconnecting:" << _e.what() << endl << flush;
-	}
-
-	if (m_connection.SecLevel() != SecureLevel::NONE)
-		delete m_securesocket;
-	else
-		delete m_socket;
-
-	m_authorized = false;
-	m_connected = false;
-
-	if (m_onDisconnected)
-		m_onDisconnected();
-}
-
 void EthStratumClient::resolve_handler(const boost::system::error_code& ec, tcp::resolver::iterator i)
 {
 	//dev::setThreadName("stratum");
@@ -176,7 +151,7 @@ void EthStratumClient::resolve_handler(const boost::system::error_code& ec, tcp:
 			logwarn << "Could not resolve host " << m_connection.Host() << ':' << m_connection.Port() << ", " << ec.message() <<
 			        endl << flush;
 		}
-		disconnect();
+		exit(-1);
 	}
 }
 
@@ -269,8 +244,7 @@ void EthStratumClient::connect_handler(const boost::system::error_code& ec, tcp:
 						loginfo << "* Disable certificate verification all-together via command-line option." << endl << flush;
 					}
 				}
-				disconnect();
-				return;
+				exit(-1);
 			}
 		}
 
@@ -319,7 +293,7 @@ void EthStratumClient::connect_handler(const boost::system::error_code& ec, tcp:
 			logerror << "Could not connect to stratum server " << m_connection.Host() << ':' << m_connection.Port() << ", " <<
 			         ec.message() << endl << flush;
 		}
-		disconnect();
+		exit(-1);
 	}
 
 }
@@ -414,7 +388,7 @@ void EthStratumClient::readResponse(const boost::system::error_code& ec, std::si
 				Guard l(x_log);
 				logerror << "Read response failed: " + ec.message() << endl << flush;
 			}
-			disconnect();
+			exit(-1);
 		}
 	}
 }
@@ -487,7 +461,7 @@ void EthStratumClient::processReponse(Json::Value& responseObject)
 				Guard l(x_log);
 				logerror << "Worker not authorized:" + m_connection.User() << endl << flush;
 			}
-			disconnect();
+			exit(-1);
 			return;
 		}
 		{
@@ -605,14 +579,25 @@ void EthStratumClient::processReponse(Json::Value& responseObject)
 
 }
 
+void EthStratumClient::stop_timeout_handler(const boost::system::error_code& ec)
+{
+	if (!ec) {
+		{
+			Guard l(x_log);
+			logerror << "Sopping as requested.\n" << flush;
+		}
+		exit(-1);
+	}
+}
+
 void EthStratumClient::work_timeout_handler(const boost::system::error_code& ec)
 {
 	if (!ec) {
 		{
 			Guard l(x_log);
-			logerror << "No new work received in " << g_worktimeout << " seconds." << endl << flush;
+			logerror << "No new work received in " << g_worktimeout << " seconds.\n" << flush;
 		}
-		disconnect();
+		exit(-1);
 	}
 }
 
@@ -623,7 +608,7 @@ void EthStratumClient::response_timeout_handler(const boost::system::error_code&
 			Guard l(x_log);
 			logerror << "No no response received in 2 seconds." << endl << flush;
 		}
-		disconnect();
+		exit(-1);
 	}
 }
 

@@ -4,7 +4,7 @@ jobs:
     docker:
       - image: nvidia/cuda:9.1-devel-ubuntu16.04
     steps:
-      - run: apt-get update && apt-get install -qy git cmake mesa-common-dev libidn11-dev
+      - run: apt-get update && apt-get install -qy git cmake mesa-common-dev libidn11-dev libgoogle-perftools-dev
 
       - checkout
       - run: git submodule update --init --recursive
