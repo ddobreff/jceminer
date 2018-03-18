@@ -92,7 +92,7 @@ public:
 		        << "secured with any TLS: " << URI::KnownSchemes(SecureLevel::TLS) << '\n'
 		        << "secured with TLS 1.2: " << URI::KnownSchemes(SecureLevel::TLS12) << "\n\n"
 		        << "Example:\n"
-		        << "stratum+ssl://0x0123456...7890190123.miner1@ethermine.org:5555\n\n"
+		        << "stratum+tls://0x0123456...7890190123.miner1@ethermine.org:5555\n\n"
 		        << "Stratum versions:\n"
 		        << "stratum  - ethpool, ethermine, coinotron, mph, nanopool\n"
 		        << "eth-proxy - dwarfpool, f2pool, nanopool (required for hashrate reporting to work with nanopool)\n"
