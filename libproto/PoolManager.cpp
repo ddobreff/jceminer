@@ -50,12 +50,12 @@ PoolManager::PoolManager(PoolClient& client, Farm& farm, MinerType const& minerT
 		{
 			Guard l(x_log);
 			loginfo << "Connected to " << m_connection.Host() << saddr.str() << ':' <<
-			        sport.str() << endl << flush;
+			        sport.str() << endl;
 		}
 		if (!m_farm.isMining()) {
 			{
 				Guard l(x_log);
-				loginfo << "Spinning up miners..." << endl << flush;
+				loginfo << "Spinning up miners..." << endl;
 			}
 			if (m_minerType == MinerType::CL)
 				m_farm.start("opencl", false);
@@ -72,7 +72,7 @@ PoolManager::PoolManager(PoolClient& client, Farm& farm, MinerType const& minerT
 	m_client.onDisconnected([&]() {
 		{
 			Guard l(x_log);
-			logwarn << "Disconnected from " + m_connection.Host() << endl << flush;
+			logwarn << "Disconnected from " + m_connection.Host() << endl;
 		}
 
 		tryReconnect();
@@ -90,12 +90,12 @@ PoolManager::PoolManager(PoolClient& client, Farm& farm, MinerType const& minerT
 			m_difficulty = double(dividend / divisor);
 			{
 				Guard l(x_log);
-				loginfo << "New pool difficulty: " << hashToString(m_difficulty, false) << endl << flush;
+				loginfo << "New pool difficulty: " << hashToString(m_difficulty, false) << endl;
 			}
 		}
 		{
 			Guard l(x_log);
-			loginfo << "Received new job " << wp.header.hex().substr(0, 8) << ".." << endl << flush;
+			loginfo << "Received new job " << wp.header.hex().substr(0, 8) << ".." << endl;
 		}
 	});
 
@@ -118,7 +118,7 @@ PoolManager::PoolManager(PoolClient& client, Farm& farm, MinerType const& minerT
 			Guard l(x_log);
 			loginfo << string(stale ? EthYellow : EthLime) << "Accepted" << (stale ? " (stale)" : "") << " in " << ms.count() <<
 			        " ms." << " Effective HR (" << fixed << setprecision(2) << secs.count() / 3600.0 << "h. sma): " << hashToString(EHR,
-			                true) << EthReset << endl << flush;
+			                true) << EthReset << endl;
 		}
 	});
 
@@ -127,8 +127,7 @@ PoolManager::PoolManager(PoolClient& client, Farm& farm, MinerType const& minerT
 		auto ms = duration_cast<milliseconds>(steady_clock::now() - m_submit_time);
 		{
 			Guard l(x_log);
-			loginfo << EthRed "Rejected" << (stale ? " (stale)" : "") << " in " << ms.count() << " ms." << EthReset << endl <<
-			        flush;
+			loginfo << EthRed "Rejected" << (stale ? " (stale)" : "") << " in " << ms.count() << " ms." << EthReset << endl;
 		}
 		m_farm.rejectedSolution(stale);
 	});
@@ -140,11 +139,11 @@ PoolManager::PoolManager(PoolClient& client, Farm& farm, MinerType const& minerT
 		if (sol.stale) {
 			Guard l(x_log);
 			loginfo << EthYellow << from << " - stale nonce 0x" + toHex(sol.nonce) + " submitted to " +
-			        m_connection.Host() << EthReset << endl << flush;
+			        m_connection.Host() << EthReset << endl;
 		} else {
 			Guard l(x_log);
 			loginfo << EthWhite << from << " - nonce 0x" + toHex(sol.nonce)
-			        + " submitted to " + m_connection.Host() << EthReset << endl << flush;
+			        + " submitted to " + m_connection.Host() << EthReset << endl;
 		}
 
 		return false;
@@ -182,7 +181,7 @@ void PoolManager::start()
 		m_client.connect();
 	} else {
 		Guard l(x_log);
-		logerror << "Manager has no connections defined!" << endl << flush;
+		logerror << "Manager has no connections defined!" << endl;
 	}
 }
 
@@ -192,13 +191,13 @@ void PoolManager::tryReconnect()
 	if (m_connection.Empty()) {
 		{
 			Guard l(x_log);
-			logerror << "Manager has no connections defined!" << endl << flush;
+			logerror << "Manager has no connections defined!" << endl;
 		}
 		return;
 	}
 	{
 		Guard l(x_log);
-		logwarn << "Retrying in 3 seconds.\n" << flush;
+		logwarn << "Retrying in 3 seconds.\n";
 	}
 
 	this_thread::sleep_for(chrono::seconds(3));
