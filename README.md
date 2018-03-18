@@ -45,7 +45,7 @@ Options:
                               secured with TLS 1.2: ethproxy+tls12 nicehash+tls12 stratum+tls12
                               
                               Example:
-                              stratum+ssl://0x0123456...7890190123.miner1@ethermine.org:5555
+                              stratum+tls://0x0123456...7890190123.miner1@ethermine.org:5555
                               
                               Stratum versions:
                               stratum  - ethpool, ethermine, coinotron, mph, nanopool
