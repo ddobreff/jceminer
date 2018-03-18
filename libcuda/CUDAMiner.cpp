@@ -64,9 +64,9 @@ bool CUDAMiner::init(const h256& seed)
 			}
 		}
 		return true;
-	} catch (std::runtime_error const& _e) {
+	} catch (std::exception const& _e) {
 		logerror << "Error CUDA mining: " << _e.what() << endl << flush;
-		BOOST_THROW_EXCEPTION(GPUFailure());
+		exit(-1);
 	}
 }
 
@@ -106,12 +106,9 @@ void CUDAMiner::workLoop()
 
 		// Reset miner and stop working
 		CUDA_SAFE_CALL(cudaDeviceReset());
-	} catch (cuda_runtime_error const& _e) {
+	} catch (std::exception const& _e) {
 		logerror << "Fatal GPU error: " << _e.what() << endl << flush;
-		BOOST_THROW_EXCEPTION(GPUFailure());
-	} catch (std::runtime_error const& _e) {
-		logerror << "Error CUDA mining: " << _e.what() << endl << flush;
-		BOOST_THROW_EXCEPTION(GPUFailure());
+		exit(-1);
 	}
 }
 
@@ -250,8 +247,9 @@ bool CUDAMiner::cuda_configureGPU(
 			}
 		}
 		return true;
-	} catch (runtime_error) {
-		BOOST_THROW_EXCEPTION(GPUFailure());
+	} catch (std::exception const& _e) {
+		logerror << "Error CUDA mining: " << _e.what() << endl << flush;
+		exit(-1);
 	}
 }
 
@@ -400,8 +398,9 @@ bool CUDAMiner::cuda_init(
 		m_dag = dag;
 		m_dag_size = dagSize128;
 		return true;
-	} catch (runtime_error const&) {
-		BOOST_THROW_EXCEPTION(GPUFailure());
+	} catch (std::exception const& _e) {
+		logerror << "Error CUDA mining: " << _e.what() << endl << flush;
+		exit(-1);
 	}
 }
 

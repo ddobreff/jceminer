@@ -35,162 +35,6 @@ CLKernelName CLMiner::s_clKernelName;
 
 constexpr size_t c_maxSearchResults = 1;
 
-static const char* strClError(cl_int err)
-{
-
-	switch (err) {
-	case CL_SUCCESS:
-		return "CL_SUCCESS";
-	case CL_DEVICE_NOT_FOUND:
-		return "CL_DEVICE_NOT_FOUND";
-	case CL_DEVICE_NOT_AVAILABLE:
-		return "CL_DEVICE_NOT_AVAILABLE";
-	case CL_COMPILER_NOT_AVAILABLE:
-		return "CL_COMPILER_NOT_AVAILABLE";
-	case CL_MEM_OBJECT_ALLOCATION_FAILURE:
-		return "CL_MEM_OBJECT_ALLOCATION_FAILURE";
-	case CL_OUT_OF_RESOURCES:
-		return "CL_OUT_OF_RESOURCES";
-	case CL_OUT_OF_HOST_MEMORY:
-		return "CL_OUT_OF_HOST_MEMORY";
-	case CL_PROFILING_INFO_NOT_AVAILABLE:
-		return "CL_PROFILING_INFO_NOT_AVAILABLE";
-	case CL_MEM_COPY_OVERLAP:
-		return "CL_MEM_COPY_OVERLAP";
-	case CL_IMAGE_FORMAT_MISMATCH:
-		return "CL_IMAGE_FORMAT_MISMATCH";
-	case CL_IMAGE_FORMAT_NOT_SUPPORTED:
-		return "CL_IMAGE_FORMAT_NOT_SUPPORTED";
-	case CL_BUILD_PROGRAM_FAILURE:
-		return "CL_BUILD_PROGRAM_FAILURE";
-	case CL_MAP_FAILURE:
-		return "CL_MAP_FAILURE";
-	case CL_MISALIGNED_SUB_BUFFER_OFFSET:
-		return "CL_MISALIGNED_SUB_BUFFER_OFFSET";
-	case CL_EXEC_STATUS_ERROR_FOR_EVENTS_IN_WAIT_LIST:
-		return "CL_EXEC_STATUS_ERROR_FOR_EVENTS_IN_WAIT_LIST";
-
-#ifdef CL_VERSION_1_2
-	case CL_COMPILE_PROGRAM_FAILURE:
-		return "CL_COMPILE_PROGRAM_FAILURE";
-	case CL_LINKER_NOT_AVAILABLE:
-		return "CL_LINKER_NOT_AVAILABLE";
-	case CL_LINK_PROGRAM_FAILURE:
-		return "CL_LINK_PROGRAM_FAILURE";
-	case CL_DEVICE_PARTITION_FAILED:
-		return "CL_DEVICE_PARTITION_FAILED";
-	case CL_KERNEL_ARG_INFO_NOT_AVAILABLE:
-		return "CL_KERNEL_ARG_INFO_NOT_AVAILABLE";
-#endif // CL_VERSION_1_2
-
-	case CL_INVALID_VALUE:
-		return "CL_INVALID_VALUE";
-	case CL_INVALID_DEVICE_TYPE:
-		return "CL_INVALID_DEVICE_TYPE";
-	case CL_INVALID_PLATFORM:
-		return "CL_INVALID_PLATFORM";
-	case CL_INVALID_DEVICE:
-		return "CL_INVALID_DEVICE";
-	case CL_INVALID_CONTEXT:
-		return "CL_INVALID_CONTEXT";
-	case CL_INVALID_QUEUE_PROPERTIES:
-		return "CL_INVALID_QUEUE_PROPERTIES";
-	case CL_INVALID_COMMAND_QUEUE:
-		return "CL_INVALID_COMMAND_QUEUE";
-	case CL_INVALID_HOST_PTR:
-		return "CL_INVALID_HOST_PTR";
-	case CL_INVALID_MEM_OBJECT:
-		return "CL_INVALID_MEM_OBJECT";
-	case CL_INVALID_IMAGE_FORMAT_DESCRIPTOR:
-		return "CL_INVALID_IMAGE_FORMAT_DESCRIPTOR";
-	case CL_INVALID_IMAGE_SIZE:
-		return "CL_INVALID_IMAGE_SIZE";
-	case CL_INVALID_SAMPLER:
-		return "CL_INVALID_SAMPLER";
-	case CL_INVALID_BINARY:
-		return "CL_INVALID_BINARY";
-	case CL_INVALID_BUILD_OPTIONS:
-		return "CL_INVALID_BUILD_OPTIONS";
-	case CL_INVALID_PROGRAM:
-		return "CL_INVALID_PROGRAM";
-	case CL_INVALID_PROGRAM_EXECUTABLE:
-		return "CL_INVALID_PROGRAM_EXECUTABLE";
-	case CL_INVALID_KERNEL_NAME:
-		return "CL_INVALID_KERNEL_NAME";
-	case CL_INVALID_KERNEL_DEFINITION:
-		return "CL_INVALID_KERNEL_DEFINITION";
-	case CL_INVALID_KERNEL:
-		return "CL_INVALID_KERNEL";
-	case CL_INVALID_ARG_INDEX:
-		return "CL_INVALID_ARG_INDEX";
-	case CL_INVALID_ARG_VALUE:
-		return "CL_INVALID_ARG_VALUE";
-	case CL_INVALID_ARG_SIZE:
-		return "CL_INVALID_ARG_SIZE";
-	case CL_INVALID_KERNEL_ARGS:
-		return "CL_INVALID_KERNEL_ARGS";
-	case CL_INVALID_WORK_DIMENSION:
-		return "CL_INVALID_WORK_DIMENSION";
-	case CL_INVALID_WORK_GROUP_SIZE:
-		return "CL_INVALID_WORK_GROUP_SIZE";
-	case CL_INVALID_WORK_ITEM_SIZE:
-		return "CL_INVALID_WORK_ITEM_SIZE";
-	case CL_INVALID_GLOBAL_OFFSET:
-		return "CL_INVALID_GLOBAL_OFFSET";
-	case CL_INVALID_EVENT_WAIT_LIST:
-		return "CL_INVALID_EVENT_WAIT_LIST";
-	case CL_INVALID_EVENT:
-		return "CL_INVALID_EVENT";
-	case CL_INVALID_OPERATION:
-		return "CL_INVALID_OPERATION";
-	case CL_INVALID_GL_OBJECT:
-		return "CL_INVALID_GL_OBJECT";
-	case CL_INVALID_BUFFER_SIZE:
-		return "CL_INVALID_BUFFER_SIZE";
-	case CL_INVALID_MIP_LEVEL:
-		return "CL_INVALID_MIP_LEVEL";
-	case CL_INVALID_GLOBAL_WORK_SIZE:
-		return "CL_INVALID_GLOBAL_WORK_SIZE";
-	case CL_INVALID_PROPERTY:
-		return "CL_INVALID_PROPERTY";
-
-#ifdef CL_VERSION_1_2
-	case CL_INVALID_IMAGE_DESCRIPTOR:
-		return "CL_INVALID_IMAGE_DESCRIPTOR";
-	case CL_INVALID_COMPILER_OPTIONS:
-		return "CL_INVALID_COMPILER_OPTIONS";
-	case CL_INVALID_LINKER_OPTIONS:
-		return "CL_INVALID_LINKER_OPTIONS";
-	case CL_INVALID_DEVICE_PARTITION_COUNT:
-		return "CL_INVALID_DEVICE_PARTITION_COUNT";
-#endif // CL_VERSION_1_2
-
-#ifdef CL_VERSION_2_0
-	case CL_INVALID_PIPE_SIZE:
-		return "CL_INVALID_PIPE_SIZE";
-	case CL_INVALID_DEVICE_QUEUE:
-		return "CL_INVALID_DEVICE_QUEUE";
-#endif // CL_VERSION_2_0
-
-#ifdef CL_VERSION_2_2
-	case CL_INVALID_SPEC_ID:
-		return "CL_INVALID_SPEC_ID";
-	case CL_MAX_SIZE_RESTRICTION_EXCEEDED:
-		return "CL_MAX_SIZE_RESTRICTION_EXCEEDED";
-#endif // CL_VERSION_2_2
-	}
-
-	return "Unknown CL error encountered";
-}
-
-static std::string ethCLErrorHelper(const char* msg, cl::Error const& clerr)
-{
-	std::ostringstream osstream;
-	osstream << msg << ": " << clerr.what() << ": " << strClError(clerr.err())
-	         << " (" << clerr.err() << ")";
-	return osstream.str();
-}
-
 namespace
 {
 
@@ -206,14 +50,8 @@ std::vector<cl::Platform> getPlatforms()
 	vector<cl::Platform> platforms;
 	try {
 		cl::Platform::get(&platforms);
-	} catch (cl::Error const& err) {
-#if defined(CL_PLATFORM_NOT_FOUND_KHR)
-		if (err.err() == CL_PLATFORM_NOT_FOUND_KHR) {
-			Guard l(x_log);
-			logerror << "No OpenCL platforms found" << endl << flush;
-		} else
-#endif
-			throw err;
+	} catch (std::exception const& err) {
+		throw err;
 	}
 	return platforms;
 }
@@ -227,10 +65,8 @@ std::vector<cl::Device> getDevices(std::vector<cl::Platform> const& _platforms, 
 		    CL_DEVICE_TYPE_GPU | CL_DEVICE_TYPE_ACCELERATOR,
 		    &devices
 		);
-	} catch (cl::Error const& err) {
-		// if simply no devices found return empty vector
-		if (err.err() != CL_DEVICE_NOT_FOUND)
-			throw err;
+	} catch (std::exception const&) {
+		// simply no devices found return empty vector
 	}
 	return devices;
 }
@@ -363,9 +199,9 @@ void CLMiner::workLoop()
 		// Make sure the last buffer write has finished --
 		// it reads local variable.
 		m_queue.finish();
-	} catch (cl::Error const& _e) {
-		logerror << ethCLErrorHelper("OpenCL Error", _e) << endl << flush;
-		BOOST_THROW_EXCEPTION(GPUFailure());
+	} catch (std::exception const& _e) {
+		logerror << _e.what() << endl << flush;
+		exit(-1);
 	}
 }
 
@@ -643,7 +479,7 @@ bool CLMiner::init(const h256& seed)
 		cl::Program program(m_context, sources), binaryProgram;
 		try {
 			program.build({device}, options);
-		} catch (cl::Error const&) {
+		} catch (std::exception const&) {
 			logerror << "Build info: " << program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(device) << endl << flush;
 			return false;
 		}
@@ -687,7 +523,7 @@ bool CLMiner::init(const h256& seed)
 					}
 					binaryProgram = program;
 					loadedBinary = true;
-				} catch (cl::Error const&) {
+				} catch (std::exception const&) {
 					logerror << "Build info: " << program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(device) << endl << flush;
 				}
 
@@ -744,8 +580,8 @@ bool CLMiner::init(const h256& seed)
 				loginfo << "Writing light cache buffer" << endl << flush;
 			}
 			m_queue.enqueueWriteBuffer(m_light, CL_TRUE, 0, light->data().size(), light->data().data());
-		} catch (cl::Error const& err) {
-			logerror << ethCLErrorHelper("Creating DAG buffer failed", err) << endl << flush;
+		} catch (std::exception const& err) {
+			logerror << "Creating DAG buffer failed: " << err.what() << endl << flush;
 			return false;
 		}
 		{
@@ -798,9 +634,9 @@ bool CLMiner::init(const h256& seed)
 			Guard l(x_log);
 			loginfo << gb << " GB of DAG data generated in " << dagTime.count() << " ms." << endl << flush;
 		}
-	} catch (cl::Error const& err) {
-		logerror << ethCLErrorHelper("OpenCL init failed", err) << endl << flush;
-		BOOST_THROW_EXCEPTION(GPUFailure());
+	} catch (std::exception const& err) {
+		logerror << "OpenCL init failed: " << err.what() << endl << flush;
+		exit(-1);
 	}
 	return true;
 }

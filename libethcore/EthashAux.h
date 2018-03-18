@@ -19,7 +19,6 @@
 #include <libdevcore/Worker.h>
 #include <libdevcore/Common.h>
 #include <libdevcore/SHA3.h>
-#include "Exceptions.h"
 
 
 namespace dev

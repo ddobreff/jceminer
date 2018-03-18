@@ -196,18 +196,19 @@ void PoolManager::tryReconnect()
 		}
 		return;
 	}
-
 	{
 		Guard l(x_log);
 		logwarn << "Retrying in 3 seconds.\n" << flush;
 	}
+
 	this_thread::sleep_for(chrono::seconds(3));
 
-	// Fallback logic, tries current connection multiple times and then switches to
-	// one of the other connections.
 	if (m_reconnectTries >= m_reconnectTry) {
 		m_reconnectTry++;
 		m_client.connect();
-	} else
-		BOOST_THROW_EXCEPTION(StratumTimeout());
+		return;
+	}
+
+	logerror << "Could not connect.\n";
+	exit(-1);
 }
