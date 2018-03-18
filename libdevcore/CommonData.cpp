@@ -14,7 +14,6 @@
 
 #include "CommonData.h"
 #include <cstdlib>
-#include "Exceptions.h"
 
 using namespace std;
 using namespace dev;
@@ -52,7 +51,7 @@ int dev::fromHex(char _i, WhenError _throw)
 	if (_i >= 'A' && _i <= 'F')
 		return _i - 'A' + 10;
 	if (_throw == WhenError::Throw)
-		BOOST_THROW_EXCEPTION(BadHexCharacter());
+		throw std::runtime_error("Bad hex character");
 	else
 		return -1;
 }
@@ -68,7 +67,7 @@ bytes dev::fromHex(std::string const& _s, WhenError _throw)
 		if (h != -1)
 			ret.push_back(h);
 		else if (_throw == WhenError::Throw)
-			BOOST_THROW_EXCEPTION(BadHexCharacter());
+			throw std::runtime_error("Bad hex character");
 		else
 			return bytes();
 	}
@@ -78,7 +77,7 @@ bytes dev::fromHex(std::string const& _s, WhenError _throw)
 		if (h != -1 && l != -1)
 			ret.push_back((byte)(h * 16 + l));
 		else if (_throw == WhenError::Throw)
-			BOOST_THROW_EXCEPTION(BadHexCharacter());
+			throw std::runtime_error("Bad hex character");
 		else
 			return bytes();
 	}

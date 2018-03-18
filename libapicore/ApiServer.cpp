@@ -15,7 +15,7 @@
 #include "ApiServer.h"
 
 #include <miner-buildinfo.h>
-#include <libethcore/Exceptions.h>
+#include <libdevcore/Log.h>
 
 ApiServer::ApiServer(AbstractServerConnector* conn, serverVersion_t type, Farm& farm,
                      bool& readonly) : AbstractServer(*conn, type), m_farm(farm)
@@ -140,8 +140,8 @@ void ApiServer::doMinerRestart(const Json::Value& request, Json::Value& response
 {
 	(void) request; // unused
 	(void) response; // unused
-
-	BOOST_THROW_EXCEPTION(MinerRestart());
+	logerror << "Restart from API\n";
+	exit(-1);
 }
 
 void ApiServer::doMinerReboot(const Json::Value& request, Json::Value& response)

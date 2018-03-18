@@ -28,7 +28,6 @@
 #include <boost/tokenizer.hpp>
 
 #include <libethcore/MinerCommon.h>
-#include <libethcore/Exceptions.h>
 #include <libdevcore/SHA3.h>
 #include <libethcore/EthashAux.h>
 #include <libethcore/Farm.h>
@@ -57,8 +56,6 @@ bool g_report_stratum_hashrate = false;
 string g_email;
 unsigned g_worktimeout = 180;
 unsigned g_stopAfter;
-
-class BadArgument: public Exception {};
 
 string version()
 {
@@ -154,7 +151,7 @@ public:
 			ifstream ifs(vm["file"].as<string>().c_str());
 			if (!ifs) {
 				cerr << "Couldn't read file " << vm["file"].as<string>() << ".\n";
-				BOOST_THROW_EXCEPTION(BadArgument());
+				exit(-1);
 			}
 			// Read the whole file into a string
 			stringstream ss;
@@ -187,20 +184,20 @@ public:
 
 		if (vm.count("pool") != 1) {
 			cerr << "Specify a single pool URL\n";
-			BOOST_THROW_EXCEPTION(BadArgument());
+			exit(-1);
 		}
 
 		string url = vm["pool"].as<string>();
 		URI uri;
 		try {
 			uri = url;
-		} catch (...) {
-			cerr << "Bad endpoint address: " << url << endl;
-			BOOST_THROW_EXCEPTION(BadArgument());
+		} catch (std::exception const& e) {
+			cerr << "Bad endpoint address: " << url << " - " << e.what() << endl;
+			exit(-1);
 		}
 		if (!uri.KnownScheme()) {
 			cerr << "Unknown URI scheme " << uri.Scheme() << endl;
-			BOOST_THROW_EXCEPTION(BadArgument());
+			exit(-1);
 		}
 		m_endpoint = PoolConnection(uri);
 
@@ -212,7 +209,7 @@ public:
 
 		if (m_parallelHash == 0 || m_parallelHash > 8) {
 			cerr << "Cuda parallel hash must be greater than 0 and less than or equal to 8.\n";
-			BOOST_THROW_EXCEPTION(BadArgument());
+			exit(-1);
 		}
 
 		m_cudaNoEval = vm["cu-noeval"].as<bool>();
@@ -227,26 +224,26 @@ public:
 		if (m_openclThreadsPerHash != 1 && m_openclThreadsPerHash != 2 && m_openclThreadsPerHash != 4
 		    && m_openclThreadsPerHash != 8) {
 			cerr << "Opencl parallel hash must be 1, 2, 4, or 8.\n";
-			BOOST_THROW_EXCEPTION(BadArgument());
+			exit(-1);
 		}
 #endif
 
 #if ETH_ETHASHCL && ETH_ETHASHCUDA
 		if ((m_openclDeviceCount + m_cudaDeviceCount) > MAX_GPUS) {
 			cerr << "Can only support up to " << MAX_GPUS << ".\n";
-			BOOST_THROW_EXCEPTION(BadArgument());
+			exit(-1);
 		}
 #endif
 #if ETH_ETHASHCL && !ETH_ETHASHCUDA
 		if (m_openclDeviceCount > MAX_GPUS) {
 			cerr << "Can only support up to " << MAX_GPUS << ".\n";
-			BOOST_THROW_EXCEPTION(BadArgument());
+			exit(-1);
 		}
 #endif
 #if !ETH_ETHASHCL && ETH_ETHASHCUDA
 		if (m_cudaDeviceCount > MAX_GPUS) {
 			cerr << "Can only support up to " << MAX_GPUS << ".\n";
-			BOOST_THROW_EXCEPTION(BadArgument());
+			exit(-1);
 		}
 #endif
 
@@ -264,7 +261,7 @@ public:
 			m_minerType = MinerType::Mixed;
 		else {
 			cerr << "Specify a miner type\n";
-			BOOST_THROW_EXCEPTION(BadArgument());
+			exit(-1);
 		}
 
 	}
@@ -453,16 +450,16 @@ int main(int argc, char** argv)
 		// Mining options:
 		m.interpretOption(argc, argv);
 
-	} catch (BadArgument ex) {
-		cerr << "Error: " << ex.what() << "\n";
+	} catch (std::exception const& ex) {
+		cerr << "Error parsing arguments: " << ex.what() << "\n";
 		exit(-1);
 	}
 
 	try {
 		m.execute();
 	} catch (std::exception& ex) {
-		cerr << "Error: " << ex.what() << "\n";
-		return 1;
+		cerr << "Error running miner: " << ex.what() << "\n";
+		exit(-1);
 	}
 
 	return 0;

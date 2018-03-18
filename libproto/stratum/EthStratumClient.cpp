@@ -103,11 +103,13 @@ void EthStratumClient::connect()
 		char* certPath = getenv("SSL_CERT_FILE");
 		try {
 			ctx.load_verify_file(certPath ? certPath : "/etc/ssl/certs/ca-certificates.crt");
-		} catch (...) {
-			logerror << "Failed to load ca certificates. Either the file '/etc/ssl/certs/ca-certificates.crt' does not exist" <<
-			         endl << flush;
-			logerror << "or the environment variable SSL_CERT_FILE is set to an invalid or inaccessable file." << endl << flush;
-			logerror << "It is possible that certificate verification can fail." << endl << flush;
+		} catch (std::exception const& e) {
+			Guard l(x_log);
+			logerror << e.what() << endl << flush;
+			logwarn << "Failed to load ca certificates. Either the file '/etc/ssl/certs/ca-certificates.crt' does not exist" <<
+			        endl << flush;
+			logwarn << "or the environment variable SSL_CERT_FILE is set to an invalid or inaccessable file." << endl << flush;
+			logwarn << "It is possible that certificate verification can fail." << endl << flush;
 		}
 	} else
 		m_socket = new boost::asio::ip::tcp::socket(m_io_service);

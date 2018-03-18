@@ -14,6 +14,7 @@
 
 #include "EthashAux.h"
 #include <libethash/internal.h>
+#include <libdevcore/Log.h>
 
 using namespace std;
 using namespace chrono;
@@ -78,8 +79,10 @@ EthashAux::LightAllocation::LightAllocation(h256 const& _seedHash)
 {
 	uint64_t blockNumber = EthashAux::number(_seedHash);
 	light = ethash_light_new(blockNumber);
-	if (!light)
-		BOOST_THROW_EXCEPTION(LiteCreationFailure());
+	if (!light) {
+		loginfo << "Light creation error.\n";
+		exit(-1);
+	}
 	size = ethash_get_cachesize(blockNumber);
 }
 
@@ -96,8 +99,10 @@ bytesConstRef EthashAux::LightAllocation::data() const
 Result EthashAux::LightAllocation::compute(h256 const& _headerHash, uint64_t _nonce) const
 {
 	ethash_return_value r = ethash_light_compute(light, *(ethash_h256_t*)_headerHash.data(), _nonce);
-	if (!r.success)
-		BOOST_THROW_EXCEPTION(DAGCreationFailure());
+	if (!r.success) {
+		loginfo << "DAG creation error.\n";
+		exit(-1);
+	}
 	return Result{h256((uint8_t*)&r.result, h256::ConstructFromPointer), h256((uint8_t*)&r.mix_hash, h256::ConstructFromPointer)};
 }
 
@@ -105,7 +110,8 @@ Result EthashAux::eval(h256 const& _seedHash, h256 const& _headerHash, uint64_t 
 {
 	try {
 		return get().light(_seedHash)->compute(_headerHash, _nonce);
-	} catch (...) {
+	} catch (std::exception const& e) {
+		(void)e;
 		return Result{~h256(), h256()};
 	}
 }
