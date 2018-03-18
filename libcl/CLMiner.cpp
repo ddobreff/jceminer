@@ -35,10 +35,6 @@ CLKernelName CLMiner::s_clKernelName;
 
 constexpr size_t c_maxSearchResults = 1;
 
-/**
-        Returns the name of a numerical cl_int error
-        Takes constants from CL/cl.h and returns them in a readable format
-*/
 static const char* strClError(cl_int err)
 {
 
@@ -187,14 +183,6 @@ static const char* strClError(cl_int err)
 	return "Unknown CL error encountered";
 }
 
-/**
-        Prints cl::Errors in a uniform way
-        @param msg text prepending the error message
-        @param clerr cl:Error object
-
-        Prints errors in the format:
-        msg: what(), string err() (numeric err())
-*/
 static std::string ethCLErrorHelper(const char* msg, cl::Error const& clerr)
 {
 	std::ostringstream osstream;
@@ -655,20 +643,13 @@ bool CLMiner::init(const h256& seed)
 		cl::Program program(m_context, sources), binaryProgram;
 		try {
 			program.build({device}, options);
-			{
-				Guard l(x_log);
-				loginfo << "Build info: " << program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(device) << endl << flush;
-			}
 		} catch (cl::Error const&) {
-			{
-				Guard l(x_log);
-				logerror << "Build info: " << program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(device) << endl << flush;
-			}
+			logerror << "Build info: " << program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(device) << endl << flush;
 			return false;
 		}
 
-		/*      If we have a binary kernel, we load it in tandem with the opencl,
-		        that way, we can use the dag generate opencl code */
+		// If we have a binary kernel, we load it in tandem with the opencl,
+		// that way, we can use the dag generate opencl code
 		bool loadedBinary = false;
 		unsigned int computeUnits = device.getInfo<CL_DEVICE_MAX_COMPUTE_UNITS>();
 
@@ -702,7 +683,7 @@ bool CLMiner::init(const h256& seed)
 					program.build({ device }, options);
 					{
 						Guard l(x_log);
-						loginfo << "Build info success: " << program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(device) << endl << flush;
+						loginfo << fname_strm.str() << " sucessfully loaded.\n" << flush;
 					}
 					binaryProgram = program;
 					loadedBinary = true;
