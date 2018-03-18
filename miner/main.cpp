@@ -168,18 +168,17 @@ public:
 		}
 
 		notify(vm);
-
 		if (vm["help"].as<bool>()) {
 			cout << desc << "\n";
 			exit(0);
 		}
 
-		if (vm["version"].as<bool>()) {
+		if (vm["vers"].as<bool>()) {
 			cout << version() << "\n";
 			exit(0);
 		}
 
-		if (vm["devices"].as<bool>()) {
+		if (vm["devs"].as<bool>()) {
 			m_shouldListDevices = true;
 			return;
 		}
@@ -249,9 +248,9 @@ public:
 		}
 #endif
 
-		g_logSwitchTime = vm["log-switch"].as<bool>();
+		g_logSwitchTime = vm["l-switch"].as<bool>();
 
-		g_logJson = vm["log-json"].as<bool>();
+		g_logJson = vm["l-json"].as<bool>();
 
 		g_report_stratum_hashrate = vm["hash"].as<bool>();
 
@@ -259,7 +258,7 @@ public:
 			m_minerType = MinerType::CL;
 		else if (vm["cu"].as<bool>())
 			m_minerType = MinerType::CUDA;
-		else if (vm["mixed"].as<bool>())
+		else if (vm["mix"].as<bool>())
 			m_minerType = MinerType::Mixed;
 		else {
 			cerr << "Specify a miner type\n";
