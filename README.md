@@ -14,9 +14,8 @@ If you're going to try to use this, the release branches (1.0.0, 1.0.1, etc...) 
 For a full list of available command options, please run
 
 ```
-ethminer --help
-
 Options:
+
   -h [ --help ]               produce help message.
                               
   -d [ --devs ]               List devices.
@@ -49,20 +48,20 @@ Options:
                               
                               Stratum versions:
                               stratum  - ethpool, ethermine, coinotron, mph, nanopool
-                              eth-proxy - dwarfpool, f2pool, nanopool (required for hashrate reporting to work with nanopool)
+                              eth-proxy - dwarfpool, f2pool, nanopool (required for hashrate reporting to nanopool)
                               nicehash - Ethereum Stratum
                               
   --dag arg (=0)              DAG load mode. 0 - parallel, 1 - sequential, 2 - single.
                               
-  --l-switch                  Log job switch time.
+  --switch                    Log job switch time.
                               
-  --l-json                    Log formatted json messaging.
+  --json                      Log formatted json messaging.
                               
   -G [ --cl ]                 Opencl mode.
                               
   -U [ --cu ]                 Cuda mode.
                               
-  -X [ --mix ]                Mixed opencl and cuda mode. Use OpenCL + CUDA in a system with mixed AMD/Nvidia cards. May require setting --cl-platform 1 or 2.
+  -X [ --mix ]                Mixed opencl and cuda mode. Use OpenCL + CUDA in a system with mixed AMD/Nvidia cards. May require setting --cl-plat 1 or 2.
                               
   -a [ --api-port ] arg (=0)  API port number. 0 - disable, < 0 - read-only.
                               
@@ -70,15 +69,7 @@ Options:
                               
   --cl-devs arg               Opencl device list.
                               
-  --cl-para arg (=8)          Opencl parallel hashes.
-                              
   --cl-kern arg (=1)          Opencl kernel. 0 - Stable, 1 - Experimental, 2 - binary.
-                              
-  --cl-tweak arg (=7)         Opencl wave tweak.
-                              
-  --cl-global arg (=8192)     Opencl global work size. 0 - Auto.
-                              
-  --cl-local arg (=64)        Opencl local work size.
                               
   --cu-grid arg (=8192)       Cuda grid size.
                               
@@ -94,6 +85,8 @@ Options:
                               
   --cu-noeval                 Cuda bypass software result evaluation.
                               
+  --stop arg (=0)             Stop after seconds
+
 ```
 
 ### Building from source

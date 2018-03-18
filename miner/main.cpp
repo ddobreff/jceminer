@@ -111,12 +111,12 @@ public:
 		("pool,p", value<string>(&m_endpoint_url), poolDesc.str().c_str())
 		("dag", value<unsigned>(&m_dagLoadMode)->default_value(0),
 		 "DAG load mode. 0 - parallel, 1 - sequential, 2 - single.\n")
-		("l-switch", bool_switch()->default_value(false), "Log job switch time.\n")
-		("l-json", bool_switch()->default_value(false), "Log formatted json messaging.\n")
+		("switch", bool_switch()->default_value(false), "Log job switch time.\n")
+		("json", bool_switch()->default_value(false), "Log formatted json messaging.\n")
 		("cl,G", bool_switch()->default_value(false), "Opencl mode.\n") // set m_minerType = MinerType::CL;
 		("cu,U", bool_switch()->default_value(false), "Cuda mode.\n") // set m_minerType = MinerType::CUDA;
 		("mix,X", bool_switch()->default_value(false),
-		 "Mixed opencl and cuda mode. Use OpenCL + CUDA in a system with mixed AMD/Nvidia cards. May require setting --cl-platform 1 or 2.\n")
+		 "Mixed opencl and cuda mode. Use OpenCL + CUDA in a system with mixed AMD/Nvidia cards. May require setting --cl-plat 1 or 2.\n")
 #if API_CORE
 		("api-port,a", value<unsigned>(&m_api_port)->default_value(0), "API port number. 0 - disable, < 0 - read-only.\n")
 #endif
@@ -125,7 +125,6 @@ public:
 		("cl-devs", value<std::vector<unsigned>>()->multitoken(), "Opencl device list.\n")
 		("cl-kern", value<unsigned>(&m_openclSelectedKernel)->default_value(1),
 		 "Opencl kernel. 0 - Stable, 1 - Experimental, 2 - binary.\n")
-		("cl-local", value<unsigned>(&m_localWorkSize)->default_value(64), "Opencl local work size.\n")
 #endif
 #if ETH_ETHASHCUDA
 		("cu-grid", value<unsigned>(&m_cudaGridSize)->default_value(8192), "Cuda grid size.\n")
@@ -238,9 +237,9 @@ public:
 		}
 #endif
 
-		g_logSwitchTime = vm["l-switch"].as<bool>();
+		g_logSwitchTime = vm["switch"].as<bool>();
 
-		g_logJson = vm["l-json"].as<bool>();
+		g_logJson = vm["json"].as<bool>();
 
 		g_report_stratum_hashrate = vm["hash"].as<bool>();
 
