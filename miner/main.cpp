@@ -56,6 +56,7 @@ extern bool g_logJson;
 bool g_report_stratum_hashrate = false;
 string g_email;
 unsigned g_worktimeout = 180;
+unsigned g_stopAfter;
 
 class BadArgument: public Exception {};
 
@@ -142,6 +143,7 @@ public:
 		("cu-stream", value<unsigned>(&m_numStreams)->default_value(2), "Cuda streams\n")
 		("cu-noeval", bool_switch()->default_value(false), "Cuda bypass software result evaluation.\n")
 #endif
+		("stop", value<unsigned>(&g_stopAfter)->default_value(0), "Stop after seconds\n")
 		;
 
 		variables_map vm;
