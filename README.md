@@ -98,6 +98,13 @@ Options:
 
 ### Building from source
 
+In addition to the CUDA dev tools, you will require the following packages installed to build the miner: git cmake mesa-common-dev libidn11-dev libgoogle-perftools-dev
+
+
+   ```sh
+   sudo apt install git cmake mesa-common-dev libidn11-dev libgoogle-perftools-dev
+   ```
+
 This project uses [CMake] and [Hunter] package manager.
 
 1. Make sure git submodules are up to date
