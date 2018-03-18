@@ -282,7 +282,7 @@ public:
 
 		{
 			Guard l(x_log);
-			loginfo << EthLime << version() << EthReset << endl << flush;
+			loginfo << EthLime << version() << EthReset << endl;
 		}
 
 		if (m_minerType == MinerType::CL || m_minerType == MinerType::Mixed) {

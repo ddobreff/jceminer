@@ -105,11 +105,11 @@ void EthStratumClient::connect()
 			ctx.load_verify_file(certPath ? certPath : "/etc/ssl/certs/ca-certificates.crt");
 		} catch (std::exception const& e) {
 			Guard l(x_log);
-			logerror << e.what() << endl << flush;
+			logerror << e.what() << endl;
 			logwarn << "Failed to load ca certificates. Either the file '/etc/ssl/certs/ca-certificates.crt' does not exist" <<
-			        endl << flush;
-			logwarn << "or the environment variable SSL_CERT_FILE is set to an invalid or inaccessable file." << endl << flush;
-			logwarn << "It is possible that certificate verification can fail." << endl << flush;
+			        endl;
+			logwarn << "or the environment variable SSL_CERT_FILE is set to an invalid or inaccessable file." << endl;
+			logwarn << "It is possible that certificate verification can fail." << endl;
 		}
 	} else
 		m_socket = new boost::asio::ip::tcp::socket(m_io_service);
@@ -151,7 +151,7 @@ void EthStratumClient::resolve_handler(const boost::system::error_code& ec, tcp:
 		{
 			Guard l(x_log);
 			logwarn << "Could not resolve host " << m_connection.Host() << ':' << m_connection.Port() << ", " << ec.message() <<
-			        endl << flush;
+			        endl;
 		}
 		exit(-1);
 	}
@@ -205,45 +205,45 @@ void EthStratumClient::connect_handler(const boost::system::error_code& ec, tcp:
 			if (hec) {
 				{
 					Guard l(x_log);
-					logerror << "SSL/TLS Handshake failed: " << hec.message() << endl << flush;
+					logerror << "SSL/TLS Handshake failed: " << hec.message() << endl;
 				}
 				if (hec.value() == 337047686) { // certificate verification failed
 					{
 						Guard l(x_log);
-						loginfo << "This can have multiple reasons:" << endl << flush;
+						loginfo << "This can have multiple reasons:" << endl;
 					}
 					{
 						Guard l(x_log);
-						loginfo << "* Root certs are either not installed or not found" << endl << flush;
+						loginfo << "* Root certs are either not installed or not found" << endl;
 					}
 					{
 						Guard l(x_log);
-						loginfo << "* Pool uses a self-signed certificate" << endl << flush;
+						loginfo << "* Pool uses a self-signed certificate" << endl;
 					}
 					{
 						Guard l(x_log);
-						loginfo << "Possible fixes:" << endl << flush;
+						loginfo << "Possible fixes:" << endl;
 					}
 					{
 						Guard l(x_log);
-						loginfo << "* Make sure the file '/etc/ssl/certs/ca-certificates.crt' exists and is accessable" << endl << flush;
+						loginfo << "* Make sure the file '/etc/ssl/certs/ca-certificates.crt' exists and is accessable" << endl;
 					}
 					{
 						Guard l(x_log);
 						loginfo << "* Export the correct path via 'export SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt' to the correct file"
-						        << endl << flush;
+						        << endl;
 					}
 					{
 						Guard l(x_log);
-						loginfo << "  On most systems you can install the 'ca-certificates' package" << endl << flush;
+						loginfo << "  On most systems you can install the 'ca-certificates' package" << endl;
 					}
 					{
 						Guard l(x_log);
-						loginfo << "  You can also get the latest file here: https://curl.haxx.se/docs/caextract.html" << endl << flush;
+						loginfo << "  You can also get the latest file here: https://curl.haxx.se/docs/caextract.html" << endl;
 					}
 					{
 						Guard l(x_log);
-						loginfo << "* Disable certificate verification all-together via command-line option." << endl << flush;
+						loginfo << "* Disable certificate verification all-together via command-line option." << endl;
 					}
 				}
 				exit(-1);
@@ -293,7 +293,7 @@ void EthStratumClient::connect_handler(const boost::system::error_code& ec, tcp:
 		{
 			Guard l(x_log);
 			logerror << "Could not connect to stratum server " << m_connection.Host() << ':' << m_connection.Port() << ", " <<
-			         ec.message() << endl << flush;
+			         ec.message() << endl;
 		}
 		exit(-1);
 	}
@@ -353,7 +353,7 @@ void EthStratumClient::handleResponse(const boost::system::error_code& ec)
 		readline();
 	else {
 		Guard l(x_log);
-		logerror << "Handle response failed: " + ec.message() << endl << flush;
+		logerror << "Handle response failed: " + ec.message() << endl;
 	}
 }
 
@@ -376,11 +376,11 @@ void EthStratumClient::readResponse(const boost::system::error_code& ec, std::si
 				processReponse(responseObject);
 			else {
 				Guard l(x_log);
-				logerror << "Parse response failed: " + reader.getFormattedErrorMessages() << endl << flush;
+				logerror << "Parse response failed: " + reader.getFormattedErrorMessages() << endl;
 			}
 		} else if (m_connection.Version() != EthStratumClient::ETHPROXY) {
 			Guard l(x_log);
-			logerror << "Discarding incomplete response" << endl << flush;
+			logerror << "Discarding incomplete response" << endl;
 		}
 		if (m_connected)
 			readline();
@@ -388,7 +388,7 @@ void EthStratumClient::readResponse(const boost::system::error_code& ec, std::si
 		if (m_connected) {
 			{
 				Guard l(x_log);
-				logerror << "Read response failed: " + ec.message() << endl << flush;
+				logerror << "Read response failed: " + ec.message() << endl;
 			}
 			exit(-1);
 		}
@@ -401,7 +401,7 @@ void EthStratumClient::processExtranonce(std::string& enonce)
 
 	{
 		Guard l(x_log);
-		loginfo << "Extranonce set to " + enonce << endl << flush;
+		loginfo << "Extranonce set to " + enonce << endl;
 	}
 
 	for (int i = enonce.length(); i < 16; ++i) enonce += "0";
@@ -412,12 +412,12 @@ void EthStratumClient::processReponse(Json::Value& responseObject)
 {
 	if (g_logJson) {
 		Guard l(x_log);
-		loginfo << "JSON RX" << endl << responseObject << endl << flush;
+		loginfo << "JSON RX" << endl << responseObject << endl;
 	}
 	Json::Value error = responseObject.get("error", {});
 	if (error.isArray()) {
 		Guard l(x_log);
-		logerror << error.get(1, "Unknown error").asString() << endl << flush;
+		logerror << error.get(1, "Unknown error").asString() << endl;
 	}
 	std::stringstream json;
 	std::ostream os(&m_requestBuffer);
@@ -438,7 +438,7 @@ void EthStratumClient::processReponse(Json::Value& responseObject)
 		if (m_connection.Version() != EthStratumClient::ETHPROXY) {
 			{
 				Guard l(x_log);
-				loginfo << "Subscribed to stratum server" << endl << flush;
+				loginfo << "Subscribed to stratum server" << endl;
 			}
 			json << "{\"id\": 3, \"method\": \"mining.authorize\", \"params\": [\"" << m_connection.User() << "\",\"" <<
 			     m_connection.Pass() << "\"]}\n";
@@ -461,14 +461,14 @@ void EthStratumClient::processReponse(Json::Value& responseObject)
 		if (!m_authorized) {
 			{
 				Guard l(x_log);
-				logerror << "Worker not authorized:" + m_connection.User() << endl << flush;
+				logerror << "Worker not authorized:" + m_connection.User() << endl;
 			}
 			exit(-1);
 			return;
 		}
 		{
 			Guard l(x_log);
-			loginfo << "Authorized worker " + m_connection.User() << endl << flush;
+			loginfo << "Authorized worker " + m_connection.User() << endl;
 		}
 		break;
 	case 4: {
@@ -558,7 +558,7 @@ void EthStratumClient::processReponse(Json::Value& responseObject)
 				if (m_nextWorkDifficulty <= 0.0001) m_nextWorkDifficulty = 0.0001;
 				{
 					Guard l(x_log);
-					loginfo << "Difficulty set to "  << m_nextWorkDifficulty << endl << flush;
+					loginfo << "Difficulty set to "  << m_nextWorkDifficulty << endl;
 				}
 			}
 		} else if (method == "mining.set_extranonce" && m_connection.Version() == EthStratumClient::ETHEREUMSTRATUM) {
@@ -586,7 +586,7 @@ void EthStratumClient::stop_timeout_handler(const boost::system::error_code& ec)
 	if (!ec) {
 		{
 			Guard l(x_log);
-			logerror << "Sopping as requested.\n" << flush;
+			logerror << "Sopping as requested.\n";
 		}
 		exit(-1);
 	}
@@ -597,7 +597,7 @@ void EthStratumClient::work_timeout_handler(const boost::system::error_code& ec)
 	if (!ec) {
 		{
 			Guard l(x_log);
-			logerror << "No new work received in " << g_worktimeout << " seconds.\n" << flush;
+			logerror << "No new work received in " << g_worktimeout << " seconds.\n";
 		}
 		exit(-1);
 	}
@@ -608,7 +608,7 @@ void EthStratumClient::response_timeout_handler(const boost::system::error_code&
 	if (!ec) {
 		{
 			Guard l(x_log);
-			logerror << "No no response received in 2 seconds." << endl << flush;
+			logerror << "No no response received in 2 seconds." << endl;
 		}
 		exit(-1);
 	}
