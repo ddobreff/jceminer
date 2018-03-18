@@ -39,10 +39,10 @@ typedef struct {
 } clConfig;
 
 std::map <std::string, clConfig> optimalConfigs = {
-//						group	mult	threads	tweak
-	{"stable", 			{64,  	32768,  8, 		0}},
-	{"experimental", 	{256, 	32768, 	2, 		0}},
-	{"ellesmere", 		{64, 	32768, 	8, 		7}}
+//                      group   mult    threads tweak
+	{"stable",          {64,    32768,  8,      0}},
+	{"experimental",    {256,   32768,  2,      0}},
+	{"ellesmere",       {64,    32768,  8,      7}}
 };
 
 namespace
