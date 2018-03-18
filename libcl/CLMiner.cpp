@@ -455,6 +455,8 @@ bool CLMiner::init(const h256& seed)
 		m_threadTweak = conf.workTweak;
 
 		unsigned int computeUnits = device.getInfo<CL_DEVICE_MAX_COMPUTE_UNITS>();
+		// Apparently some 36 CU devices return a bogus 14!!!
+		computeUnits = computeUnits == 14 ? 36 : computeUnits;
 		logwarn << workerName() << " - adjusting CL work multiplier for " << computeUnits << " CUs.\n";
 		m_workMultiplier = (m_workMultiplier * 36) / computeUnits;
 		logwarn << workerName() << " - threads per hash " << m_threadsPerHash
