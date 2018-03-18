@@ -111,24 +111,20 @@ public:
 		("pool,p", value<string>(&m_endpoint_url), poolDesc.str().c_str())
 		("dag", value<unsigned>(&m_dagLoadMode)->default_value(0),
 		 "DAG load mode. 0 - parallel, 1 - sequential, 2 - single.\n")
-		("l-switch", bool_switch()->default_value(false), "Log job switch time.\n")
-		("l-json", bool_switch()->default_value(false), "Log formatted json messaging.\n")
+		("switch", bool_switch()->default_value(false), "Log job switch time.\n")
+		("json", bool_switch()->default_value(false), "Log formatted json messaging.\n")
 		("cl,G", bool_switch()->default_value(false), "Opencl mode.\n") // set m_minerType = MinerType::CL;
 		("cu,U", bool_switch()->default_value(false), "Cuda mode.\n") // set m_minerType = MinerType::CUDA;
 		("mix,X", bool_switch()->default_value(false),
-		 "Mixed opencl and cuda mode. Use OpenCL + CUDA in a system with mixed AMD/Nvidia cards. May require setting --cl-platform 1 or 2.\n")
+		 "Mixed opencl and cuda mode. Use OpenCL + CUDA in a system with mixed AMD/Nvidia cards. May require setting --cl-plat 1 or 2.\n")
 #if API_CORE
 		("api-port,a", value<unsigned>(&m_api_port)->default_value(0), "API port number. 0 - disable, < 0 - read-only.\n")
 #endif
 #if ETH_ETHASHCL
 		("cl-plat", value<unsigned>(&m_openclPlatform)->default_value(0), "Opencl platform.\n")
 		("cl-devs", value<std::vector<unsigned>>()->multitoken(), "Opencl device list.\n")
-		("cl-para", value<unsigned>(&m_openclThreadsPerHash)->default_value(8), "Opencl parallel hashes.\n")
 		("cl-kern", value<unsigned>(&m_openclSelectedKernel)->default_value(1),
 		 "Opencl kernel. 0 - Stable, 1 - Experimental, 2 - binary.\n")
-		("cl-tweak", value<unsigned>(&m_openclWavetweak)->default_value(7), "Opencl wave tweak.\n")
-		("cl-global", value<unsigned>(&m_globalWorkSizeMultiplier)->default_value(8192), "Opencl global work size. 0 - Auto.\n")
-		("cl-local", value<unsigned>(&m_localWorkSize)->default_value(64), "Opencl local work size.\n")
 #endif
 #if ETH_ETHASHCUDA
 		("cu-grid", value<unsigned>(&m_cudaGridSize)->default_value(8192), "Cuda grid size.\n")
@@ -220,12 +216,6 @@ public:
 			m_openclDeviceCount = vm["cl-devices"].as<vector<unsigned>>().size();
 			m_openclDevices = vm["cl-devices"].as<vector<unsigned>>();
 		}
-
-		if (m_openclThreadsPerHash != 1 && m_openclThreadsPerHash != 2 && m_openclThreadsPerHash != 4
-		    && m_openclThreadsPerHash != 8) {
-			cerr << "Opencl parallel hash must be 1, 2, 4, or 8.\n";
-			exit(-1);
-		}
 #endif
 
 #if ETH_ETHASHCL && ETH_ETHASHCUDA
@@ -247,9 +237,9 @@ public:
 		}
 #endif
 
-		g_logSwitchTime = vm["l-switch"].as<bool>();
+		g_logSwitchTime = vm["switch"].as<bool>();
 
-		g_logJson = vm["l-json"].as<bool>();
+		g_logJson = vm["json"].as<bool>();
 
 		g_report_stratum_hashrate = vm["hash"].as<bool>();
 
@@ -293,14 +283,9 @@ public:
 			}
 
 			CLMiner::setCLKernel(m_openclSelectedKernel);
-			CLMiner::setKernelTweak(m_openclWavetweak);
-			CLMiner::setThreadsPerHash(m_openclThreadsPerHash);
 
 			if (!CLMiner::configureGPU(
-			        m_localWorkSize,
-			        m_globalWorkSizeMultiplier,
 			        m_openclPlatform,
-			        0,
 			        m_dagLoadMode,
 			        m_dagCreateDevice
 			    ))
@@ -398,9 +383,6 @@ private:
 	unsigned m_openclSelectedKernel = 0;  ///< A numeric value for the selected OpenCL kernel
 	unsigned m_openclDeviceCount = 0;
 	vector<unsigned> m_openclDevices = vector<unsigned>(MAX_MINERS, -1);
-	unsigned m_openclThreadsPerHash = 8;
-	unsigned m_openclWavetweak = 7;
-	unsigned m_globalWorkSizeMultiplier;
 	unsigned m_localWorkSize;
 #endif
 #if ETH_ETHASHCUDA

@@ -67,24 +67,13 @@ public:
 	static unsigned getNumDevices();
 	static void listDevices();
 	static bool configureGPU(
-	    unsigned _localWorkSize,
-	    unsigned _globalWorkSizeMultiplier,
 	    unsigned _platformId,
-	    uint64_t _currentBlock,
 	    unsigned _dagLoadMode,
 	    unsigned _dagCreateDevice
 	);
 	static void setNumInstances(unsigned _instances)
 	{
 		s_numInstances = std::min<unsigned>(_instances, getNumDevices());
-	}
-	static void setThreadsPerHash(unsigned _threadsPerHash)
-	{
-		s_threadsPerHash = _threadsPerHash;
-	}
-	static void setKernelTweak(unsigned _tweakValue)
-	{
-		s_threadTweak = _tweakValue;
 	}
 	static void setDevices(const vector<unsigned>& _devices, unsigned _selectedDeviceCount)
 	{
@@ -111,20 +100,15 @@ private:
 	cl::Buffer m_light;
 	cl::Buffer m_header;
 	cl::Buffer m_searchBuffer;
-	unsigned m_globalWorkSize = 0;
-	unsigned m_workgroupSize = 0;
+	unsigned m_workMultiplier;
+	unsigned m_workgroupSize;
+	unsigned m_threadsPerHash;
+	unsigned m_threadTweak;
 
 	static unsigned s_platformId;
 	static unsigned s_numInstances;
-	static unsigned s_threadsPerHash;
-	static uint32_t s_threadTweak;
 	static CLKernelName s_clKernelName;
 	static vector<int> s_devices;
-
-	/// The local work size for the search
-	static unsigned s_workgroupSize;
-	/// The initial global work size for the searches
-	static unsigned s_initialGlobalWorkSize;
 };
 struct mod_optimized {
 	unsigned int  factor;
