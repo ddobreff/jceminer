@@ -27,13 +27,23 @@ namespace dev
 namespace eth
 {
 
-unsigned CLMiner::s_workgroupSize;
-unsigned CLMiner::s_initialGlobalWorkSize;
-unsigned CLMiner::s_threadsPerHash;
-unsigned CLMiner::s_threadTweak;
 CLKernelName CLMiner::s_clKernelName;
 
 constexpr size_t c_maxSearchResults = 1;
+
+typedef struct {
+	unsigned workGroupSize;
+	unsigned workMultiplier;
+	unsigned workThreads;
+	unsigned workTweak;
+} clConfig;
+
+std::map <std::string, clConfig> optimalConfigs = {
+//						group	mult	threads	tweak
+	{"stable", 			{64,  	32768,  8, 		0}},
+	{"experimental", 	{256, 	32768, 	2, 		0}},
+	{"ellesmere", 		{64, 	32768, 	8, 		7}}
+};
 
 namespace
 {
@@ -170,7 +180,7 @@ void CLMiner::workLoop()
 
 			// Run the kernel.
 			m_searchKernel.setArg(3, startNonce);
-			m_queue.enqueueNDRangeKernel(m_searchKernel, cl::NullRange, m_globalWorkSize, m_workgroupSize);
+			m_queue.enqueueNDRangeKernel(m_searchKernel, cl::NullRange, m_workMultiplier * m_workgroupSize, m_workgroupSize);
 
 			// Report results while the kernel is running.
 			// It takes some time because ethash must be re-evaluated on CPU.
@@ -190,10 +200,10 @@ void CLMiner::workLoop()
 			current = w;        // kernel now processing newest work
 			current.startNonce = startNonce;
 			// Increase start nonce for following kernel execution.
-			startNonce += m_globalWorkSize;
+			startNonce += m_workMultiplier * m_workgroupSize;
 
 			// Report hash count
-			addHashCount(m_globalWorkSize);
+			addHashCount(m_workMultiplier * m_workgroupSize);
 		}
 
 		// Make sure the last buffer write has finished --
@@ -267,10 +277,7 @@ void CLMiner::listDevices()
 }
 
 bool CLMiner::configureGPU(
-    unsigned _localWorkSize,
-    unsigned _globalWorkSizeMultiplier,
     unsigned _platformId,
-    uint64_t _currentBlock,
     unsigned _dagLoadMode,
     unsigned _dagCreateDevice
 )
@@ -280,12 +287,7 @@ bool CLMiner::configureGPU(
 
 	s_platformId = _platformId;
 
-	_localWorkSize = ((_localWorkSize + 7) / 8) * 8;
-	s_workgroupSize = _localWorkSize;
-
-	s_initialGlobalWorkSize = _globalWorkSizeMultiplier * _localWorkSize;
-
-	uint64_t dagSize = ethash_get_datasize(_currentBlock);
+	uint64_t dagSize = ethash_get_datasize(0);
 
 	vector<cl::Platform> platforms = getPlatforms();
 	if (platforms.empty())
@@ -407,28 +409,6 @@ bool CLMiner::init(const h256& seed)
 		m_context = cl::Context(vector<cl::Device>(&device, &device + 1));
 		m_queue = cl::CommandQueue(m_context, device);
 
-		m_workgroupSize = s_workgroupSize;
-		m_globalWorkSize = s_initialGlobalWorkSize;
-
-		// Adjust global work size according to number of CUs
-		cl_uint maxCUs;
-		clGetDeviceInfo(device(), CL_DEVICE_MAX_COMPUTE_UNITS, sizeof(cl_uint), &maxCUs, nullptr);
-		{
-			Guard l(x_log);
-			logwarn << "Global work size adjusted for " << maxCUs << " CUs" << endl;
-		}
-		{
-			Guard l(x_log);
-			logwarn << "Specified Global work size: " << m_globalWorkSize << endl;
-		}
-		m_globalWorkSize = (m_globalWorkSize * maxCUs) / 36;
-		{
-			Guard l(x_log);
-			logwarn << "Adjusted global work size: " << m_globalWorkSize << endl;
-		}
-		if (m_globalWorkSize % m_workgroupSize != 0)
-			m_globalWorkSize = ((m_globalWorkSize / m_workgroupSize) + 1) * m_workgroupSize;
-
 		uint64_t dagSize = ethash_get_datasize(light->light->block_number);
 		uint32_t dagSize128 = (unsigned)(dagSize / ETHASH_MIX_BYTES);
 		uint32_t lightSize64 = (unsigned)(light->data().size() / sizeof(node));
@@ -452,19 +432,36 @@ bool CLMiner::init(const h256& seed)
 				loginfo << "OpenCL kernel: " << (s_clKernelName == CLKernelName::Binary ?  "Binary" : "Experimental") << " kernel" <<
 				        endl;
 			}
-
-			//CLMiner_kernel_stable.cl will do a #undef THREADS_PER_HASH
-			if (s_threadsPerHash != 8) {
-				//
-				{
-					Guard l(x_log);
-					logwarn << "The current stable OpenCL kernel only supports exactly 8 threads. Thread parameter will be ignored." <<
-					        endl;
-				}
-			}
-
 			code = string(CLMiner_kernel_stable, CLMiner_kernel_stable + sizeof(CLMiner_kernel_stable));
 		}
+
+		clConfig conf;
+		if (s_clKernelName == CLKernelName::Experimental)
+			conf = optimalConfigs["experimental"];
+		else if (s_clKernelName == CLKernelName::Stable)
+			conf = optimalConfigs["stable"];
+		else { /* if (s_clKernelName == CLKernelName::Binary) */
+			std::string name = device.getInfo<CL_DEVICE_NAME>();
+			std::transform(name.begin(), name.end(), name.begin(), ::tolower);
+			if (optimalConfigs.find(name) == optimalConfigs.end()) {
+				logerror << "Can't find configuration for binary kernel " << name << endl;
+				exit(-1);
+			}
+			conf = optimalConfigs[name];
+		}
+		m_threadsPerHash = conf.workThreads;
+		m_workgroupSize = conf.workGroupSize;
+		m_workMultiplier = conf.workMultiplier;
+		m_threadTweak = conf.workTweak;
+
+		unsigned int computeUnits = device.getInfo<CL_DEVICE_MAX_COMPUTE_UNITS>();
+		logwarn << workerName() << " - adjusting CL work multiplier for " << computeUnits << " CUs.\n";
+		m_workMultiplier = (m_workMultiplier * 36) / computeUnits;
+		logwarn << workerName() << " - threads per hash " << m_threadsPerHash
+		        << ", work group " << m_workgroupSize
+		        << ", work multiplier " << m_workMultiplier
+		        << ", work tweak " << m_threadTweak << endl;
+
 		addDefinition(code, "GROUP_SIZE", m_workgroupSize);
 		addDefinition(code, "DAG_SIZE", dagSize128);
 		addDefinition(code, "LIGHT_SIZE", lightSize64);
@@ -472,7 +469,7 @@ bool CLMiner::init(const h256& seed)
 		addDefinition(code, "MAX_OUTPUTS", c_maxSearchResults);
 		addDefinition(code, "PLATFORM", platformId);
 		addDefinition(code, "COMPUTE", computeCapability);
-		addDefinition(code, "THREADS_PER_HASH", s_threadsPerHash);
+		addDefinition(code, "THREADS_PER_HASH", m_threadsPerHash);
 
 		// create miner OpenCL program
 		cl::Program::Sources sources{{code.data(), code.size()}};
@@ -487,7 +484,6 @@ bool CLMiner::init(const h256& seed)
 		// If we have a binary kernel, we load it in tandem with the opencl,
 		// that way, we can use the dag generate opencl code
 		bool loadedBinary = false;
-		unsigned int computeUnits = device.getInfo<CL_DEVICE_MAX_COMPUTE_UNITS>();
 
 		if (s_clKernelName >= CLKernelName::Binary) {
 			std::ifstream kernel_file;
@@ -526,9 +522,6 @@ bool CLMiner::init(const h256& seed)
 				} catch (std::exception const&) {
 					logerror << "Build info: " << program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(device) << endl;
 				}
-
-				computeUnits = computeUnits == 14 ? 36 : computeUnits;
-				m_globalWorkSize = computeUnits << 17;
 			} else {
 				{
 					Guard l(x_log);
@@ -601,7 +594,7 @@ bool CLMiner::init(const h256& seed)
 			m_searchKernel.setArg(6, dagSize128);
 			m_searchKernel.setArg(7, modulo_optimization[epoch].factor);
 			m_searchKernel.setArg(8, modulo_optimization[epoch].shift);
-			m_searchKernel.setArg(9, s_threadTweak);
+			m_searchKernel.setArg(9, m_threadTweak);
 		}
 
 		// create mining buffers
@@ -612,8 +605,8 @@ bool CLMiner::init(const h256& seed)
 		m_searchBuffer = cl::Buffer(m_context, CL_MEM_WRITE_ONLY, (c_maxSearchResults + 1) * sizeof(uint32_t));
 
 		uint32_t const work = (uint32_t)(dagSize / sizeof(node));
-		uint32_t fullRuns = work / m_globalWorkSize;
-		uint32_t const restWork = work % m_globalWorkSize;
+		uint32_t fullRuns = work / (m_workMultiplier * m_workgroupSize);
+		uint32_t const restWork = work % (m_workMultiplier * m_workgroupSize);
 		if (restWork > 0) fullRuns++;
 
 		m_dagKernel.setArg(1, m_light);
@@ -622,8 +615,8 @@ bool CLMiner::init(const h256& seed)
 
 		auto startDAG = std::chrono::steady_clock::now();
 		for (uint32_t i = 0; i < fullRuns; i++) {
-			m_dagKernel.setArg(0, i * m_globalWorkSize);
-			m_queue.enqueueNDRangeKernel(m_dagKernel, cl::NullRange, m_globalWorkSize, m_workgroupSize);
+			m_dagKernel.setArg(0, i * (m_workMultiplier * m_workgroupSize));
+			m_queue.enqueueNDRangeKernel(m_dagKernel, cl::NullRange, m_workMultiplier * m_workgroupSize, m_workgroupSize);
 			m_queue.finish();
 		}
 		auto endDAG = std::chrono::steady_clock::now();

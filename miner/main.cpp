@@ -123,11 +123,8 @@ public:
 #if ETH_ETHASHCL
 		("cl-plat", value<unsigned>(&m_openclPlatform)->default_value(0), "Opencl platform.\n")
 		("cl-devs", value<std::vector<unsigned>>()->multitoken(), "Opencl device list.\n")
-		("cl-para", value<unsigned>(&m_openclThreadsPerHash)->default_value(8), "Opencl parallel hashes.\n")
 		("cl-kern", value<unsigned>(&m_openclSelectedKernel)->default_value(1),
 		 "Opencl kernel. 0 - Stable, 1 - Experimental, 2 - binary.\n")
-		("cl-tweak", value<unsigned>(&m_openclWavetweak)->default_value(7), "Opencl wave tweak.\n")
-		("cl-global", value<unsigned>(&m_globalWorkSizeMultiplier)->default_value(8192), "Opencl global work size. 0 - Auto.\n")
 		("cl-local", value<unsigned>(&m_localWorkSize)->default_value(64), "Opencl local work size.\n")
 #endif
 #if ETH_ETHASHCUDA
@@ -220,12 +217,6 @@ public:
 			m_openclDeviceCount = vm["cl-devices"].as<vector<unsigned>>().size();
 			m_openclDevices = vm["cl-devices"].as<vector<unsigned>>();
 		}
-
-		if (m_openclThreadsPerHash != 1 && m_openclThreadsPerHash != 2 && m_openclThreadsPerHash != 4
-		    && m_openclThreadsPerHash != 8) {
-			cerr << "Opencl parallel hash must be 1, 2, 4, or 8.\n";
-			exit(-1);
-		}
 #endif
 
 #if ETH_ETHASHCL && ETH_ETHASHCUDA
@@ -293,14 +284,9 @@ public:
 			}
 
 			CLMiner::setCLKernel(m_openclSelectedKernel);
-			CLMiner::setKernelTweak(m_openclWavetweak);
-			CLMiner::setThreadsPerHash(m_openclThreadsPerHash);
 
 			if (!CLMiner::configureGPU(
-			        m_localWorkSize,
-			        m_globalWorkSizeMultiplier,
 			        m_openclPlatform,
-			        0,
 			        m_dagLoadMode,
 			        m_dagCreateDevice
 			    ))
@@ -398,9 +384,6 @@ private:
 	unsigned m_openclSelectedKernel = 0;  ///< A numeric value for the selected OpenCL kernel
 	unsigned m_openclDeviceCount = 0;
 	vector<unsigned> m_openclDevices = vector<unsigned>(MAX_MINERS, -1);
-	unsigned m_openclThreadsPerHash = 8;
-	unsigned m_openclWavetweak = 7;
-	unsigned m_globalWorkSizeMultiplier;
 	unsigned m_localWorkSize;
 #endif
 #if ETH_ETHASHCUDA
