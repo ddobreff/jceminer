@@ -119,11 +119,10 @@ This project uses [CMake] and [Hunter] package manager.
    cmake ..
    ```
 
-4. Build the project using [CMake Build Tool Mode]. This is a portable variant
-   of `make`.
+4. Build the project using make.
 
    ```sh
-   cmake --build .
+   make
    ```
 
 5. Optional, install the built executable.
@@ -141,7 +140,8 @@ cmake .. -DETHASHCUDA=ON -DETHASHCL=OFF
 ```
 
 - `-DETHASHCL=ON` - enable OpenCL mining, `ON` by default,
-- `-DETHASHCUDA=ON` - enable CUDA mining, `OFF` by default.
+- `-DETHASHCUDA=OFF` - enable CUDA mining, `ON` by default.
+- `-DAPICORE=ON` - enable Api, `OFF` by default.
 
 
 ## License

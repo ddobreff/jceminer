@@ -60,8 +60,8 @@ cmake_policy(SET CMP0054 NEW)
 ######################################################################################################
 
 option(ETHASHCL "Build with OpenCL mining" ON)
-option(ETHASHCUDA "Build with CUDA mining" OFF)
-option(APICORE "Build with API Server support" ON)
+option(ETHASHCUDA "Build with CUDA mining" ON)
+option(APICORE "Build with API Server support" OFF)
 
 # propagates CMake configuration options to the compiler
 function(configureProject)
