@@ -136,7 +136,6 @@ void CLMiner::workLoop()
 				// Update header constant buffer.
 				m_queue.enqueueWriteBuffer(m_header, CL_FALSE, 0, w.header.size, w.header.data());
 				m_queue.enqueueWriteBuffer(m_searchBuffer, CL_FALSE, 0, sizeof(c_zero), &c_zero);
-
 				m_searchKernel.setArg(0, m_searchBuffer);  // Supply output buffer to kernel.
 				m_searchKernel.setArg(4, target);
 
@@ -576,13 +575,12 @@ bool CLMiner::init(const h256& seed)
 		m_header = cl::Buffer(m_context, CL_MEM_READ_ONLY, sizeof(Keccak_RC_kernel));
 		m_queue.enqueueWriteBuffer(m_header, CL_TRUE, 0, sizeof(Keccak_RC_kernel), Keccak_RC_kernel);
 
-
 		m_searchKernel.setArg(1, m_header);
 		m_searchKernel.setArg(2, m_dag);
-		m_searchKernel.setArg(5, ~0u);  // Pass this to stop the compiler unrolling the loops.
 
-		if (s_clKernelName >= CLKernelName::Binary && loadedBinary) {
+		if (s_clKernelName == CLKernelName::Binary && loadedBinary) {
 			const uint32_t epoch = light->light->block_number / ETHASH_EPOCH_LENGTH;
+			m_searchKernel.setArg(5, ~0);
 			m_searchKernel.setArg(6, dagSize128);
 			m_searchKernel.setArg(7, modulo_optimization[epoch].factor);
 			m_searchKernel.setArg(8, modulo_optimization[epoch].shift);
@@ -603,7 +601,6 @@ bool CLMiner::init(const h256& seed)
 
 		m_dagKernel.setArg(1, m_light);
 		m_dagKernel.setArg(2, m_dag);
-		m_dagKernel.setArg(3, ~0u);
 
 		auto startDAG = std::chrono::steady_clock::now();
 		for (uint32_t i = 0; i < fullRuns; i++) {
