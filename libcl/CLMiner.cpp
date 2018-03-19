@@ -5,8 +5,7 @@
 #include "CLMiner.h"
 #include "libethash/internal.h"
 #include "libdevcore/Log.h"
-#include "CLMiner_kernel_stable.h"
-#include "CLMiner_kernel_experimental.h"
+#include "CLMiner_kernel.h"
 #include <boost/dll.hpp>
 
 using namespace dev;
@@ -30,8 +29,7 @@ typedef struct {
 
 std::map <std::string, clConfig> optimalConfigs = {
 //                      group   mult    threads tweak
-	{"stable",          {64,    65536,  8,      0}},
-	{"experimental",    {256,   65536,  2,      0}},
+	{"opencl",          {256,   65536,  2,      0}},
 	{"ellesmere",       {64,    73728,  8,      7}}
 };
 
@@ -409,26 +407,24 @@ bool CLMiner::init(const h256& seed)
 		// TODO: Just use C++ raw string literal.
 		string code;
 
-		if (s_clKernelName == CLKernelName::Experimental) {
+		if (s_clKernelName == CLKernelName::Opencl) {
 			{
 				Guard l(x_log);
-				loginfo << "OpenCL kernel: Experimental kernel" << endl;
+				loginfo << "OpenCL kernel: opencl kernel" << endl;
 			}
-			code = string(CLMiner_kernel_experimental, CLMiner_kernel_experimental + sizeof(CLMiner_kernel_experimental));
+			code = string(CLMiner_kernel, CLMiner_kernel + sizeof(CLMiner_kernel));
 		} else { // Fallback to experimental kernel if binary loader fails
 			{
 				Guard l(x_log);
-				loginfo << "OpenCL kernel: " << (s_clKernelName == CLKernelName::Binary ?  "Binary" : "Experimental") << " kernel" <<
+				loginfo << "OpenCL kernel: " << (s_clKernelName == CLKernelName::Binary ?  "Binary" : "opencl") << " kernel" <<
 				        endl;
 			}
-			code = string(CLMiner_kernel_stable, CLMiner_kernel_stable + sizeof(CLMiner_kernel_stable));
+			code = string(CLMiner_kernel, CLMiner_kernel + sizeof(CLMiner_kernel));
 		}
 
 		clConfig conf;
-		if (s_clKernelName == CLKernelName::Experimental)
-			conf = optimalConfigs["experimental"];
-		else if (s_clKernelName == CLKernelName::Stable)
-			conf = optimalConfigs["stable"];
+		if (s_clKernelName == CLKernelName::Opencl)
+			conf = optimalConfigs["opencl"];
 		else { /* if (s_clKernelName == CLKernelName::Binary) */
 			std::string name = device.getInfo<CL_DEVICE_NAME>();
 			std::transform(name.begin(), name.end(), name.begin(), ::tolower);
