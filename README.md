@@ -146,5 +146,5 @@ cmake .. -DETHASHCUDA=ON -DETHASHCL=OFF
 
 ## License
 
-__Regrettably this must be licensed under the [GNU General Public License, Version 3](LICENSE).__
+__Regrettably this must be licensed under the [GNU General Public License, Version 3](LICENSE.md).__
 
