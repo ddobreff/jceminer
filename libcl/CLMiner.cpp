@@ -107,7 +107,7 @@ void CLMiner::workLoop()
 				if (!w) {
 					{
 						Guard l(x_log);
-						logwarn << "No work. Pause for 3 s." << endl;
+						logwarn << workerName() << " - No work. Pause for 3 s." << endl;
 					}
 					std::this_thread::sleep_for(std::chrono::seconds(3));
 					continue;
@@ -122,7 +122,7 @@ void CLMiner::workLoop()
 
 					{
 						Guard l(x_log);
-						loginfo << "New seed " << w.seed << endl;
+						loginfo << workerName() << " - New seed " << w.seed << endl;
 					}
 					init(w.seed);
 				}
@@ -137,7 +137,6 @@ void CLMiner::workLoop()
 				m_searchKernel.setArg(0, m_searchBuffer);  // Supply output buffer to kernel.
 				m_searchKernel.setArg(4, target);
 
-				// FIXME: This logic should be move out of here.
 				if (w.exSizeBits >= 0) {
 					// This can support up to 2^c_log2MaxMiners devices.
 					startNonce = w.startNonce | ((uint64_t)index << (64 - LOG2_MAX_MINERS - w.exSizeBits));
@@ -179,7 +178,7 @@ void CLMiner::workLoop()
 					farm.failedSolution();
 					{
 						Guard l(x_log);
-						logwarn << "FAILURE: GPU gave incorrect result! Discarded." << endl;
+						logerror << workerName() << " - discared incorrect result!\n";
 					}
 				}
 			}
@@ -197,7 +196,7 @@ void CLMiner::workLoop()
 		// it reads local variable.
 		m_queue.finish();
 	} catch (std::exception const& _e) {
-		logerror << _e.what() << endl;
+		logerror << workerName() << " - " << _e.what() << endl;
 		exit(-1);
 	}
 }
@@ -322,7 +321,7 @@ bool CLMiner::init(const h256& seed)
 		string platformName = platforms[platformIdx].getInfo<CL_PLATFORM_NAME>();
 		{
 			Guard l(x_log);
-			loginfo << "Platform: " << platformName << endl;
+			loginfo << workerName() << " - Platform: " << platformName << endl;
 		}
 
 		int platformId = OPENCL_PLATFORM_UNKNOWN;
@@ -348,7 +347,7 @@ bool CLMiner::init(const h256& seed)
 		if (devices.empty()) {
 			{
 				Guard l(x_log);
-				logerror << "No OpenCL devices found." << endl;
+				logerror << workerName() << " - No OpenCL devices found." << endl;
 			}
 			return false;
 		}
@@ -361,19 +360,20 @@ bool CLMiner::init(const h256& seed)
 		string device_version = device.getInfo<CL_DEVICE_VERSION>();
 		{
 			Guard l(x_log);
-			loginfo << "Device: " << device.getInfo<CL_DEVICE_NAME>() << " / " << device_version << endl;
+			loginfo << workerName() << " - Device: " << device.getInfo<CL_DEVICE_NAME>() << " / " << device_version << endl;
 		}
 
 		string clVer = device_version.substr(7, 3);
 		if (clVer == "1.0" || clVer == "1.1") {
 			if (platformId == OPENCL_PLATFORM_CLOVER) {
 				Guard l(x_log);
-				logwarn << "OpenCL " << clVer << " not supported, but platform Clover might work nevertheless. USE AT OWN RISK!" <<
+				logwarn << workerName() << " - OpenCL " << clVer <<
+				        " not supported, but platform Clover might work nevertheless. USE AT OWN RISK!" <<
 				        endl;
 			} else {
 				{
 					Guard l(x_log);
-					logerror << "OpenCL " << clVer << " not supported - minimum required version is 1.2" << endl;
+					logerror << workerName() << " - OpenCL " << clVer << " not supported - minimum required version is 1.2" << endl;
 				}
 				return false;
 			}
@@ -410,13 +410,14 @@ bool CLMiner::init(const h256& seed)
 		if (s_clKernelName == CLKernelName::Opencl) {
 			{
 				Guard l(x_log);
-				loginfo << "OpenCL kernel: opencl kernel" << endl;
+				loginfo << workerName() << " - OpenCL kernel: opencl kernel" << endl;
 			}
 			code = string(CLMiner_kernel, CLMiner_kernel + sizeof(CLMiner_kernel));
 		} else { // Fallback to experimental kernel if binary loader fails
 			{
 				Guard l(x_log);
-				loginfo << "OpenCL kernel: " << (s_clKernelName == CLKernelName::Binary ?  "Binary" : "opencl") << " kernel" <<
+				loginfo << workerName() << " - OpenCL kernel: " << (s_clKernelName == CLKernelName::Binary ?  "Binary" : "opencl") <<
+				        " kernel" <<
 				        endl;
 			}
 			code = string(CLMiner_kernel, CLMiner_kernel + sizeof(CLMiner_kernel));
@@ -429,7 +430,7 @@ bool CLMiner::init(const h256& seed)
 			std::string name = device.getInfo<CL_DEVICE_NAME>();
 			std::transform(name.begin(), name.end(), name.begin(), ::tolower);
 			if (optimalConfigs.find(name) == optimalConfigs.end()) {
-				logerror << "Can't find configuration for binary kernel " << name << endl;
+				logerror << workerName() << " - Can't find configuration for binary kernel " << name << endl;
 				exit(-1);
 			}
 			conf = optimalConfigs[name];
@@ -464,7 +465,7 @@ bool CLMiner::init(const h256& seed)
 		try {
 			program.build({device}, options);
 		} catch (std::exception const&) {
-			logerror << "Build info: " << program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(device) << endl;
+			logerror << workerName() << " - Build info: " << program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(device) << endl;
 			return false;
 		}
 
@@ -502,21 +503,22 @@ bool CLMiner::init(const h256& seed)
 					program.build({ device }, options);
 					{
 						Guard l(x_log);
-						loginfo << fname_strm.str() << " sucessfully loaded.\n";
+						loginfo << workerName() << " - " << fname_strm.str() << " sucessfully loaded.\n";
 					}
 					binaryProgram = program;
 					loadedBinary = true;
 				} catch (std::exception const&) {
-					logerror << "Build info: " << program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(device) << endl;
+					logerror << workerName() << " - Build info: " << program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(device) << endl;
 				}
 			} else {
 				{
 					Guard l(x_log);
-					logwarn << "Instructed to load binary kernel, but failed to load kernel: " << fname_strm.str() << endl;
+					logwarn << workerName() << " - Instructed to load binary kernel, but failed to load kernel: " << fname_strm.str() <<
+					        endl;
 				}
 				{
 					Guard l(x_log);
-					logwarn << "Falling back to OpenCL kernel..." << endl;
+					logwarn << workerName() << " - Falling back to OpenCL kernel..." << endl;
 				}
 			}
 		}
@@ -527,7 +529,8 @@ bool CLMiner::init(const h256& seed)
 		if (result < dagSize) {
 			{
 				Guard l(x_log);
-				logerror << "OpenCL device " << device.getInfo<CL_DEVICE_NAME>() << " has insufficient GPU memory." << result <<
+				logerror << workerName() << " - OpenCL device " << device.getInfo<CL_DEVICE_NAME>() << " has insufficient GPU memory."
+				         << result <<
 				         " bytes of memory found < " << dagSize << " bytes of memory required" << endl;
 			}
 			return false;
@@ -537,17 +540,17 @@ bool CLMiner::init(const h256& seed)
 		try {
 			{
 				Guard l(x_log);
-				loginfo << "Creating light cache buffer, size " << light->data().size() << " bytes\n";
+				loginfo << workerName() << " - Creating light cache buffer, size " << light->data().size() << " bytes\n";
 			}
 			m_light = cl::Buffer(m_context, CL_MEM_READ_ONLY, light->data().size());
 			{
 				Guard l(x_log);
-				loginfo << "Creating DAG buffer, size " << dagSize << " bytes\n";
+				loginfo << workerName() << " - Creating DAG buffer, size " << dagSize << " bytes\n";
 			}
 			m_dag = cl::Buffer(m_context, CL_MEM_READ_ONLY, dagSize);
 			{
 				Guard l(x_log);
-				loginfo << "Loading kernels" << endl;
+				loginfo << workerName() << " - Loading kernels" << endl;
 			}
 
 			if (s_clKernelName >= CLKernelName::Binary && loadedBinary)
@@ -557,16 +560,16 @@ bool CLMiner::init(const h256& seed)
 			m_dagKernel = cl::Kernel(program, "ethash_calculate_dag_item");
 			{
 				Guard l(x_log);
-				loginfo << "Writing light cache buffer" << endl;
+				loginfo << workerName() << " - Writing light cache buffer" << endl;
 			}
 			m_queue.enqueueWriteBuffer(m_light, CL_TRUE, 0, light->data().size(), light->data().data());
 		} catch (std::exception const& err) {
-			logerror << "Creating DAG buffer failed: " << err.what() << endl;
+			logerror << workerName() << " - Creating DAG buffer failed: " << err.what() << endl;
 			return false;
 		}
 		{
 			Guard l(x_log);
-			loginfo << "Creating buffer for header." << endl;
+			loginfo << workerName() << " - Creating buffer for header." << endl;
 		}
 		m_header = cl::Buffer(m_context, CL_MEM_READ_ONLY, sizeof(Keccak_RC_kernel));
 		m_queue.enqueueWriteBuffer(m_header, CL_TRUE, 0, sizeof(Keccak_RC_kernel), Keccak_RC_kernel);
@@ -586,7 +589,7 @@ bool CLMiner::init(const h256& seed)
 		// create mining buffers
 		{
 			Guard l(x_log);
-			loginfo << "Creating mining buffer" << endl;
+			loginfo << workerName() << " - Creating mining buffer" << endl;
 		}
 		m_searchBuffer = cl::Buffer(m_context, CL_MEM_WRITE_ONLY, (c_maxSearchResults + 1) * sizeof(uint32_t));
 
@@ -610,10 +613,10 @@ bool CLMiner::init(const h256& seed)
 		float gb = (float)dagSize / (1024 * 1024 * 1024);
 		{
 			Guard l(x_log);
-			loginfo << gb << " GB of DAG data generated in " << dagTime.count() << " ms." << endl;
+			loginfo << workerName() << " - " << gb << " GB of DAG data generated in " << dagTime.count() << " ms." << endl;
 		}
 	} catch (std::exception const& err) {
-		logerror << "OpenCL init failed: " << err.what() << endl;
+		logerror << workerName() << " - OpenCL init failed: " << err.what() << endl;
 		exit(-1);
 	}
 	return true;
