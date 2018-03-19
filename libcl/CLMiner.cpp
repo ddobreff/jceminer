@@ -576,10 +576,8 @@ bool CLMiner::init(const h256& seed)
 		m_header = cl::Buffer(m_context, CL_MEM_READ_ONLY, sizeof(Keccak_RC_kernel));
 		m_queue.enqueueWriteBuffer(m_header, CL_TRUE, 0, sizeof(Keccak_RC_kernel), Keccak_RC_kernel);
 
-
 		m_searchKernel.setArg(1, m_header);
 		m_searchKernel.setArg(2, m_dag);
-		m_searchKernel.setArg(5, ~0u);  // Pass this to stop the compiler unrolling the loops.
 
 		if (s_clKernelName >= CLKernelName::Binary && loadedBinary) {
 			const uint32_t epoch = light->light->block_number / ETHASH_EPOCH_LENGTH;

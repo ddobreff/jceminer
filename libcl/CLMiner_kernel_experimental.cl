@@ -260,8 +260,7 @@ __kernel void ethash_search(
     __constant hash32_t const* g_header,
     __global hash128_t const* g_dag,
     ulong start_nonce,
-    ulong target,
-    uint isolate
+    ulong target
 )
 {
 
@@ -277,12 +276,12 @@ __kernel void ethash_search(
 	((ulong4*)state)[0] = ((__constant ulong4*)g_header)[0];
 
 	state[4] = start_nonce + gid;
-
-	for (uint i = 6; i != 25; ++i)
-		state[i] = 0;
-
 	state[5] = 0x0000000000000001UL;
+	state[6] = state[7] = 0;
 	state[8] = 0x8000000000000000UL;
+#pragma unroll
+	for (uint i = 9; i != 25; ++i)
+		state[i] = 0;
 
 	keccak_f1600(state, 8);
 
@@ -291,10 +290,8 @@ __kernel void ethash_search(
 	share[hash_id].uint16s[0] = ((uint16*)state)[0];
 
 #pragma unroll
-	for (uint i = 0; i < 4; i++) {
-		mix.uint4s[i  ] = share[hash_id].uint4s[i];
-		mix.uint4s[i + 4] = share[hash_id].uint4s[i];
-	}
+	for (uint i = 0; i < 4; i++)
+		mix.uint4s[i] = mix.uint4s[i + 4] = share[hash_id].uint4s[i];
 
 	uint init0 = share[hash_id].uints[0];
 
@@ -314,7 +311,6 @@ __kernel void ethash_search(
 #pragma unroll
 	for (uint i = 0; i < 4; i++)
 		(state + 8)[i] = share[hash_id].ulongs[i];
-
 #else
 #pragma unroll 1
 	for (uint tid = 0; tid < THREADS_PER_HASH; tid++) {
@@ -378,10 +374,9 @@ __kernel void ethash_search(
 #endif
 
 	state[12] = 1;
-	state[13] = 0;
-	state[14] = 0;
-	state[15] = 0;
+	state[13] = state[14] = state[15] = 0;
 	state[16] = 0x8000000000000000UL;
+#pragma unroll
 	for (uint i = 17; i != 25; ++i)
 		state[i] = 0;
 
@@ -393,8 +388,7 @@ __kernel void ethash_search(
 	}
 }
 
-__kernel void ethash_calculate_dag_item(uint start, __global hash64_t const* g_light, __global hash64_t* g_dag,
-                                        uint isolate)
+__kernel void ethash_calculate_dag_item(uint start, __global hash64_t const* g_light, __global hash64_t* g_dag)
 {
 	uint const node_index = start + get_global_id(0);
 	if (node_index > DAG_SIZE * 2) return;
@@ -403,7 +397,6 @@ __kernel void ethash_calculate_dag_item(uint start, __global hash64_t const* g_l
 	dag_node.uint16s[0] = g_light[node_index % LIGHT_SIZE].uint16s[0];
 	dag_node.uints[0] ^= node_index;
 	SHA3_512(dag_node.ulongs);
-
 
 	for (uint i = 0; i != ETHASH_DATASET_PARENTS; ++i) {
 		uint parent_index = FNV(node_index ^ i, dag_node.uints[i % NODE_WORDS]) % LIGHT_SIZE;
