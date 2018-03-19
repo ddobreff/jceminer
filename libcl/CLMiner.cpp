@@ -444,7 +444,7 @@ bool CLMiner::init(const h256& seed)
 		// Apparently some 36 CU devices return a bogus 14!!!
 		computeUnits = computeUnits == 14 ? 36 : computeUnits;
 		logwarn << workerName() << " - adjusting CL work multiplier for " << computeUnits << " CUs.\n";
-		m_workMultiplier = (m_workMultiplier * 36) / computeUnits;
+		m_workMultiplier = (m_workMultiplier * computeUnits) / 36;
 		logwarn << workerName() << " - threads per hash " << m_threadsPerHash
 		        << ", work group " << m_workgroupSize
 		        << ", work multiplier " << m_workMultiplier
