@@ -251,12 +251,24 @@ typedef union {
 	uint16  uint16s[200 / sizeof(uint16)];
 } hash200_t;
 
+#define MAX_RESULTS 4
+
+typedef struct {
+    unsigned gid;
+    unsigned mix[8];
+    unsigned pad[7];
+} result;
+
+typedef struct {
+    unsigned count;
+    result rslt[MAX_RESULTS];
+} search_results;
 
 #if PLATFORM != OPENCL_PLATFORM_NVIDIA // use maxrregs on nv
 __attribute__((reqd_work_group_size(GROUP_SIZE, 1, 1)))
 #endif
 __kernel void ethash_search(
-    __global volatile uint* restrict g_output,
+    __global volatile search_results* restrict g_output,
     __constant hash32_t const* g_header,
     __global hash128_t const* g_dag,
     ulong start_nonce,
@@ -276,7 +288,7 @@ __kernel void ethash_search(
 	((ulong4*)state)[0] = ((__constant ulong4*)g_header)[0];
 
 	state[4] = start_nonce + gid;
-	state[5] = 0x0000000000000001UL;
+	state[5] = 1;
 	state[6] = state[7] = 0;
 	state[8] = 0x8000000000000000UL;
 #pragma unroll
@@ -354,12 +366,8 @@ __kernel void ethash_search(
 		}
 
 #if THREADS_PER_HASH == 2
-		share->uint4s[thread_id] = (uint4)(
-		                               FNV_REDUCE(mix.s0123),
-		                               FNV_REDUCE(mix.s4567),
-		                               FNV_REDUCE(mix.s89ab),
-		                               FNV_REDUCE(mix.scdef)
-		                           );
+		share->uint4s[thread_id] =
+			(uint4)( FNV_REDUCE(mix.s0123), FNV_REDUCE(mix.s4567), FNV_REDUCE(mix.s89ab), FNV_REDUCE(mix.scdef));
 #elif THREADS_PER_HASH == 4
 		share->uint2s[thread_id] = (uint2)(FNV_REDUCE(mix.lo), FNV_REDUCE(mix.hi));
 #elif THREADS_PER_HASH == 8
@@ -373,6 +381,12 @@ __kernel void ethash_search(
 	}
 #endif
 
+	ulong mixhash[4];
+	mixhash[0] = state[8];
+	mixhash[1] = state[9];
+	mixhash[2] = state[10];
+	mixhash[3] = state[11];
+
 	state[12] = 1;
 	state[13] = state[14] = state[15] = 0;
 	state[16] = 0x8000000000000000UL;
@@ -383,8 +397,18 @@ __kernel void ethash_search(
 	keccak_f1600(state, 1);
 
 	if (as_ulong(as_uchar8(state[0]).s76543210) < target) {
-		uint slot = min(MAX_OUTPUTS, atomic_inc(&g_output[0]) + 1);
-		g_output[slot] = gid;
+		uint slot = atomic_inc(&g_output->count);
+		if (slot >= MAX_RESULTS)
+			return;
+		g_output->rslt[slot].gid = gid;
+		g_output->rslt[slot].mix[0] = mixhash[0];
+		g_output->rslt[slot].mix[1] = mixhash[0] >> 32;
+		g_output->rslt[slot].mix[2] = mixhash[1];
+		g_output->rslt[slot].mix[3] = mixhash[1] >> 32;
+		g_output->rslt[slot].mix[4] = mixhash[2];
+		g_output->rslt[slot].mix[5] = mixhash[2] >> 32;
+		g_output->rslt[slot].mix[6] = mixhash[3];
+		g_output->rslt[slot].mix[7] = mixhash[3] >> 32;
 	}
 }
 

@@ -58,7 +58,8 @@ public:
 	static bool configureGPU(
 	    unsigned _platformId,
 	    unsigned _dagLoadMode,
-	    unsigned _dagCreateDevice
+	    unsigned _dagCreateDevice,
+	    bool _noEval
 	);
 	static void setNumInstances(unsigned _instances)
 	{
@@ -94,6 +95,7 @@ private:
 	unsigned m_threadsPerHash;
 	unsigned m_threadTweak;
 
+	static bool s_noEval;
 	static unsigned s_platformId;
 	static unsigned s_numInstances;
 	static CLKernelName s_clKernelName;

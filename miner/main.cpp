@@ -107,6 +107,7 @@ public:
 		("cu,U", bool_switch()->default_value(false), "Cuda mode.\n") // set m_minerType = MinerType::CUDA;
 		("mix,X", bool_switch()->default_value(false),
 		 "Mixed opencl and cuda mode. Use OpenCL + CUDA in a system with mixed AMD/Nvidia cards. May require setting --cl-plat 1 or 2.\n")
+		("noeval", bool_switch()->default_value(false), "Bypass software result evaluation.\n")
 #if API_CORE
 		("api-port,a", value<unsigned>(&m_api_port)->default_value(0), "API port number. 0 - disable, < 0 - read-only.\n")
 #endif
@@ -123,7 +124,6 @@ public:
 		("cu-sch", value<unsigned>(&m_cudaSchedule)->default_value(4),
 		 "Cuda schedule mode. 0 - auto, 1 - spin, 2 - yield, 4 - sync\n")
 		("cu-stream", value<unsigned>(&m_numStreams)->default_value(2), "Cuda streams\n")
-		("cu-noeval", bool_switch()->default_value(false), "Cuda bypass software result evaluation.\n")
 #endif
 		("stop", value<unsigned>(&g_stopAfter)->default_value(0), "Stop after seconds\n")
 		;
@@ -186,6 +186,8 @@ public:
 		}
 		m_endpoint = PoolConnection(uri);
 
+		m_noEval = vm["noeval"].as<bool>();
+
 #if ETH_ETHASHCUDA
 		if (vm.find("cu-devs") != vm.end()) {
 			m_cudaDeviceCount = vm["cu-devices"].as<vector<unsigned>>().size();
@@ -196,8 +198,6 @@ public:
 			cerr << "Cuda parallel hash must be greater than 0 and less than or equal to 8.\n";
 			exit(-1);
 		}
-
-		m_cudaNoEval = vm["cu-noeval"].as<bool>();
 #endif
 
 #if ETH_ETHASHCL
@@ -282,7 +282,8 @@ public:
 			if (!CLMiner::configureGPU(
 			        m_openclPlatform,
 			        m_dagLoadMode,
-			        m_dagCreateDevice
+			        m_dagCreateDevice,
+			        m_noEval
 			    ))
 				exit(1);
 			CLMiner::setNumInstances(m_miningThreads);
@@ -307,7 +308,7 @@ public:
 			        0,
 			        m_dagLoadMode,
 			        m_dagCreateDevice,
-			        m_cudaNoEval
+			        m_noEval
 			    ))
 				exit(1);
 
@@ -387,7 +388,7 @@ private:
 	unsigned m_cudaSchedule;
 	unsigned m_cudaGridSize;
 	unsigned m_cudaBlockSize;
-	bool m_cudaNoEval = false;
+	bool m_noEval = false;
 	unsigned m_parallelHash    = 4;
 #endif
 	unsigned m_dagLoadMode = 0; // parallel
