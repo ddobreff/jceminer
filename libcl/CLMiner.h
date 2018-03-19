@@ -38,8 +38,7 @@ namespace eth
 {
 
 enum CLKernelName : unsigned int {
-	Stable = 0,
-	Experimental,
+	Opencl = 0,
 	Binary,
 };
 
@@ -72,7 +71,7 @@ public:
 	}
 	static void setCLKernel(unsigned _clKernel)
 	{
-		s_clKernelName = _clKernel > CLKernelName::Binary ? CLKernelName::Experimental : (CLKernelName)_clKernel;
+		s_clKernelName = (CLKernelName)_clKernel;
 	}
 protected:
 	void kick_miner() override;

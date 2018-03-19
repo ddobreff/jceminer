@@ -36,8 +36,7 @@ Options:
                               
   -l [ --s-level ] arg (=0)   statistics display interval. 0 - HR only, 1 - + fan & temp, 2 - + power.
                               
-  -p [ --pool ] arg           URL takes the form:
-                              scheme://[user[:password]@]hostname:port
+  -p [ --pool ] arg           URL takes the form: scheme://[user[:password]@]hostname:port
                               
                               unsecured schemes: ethproxy+tcp nicehash+tcp stratum+tcp
                               secured with any TLS: ethproxy+tls nicehash+tls stratum+tls
@@ -48,7 +47,7 @@ Options:
                               
                               Stratum versions:
                               stratum  - ethpool, ethermine, coinotron, mph, nanopool
-                              eth-proxy - dwarfpool, f2pool, nanopool (required for hashrate reporting to nanopool)
+                              eth-proxy - dwarfpool, f2pool, nanopool (required for hashrate reporting to work with nanopool)
                               nicehash - Ethereum Stratum
                               
   --dag arg (=0)              DAG load mode. 0 - parallel, 1 - sequential, 2 - single.
@@ -69,7 +68,7 @@ Options:
                               
   --cl-devs arg               Opencl device list.
                               
-  --cl-kern arg (=1)          Opencl kernel. 0 - Stable, 1 - Experimental, 2 - binary.
+  --cl-kern arg (=0)          Opencl kernel. 0 - Opencl, 1 - binary.
                               
   --cu-grid arg (=8192)       Cuda grid size.
                               
@@ -86,6 +85,7 @@ Options:
   --cu-noeval                 Cuda bypass software result evaluation.
                               
   --stop arg (=0)             Stop after seconds
+                              
 
 ```
 

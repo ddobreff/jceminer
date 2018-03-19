@@ -113,8 +113,7 @@ public:
 #if ETH_ETHASHCL
 		("cl-plat", value<unsigned>(&m_openclPlatform)->default_value(0), "Opencl platform.\n")
 		("cl-devs", value<std::vector<unsigned>>()->multitoken(), "Opencl device list.\n")
-		("cl-kern", value<unsigned>(&m_openclSelectedKernel)->default_value(1),
-		 "Opencl kernel. 0 - Stable, 1 - Experimental, 2 - binary.\n")
+		("cl-kern", value<unsigned>(&m_openclSelectedKernel)->default_value(0), "Opencl kernel. 0 - Opencl, 1 - binary.\n")
 #endif
 #if ETH_ETHASHCUDA
 		("cu-grid", value<unsigned>(&m_cudaGridSize)->default_value(8192), "Cuda grid size.\n")
@@ -206,6 +205,12 @@ public:
 			m_openclDeviceCount = vm["cl-devices"].as<vector<unsigned>>().size();
 			m_openclDevices = vm["cl-devices"].as<vector<unsigned>>();
 		}
+
+		if (m_openclSelectedKernel > (unsigned)CLKernelName::Binary) {
+			cerr << "CL kernel must be 0 or 1.\n";
+			exit(-1);
+		}
+
 #endif
 
 #if ETH_ETHASHCL && ETH_ETHASHCUDA
