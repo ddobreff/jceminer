@@ -11,7 +11,7 @@ jobs:
 
       - restore_cache:
           key: hunter-v3
-      - run: cmake -DHUNTER_JOBS_NUMBER=4 -DETHASHCUDA=ON -DAPICORE=ON -H. -Bbuild
+      - run: cmake -DHUNTER_JOBS_NUMBER=4 -DAPICORE=ON -H. -Bbuild
       - save_cache:
           key: hunter-v3
           paths:
