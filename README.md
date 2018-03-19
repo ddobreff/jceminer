@@ -36,7 +36,8 @@ Options:
                               
   -l [ --s-level ] arg (=0)   statistics display interval. 0 - HR only, 1 - + fan & temp, 2 - + power.
                               
-  -p [ --pool ] arg           URL takes the form: scheme://[user[:password]@]hostname:port
+  -p [ --pool ] arg           URL takes the form:
+                              scheme://[user[:password]@]hostname:port
                               
                               unsecured schemes: ethproxy+tcp nicehash+tcp stratum+tcp
                               secured with any TLS: ethproxy+tls nicehash+tls stratum+tls
@@ -62,6 +63,8 @@ Options:
                               
   -X [ --mix ]                Mixed opencl and cuda mode. Use OpenCL + CUDA in a system with mixed AMD/Nvidia cards. May require setting --cl-plat 1 or 2.
                               
+  --noeval                    Bypass software result evaluation.
+                              
   -a [ --api-port ] arg (=0)  API port number. 0 - disable, < 0 - read-only.
                               
   --cl-plat arg (=0)          Opencl platform.
@@ -82,10 +85,7 @@ Options:
                               
   --cu-stream arg (=2)        Cuda streams
                               
-  --cu-noeval                 Cuda bypass software result evaluation.
-                              
   --stop arg (=0)             Stop after seconds
-                              
 
 ```
 

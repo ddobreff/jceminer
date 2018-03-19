@@ -16,6 +16,23 @@ namespace dev
 namespace eth
 {
 
+#define MAX_RESULTS 4
+
+typedef struct {
+	uint32_t gid;
+	uint32_t mix[8];
+	uint32_t pad[7];
+} result;
+
+typedef union {
+	struct {
+		uint32_t count;
+		result rslt[MAX_RESULTS];
+	} a;
+	uint32_t b[2];
+} search_results;
+
+
 CLKernelName CLMiner::s_clKernelName;
 
 constexpr size_t c_maxSearchResults = 1;
@@ -74,6 +91,7 @@ std::vector<cl::Device> getDevices(std::vector<cl::Platform> const& _platforms, 
 }
 }
 
+bool CLMiner::s_noEval = false;
 unsigned CLMiner::s_platformId = 0;
 unsigned CLMiner::s_numInstances = 0;
 vector<int> CLMiner::s_devices(MAX_MINERS, -1);
@@ -153,13 +171,11 @@ void CLMiner::workLoop()
 
 			// Read results.
 			// TODO: could use pinned host pointer instead.
-			uint32_t results[c_maxSearchResults + 1];
-			m_queue.enqueueReadBuffer(m_searchBuffer, CL_TRUE, 0, sizeof(results), &results);
+			search_results results;
+			m_queue.enqueueReadBuffer(m_searchBuffer, CL_TRUE, 0, sizeof(results.a.count), &results);
 
-			uint64_t nonce = 0;
-			if (results[0] > 0) {
-				// Ignore results except the first one.
-				nonce = current.startNonce + results[1];
+			if (results.a.count > 0) {
+				m_queue.enqueueReadBuffer(m_searchBuffer, CL_TRUE, 0, sizeof(results), &results);
 				// Reset search buffer if any solution found.
 				m_queue.enqueueWriteBuffer(m_searchBuffer, CL_FALSE, 0, sizeof(c_zero), &c_zero);
 			}
@@ -169,16 +185,26 @@ void CLMiner::workLoop()
 			m_queue.enqueueNDRangeKernel(m_searchKernel, cl::NullRange, m_workMultiplier * m_workgroupSize, m_workgroupSize);
 
 			// Report results while the kernel is running.
-			// It takes some time because ethash must be re-evaluated on CPU.
-			if (nonce != 0) {
-				Result r = EthashAux::eval(current.seed, current.header, nonce);
-				if (r.value < current.boundary)
-					farm.submitProof(workerName(), Solution{nonce, r.mixHash, current, current.header != w.header});
-				else {
-					farm.failedSolution();
-					{
-						Guard l(x_log);
-						logerror << workerName() << " - discared incorrect result!\n";
+			if (results.a.count > MAX_RESULTS)
+				results.a.count = MAX_RESULTS;
+			if (s_clKernelName == CLKernelName::Binary)
+				results.a.rslt[0].gid = results.b[1];
+			for (unsigned i = 0; i < results.a.count; i++) {
+				uint64_t nonce = current.startNonce + results.a.rslt[i].gid;
+				if ((s_noEval) && (s_clKernelName == CLKernelName::Opencl)) {
+					h256 mix;
+					memcpy(mix.data(), results.a.rslt[i].mix, sizeof(results.a.rslt[i].mix));
+					farm.submitProof(workerName(), Solution{nonce, mix, current, current.header != w.header});
+				} else {
+					Result r = EthashAux::eval(current.seed, current.header, nonce);
+					if (r.value < current.boundary) {
+						farm.submitProof(workerName(), Solution{nonce, r.mixHash, current, current.header != w.header});
+					} else {
+						farm.failedSolution();
+						{
+							Guard l(x_log);
+							logerror << workerName() << " - discared incorrect result!\n";
+						}
 					}
 				}
 			}
@@ -265,11 +291,13 @@ void CLMiner::listDevices()
 bool CLMiner::configureGPU(
     unsigned _platformId,
     unsigned _dagLoadMode,
-    unsigned _dagCreateDevice
+    unsigned _dagCreateDevice,
+    bool _noEval
 )
 {
 	s_dagLoadMode = _dagLoadMode;
 	s_dagCreateDevice = _dagCreateDevice;
+	s_noEval = _noEval;
 
 	s_platformId = _platformId;
 
@@ -591,7 +619,7 @@ bool CLMiner::init(const h256& seed)
 			Guard l(x_log);
 			loginfo << workerName() << " - Creating mining buffer" << endl;
 		}
-		m_searchBuffer = cl::Buffer(m_context, CL_MEM_WRITE_ONLY, (c_maxSearchResults + 1) * sizeof(uint32_t));
+		m_searchBuffer = cl::Buffer(m_context, CL_MEM_WRITE_ONLY, sizeof(search_results));
 
 		uint32_t const work = (uint32_t)(dagSize / sizeof(node));
 		uint32_t fullRuns = work / (m_workMultiplier * m_workgroupSize);
