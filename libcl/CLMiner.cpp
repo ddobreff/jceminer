@@ -24,9 +24,12 @@ typedef struct {
 	uint32_t pad[7];
 } result;
 
-typedef struct {
-	uint32_t count;
-	result rslt[MAX_RESULTS];
+typedef union {
+	struct {
+		uint32_t count;
+		result rslt[MAX_RESULTS];
+	} a;
+	uint32_t b[2];
 } search_results;
 
 
@@ -148,7 +151,7 @@ void CLMiner::workLoop()
 
 				// Update header constant buffer.
 				m_queue.enqueueWriteBuffer(m_header, CL_FALSE, 0, w.header.size, w.header.data());
-				m_queue.enqueueWriteBuffer(m_searchBuffer, CL_FALSE, offsetof(search_results, count), sizeof(c_zero), &c_zero);
+				m_queue.enqueueWriteBuffer(m_searchBuffer, CL_FALSE, 0, sizeof(c_zero), &c_zero);
 				m_searchKernel.setArg(0, m_searchBuffer);  // Supply output buffer to kernel.
 				m_searchKernel.setArg(4, target);
 
@@ -169,13 +172,12 @@ void CLMiner::workLoop()
 			// Read results.
 			// TODO: could use pinned host pointer instead.
 			search_results results;
-			m_queue.enqueueReadBuffer(m_searchBuffer, CL_TRUE, offsetof(search_results, count), sizeof(results.count),
-			                          &results.count);
+			m_queue.enqueueReadBuffer(m_searchBuffer, CL_TRUE, 0, sizeof(results.a.count), &results);
 
-			if (results.count > 0) {
-				m_queue.enqueueReadBuffer(m_searchBuffer, CL_TRUE, offsetof(search_results, count), sizeof(results), &results);
+			if (results.a.count > 0) {
+				m_queue.enqueueReadBuffer(m_searchBuffer, CL_TRUE, 0, sizeof(results), &results);
 				// Reset search buffer if any solution found.
-				m_queue.enqueueWriteBuffer(m_searchBuffer, CL_FALSE, offsetof(search_results, count), sizeof(c_zero), &c_zero);
+				m_queue.enqueueWriteBuffer(m_searchBuffer, CL_FALSE, 0, sizeof(c_zero), &c_zero);
 			}
 
 			// Run the kernel.
@@ -183,13 +185,15 @@ void CLMiner::workLoop()
 			m_queue.enqueueNDRangeKernel(m_searchKernel, cl::NullRange, m_workMultiplier * m_workgroupSize, m_workgroupSize);
 
 			// Report results while the kernel is running.
-			if (results.count > MAX_RESULTS)
-				results.count = MAX_RESULTS;
-			for (unsigned i = 0; i < results.count; i++) {
-				uint64_t nonce = current.startNonce + results.rslt[i].gid;
-				if (s_noEval) {
+			if (results.a.count > MAX_RESULTS)
+				results.a.count = MAX_RESULTS;
+			if (s_clKernelName == CLKernelName::Binary)
+				results.a.rslt[0].gid = results.b[1];
+			for (unsigned i = 0; i < results.a.count; i++) {
+				uint64_t nonce = current.startNonce + results.a.rslt[i].gid;
+				if ((s_noEval) && (s_clKernelName == CLKernelName::Opencl)) {
 					h256 mix;
-					memcpy(mix.data(), results.rslt[i].mix, sizeof(results.rslt[i].mix));
+					memcpy(mix.data(), results.a.rslt[i].mix, sizeof(results.a.rslt[i].mix));
 					farm.submitProof(workerName(), Solution{nonce, mix, current, current.header != w.header});
 				} else {
 					Result r = EthashAux::eval(current.seed, current.header, nonce);
