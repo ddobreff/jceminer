@@ -25,8 +25,8 @@ static string hashToString(double diff, bool rate)
 	return ss.str();
 }
 
-PoolManager::PoolManager(PoolClient& client, Farm& farm, MinerType const& minerType) : Worker("main"), m_client(client),
-	m_farm(farm), m_minerType(minerType)
+PoolManager::PoolManager(PoolClient& client, Farm& farm, MinerType const& minerType) :
+	Worker("main"), m_client(client), m_farm(farm), m_minerType(minerType)
 {
 
 	m_client.onConnected([&](boost::asio::ip::address address) {

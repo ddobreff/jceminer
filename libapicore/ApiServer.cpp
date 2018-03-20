@@ -25,7 +25,7 @@ void ApiServer::getMinerStat1(const Json::Value& request, Json::Value& response)
 	auto runningTime = std::chrono::duration_cast<std::chrono::minutes>(steady_clock::now() - this->m_farm.farmLaunched());
 
 	SolutionStats s = m_farm.getSolutionStats();
-	WorkingProgress p = m_farm.miningProgress(true);
+	WorkingProgress p = m_farm.miningProgress();
 
 	ostringstream totalMhEth;
 	ostringstream totalMhDcr;
@@ -80,7 +80,7 @@ void ApiServer::getMinerStatHR(const Json::Value& request, Json::Value& response
 	auto runningTime = std::chrono::duration_cast<std::chrono::minutes>(steady_clock::now() - this->m_farm.farmLaunched());
 
 	SolutionStats s = m_farm.getSolutionStats();
-	WorkingProgress p = m_farm.miningProgress(true, true);
+	WorkingProgress p = m_farm.miningProgress();
 
 	ostringstream version;
 	ostringstream runtime;

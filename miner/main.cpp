@@ -73,6 +73,7 @@ public:
 		using namespace boost::program_options;
 
 		stringstream poolDesc;
+
 		poolDesc
 		        << "URL takes the form:\nscheme://[user[:password]@]hostname:port\n\n"
 		        << "unsecured schemes: " << URI::KnownSchemes(SecureLevel::NONE) << '\n'
@@ -87,46 +88,46 @@ public:
 
 		options_description desc("Options");
 		desc.add_options()
-		("help,h", bool_switch()->default_value(false), "produce help message.\n")
-		("list,l", bool_switch()->default_value(false), "List devices.\n")
+		("help,h",    bool_switch()->default_value(false), "produce help message.\n")
+		("list,l",    bool_switch()->default_value(false), "List devices.\n")
 		("version,v", bool_switch()->default_value(false), "list version.\n")
-		("file,f", value<string>(), "Read parameters from file.\n")
+		("file,f",    value<string>(), "Read parameters from file.\n")
 		("retries,r", value<unsigned>(&m_maxFarmRetries)->default_value(3), "Connection retries.\n")
-		("email", value<string>(&g_email), "Stratum email.\n")
-		("timeout", value<unsigned>(&g_worktimeout)->default_value(180), "Work timeout.\n")
-		("hash", bool_switch()->default_value(false), "Report hashrate to pool.\n")
-		("intvl", value<unsigned>(&m_displayInterval)->default_value(15), "statistics display interval.\n")
-		("level", value<unsigned>(&m_show_level)->default_value(0),
-		 "statistics display interval. 0 - HR only, 1 - + fan & temp, 2 - + power.\n")
-		("pool,p", value<string>(&m_endpoint_url), poolDesc.str().c_str())
-		("dag", value<unsigned>(&m_dagLoadMode)->default_value(0),
+		("email",     value<string>(&g_email), "Stratum email.\n")
+		("timeout",   value<unsigned>(&g_worktimeout)->default_value(180), "Work timeout.\n")
+		("hash",      bool_switch()->default_value(false), "Report hashrate to pool.\n")
+		("intvl",     value<unsigned>(&m_displayInterval)->default_value(15), "statistics display interval.\n")
+		("level",     value<unsigned>(&m_show_level)->default_value(0),
+		 "Metrics collection level. 0 - HR only, 1 - + fan & temp, 2 - + power.\n")
+		("pool,p",    value<string>(), poolDesc.str().c_str())
+		("dag",       value<unsigned>(&m_dagLoadMode)->default_value(0),
 		 "DAG load mode. 0 - parallel, 1 - sequential, 2 - single.\n")
-		("switch", bool_switch()->default_value(false), "Log job switch time.\n")
-		("json", bool_switch()->default_value(false), "Log formatted json messaging.\n")
-		("cl,G", bool_switch()->default_value(false), "Opencl mode.\n") // set m_minerType = MinerType::CL;
-		("cu,U", bool_switch()->default_value(false), "Cuda mode.\n") // set m_minerType = MinerType::CUDA;
-		("mix,X", bool_switch()->default_value(false),
+		("switch",    bool_switch()->default_value(false), "Log job switch time.\n")
+		("json",      bool_switch()->default_value(false), "Log formatted json messaging.\n")
+		("cl,G",      bool_switch()->default_value(false), "Opencl mode.\n") // set m_minerType = MinerType::CL;
+		("cu,U",      bool_switch()->default_value(false), "Cuda mode.\n") // set m_minerType = MinerType::CUDA;
+		("mix,X",     bool_switch()->default_value(false),
 		 "Mixed opencl and cuda mode. Use OpenCL + CUDA in a system with mixed AMD/Nvidia cards. May require setting --cl-plat 1 or 2.\n")
-		("eval", bool_switch()->default_value(false),
+		("eval",      bool_switch()->default_value(false),
 		 "Enable software result evaluation. Use if you GPUs generate too many invalid shares.\n")
 #if API_CORE
-		("api", value<unsigned>(&m_api_port)->default_value(0), "API port number. 0 - disable, < 0 - read-only.\n")
+		("api",       value<unsigned>(&m_api_port)->default_value(0), "API port number. 0 - disable, < 0 - read-only.\n")
 #endif
 #if ETH_ETHASHCL
-		("cl-plat", value<unsigned>(&m_openclPlatform)->default_value(0), "Opencl platform.\n")
-		("cl-devs", value<std::vector<unsigned>>()->multitoken(), "Opencl device list.\n")
-		("cl-kern", value<unsigned>(&m_openclSelectedKernel)->default_value(0), "Opencl kernel. 0 - Opencl, 1 - binary.\n")
+		("cl-plat",   value<unsigned>(&m_openclPlatform)->default_value(0), "Opencl platform.\n")
+		("cl-devs",   value<std::vector<unsigned>>()->multitoken(), "Opencl device list.\n")
+		("cl-kern",   value<unsigned>(&m_openclSelectedKernel)->default_value(0), "Opencl kernel. 0 - Opencl, 1 - binary.\n")
 #endif
 #if ETH_ETHASHCUDA
-		("cu-grid", value<unsigned>(&m_cudaGridSize)->default_value(8192), "Cuda grid size.\n")
-		("cu-blk", value<unsigned>(&m_cudaBlockSize)->default_value(128), "Cuda block size.\n")
-		("cu-devs", value<std::vector<unsigned>>()->multitoken(), "Cuda device list.\n")
-		("cu-para", value<unsigned>(&m_parallelHash)->default_value(4), "Cuda parallel hashes.\n")
-		("cu-sch", value<unsigned>(&m_cudaSchedule)->default_value(4),
+		("cu-grid",   value<unsigned>(&m_cudaGridSize)->default_value(8192), "Cuda grid size.\n")
+		("cu-blk",    value<unsigned>(&m_cudaBlockSize)->default_value(128), "Cuda block size.\n")
+		("cu-devs",   value<std::vector<unsigned>>()->multitoken(), "Cuda device list.\n")
+		("cu-para",   value<unsigned>(&m_parallelHash)->default_value(4), "Cuda parallel hashes.\n")
+		("cu-sch",    value<unsigned>(&m_cudaSchedule)->default_value(4),
 		 "Cuda schedule mode. 0 - auto, 1 - spin, 2 - yield, 4 - sync\n")
-		("cu-strm", value<unsigned>(&m_numStreams)->default_value(2), "Cuda streams\n")
+		("cu-strm",   value<unsigned>(&m_numStreams)->default_value(2), "Cuda streams\n")
 #endif
-		("stop", value<unsigned>(&g_stopAfter)->default_value(0), "Stop after minutes. 0 - never stop.\n")
+		("stop",      value<unsigned>(&g_stopAfter)->default_value(0), "Stop after minutes. 0 - never stop.\n")
 		;
 
 		variables_map vm;
@@ -145,8 +146,8 @@ public:
 			ss << ifs.rdbuf();
 			// Split the file content
 			boost::char_separator<char> sep(" \n\r");
-			string ResponsefileContents(ss.str());
-			boost::tokenizer<boost::char_separator<char>> tok(ResponsefileContents, sep);
+			string contents(ss.str());
+			boost::tokenizer<boost::char_separator<char>> tok(contents, sep);
 			vector<string> args;
 			copy(tok.begin(), tok.end(), back_inserter(args));
 			// Parse the file and store the options
@@ -212,27 +213,12 @@ public:
 			cerr << "CL kernel must be 0 or 1.\n";
 			exit(-1);
 		}
-
 #endif
 
-#if ETH_ETHASHCL && ETH_ETHASHCUDA
 		if ((m_openclDeviceCount + m_cudaDeviceCount) > MAX_GPUS) {
 			cerr << "Can only support up to " << MAX_GPUS << ".\n";
 			exit(-1);
 		}
-#endif
-#if ETH_ETHASHCL && !ETH_ETHASHCUDA
-		if (m_openclDeviceCount > MAX_GPUS) {
-			cerr << "Can only support up to " << MAX_GPUS << ".\n";
-			exit(-1);
-		}
-#endif
-#if !ETH_ETHASHCL && ETH_ETHASHCUDA
-		if (m_cudaDeviceCount > MAX_GPUS) {
-			cerr << "Can only support up to " << MAX_GPUS << ".\n";
-			exit(-1);
-		}
-#endif
 
 		g_logSwitchTime = vm["switch"].as<bool>();
 
@@ -350,7 +336,7 @@ public:
 		mgr.addConnection(m_endpoint);
 
 #if API_CORE
-		Api api(this->m_api_port, f);
+		Api api(m_api_port, f);
 #endif
 
 		// Start PoolManager
@@ -359,7 +345,8 @@ public:
 		// Run CLI in loop
 		while (true) {
 			if (mgr.isConnected()) {
-				auto mp = f.miningProgress(m_show_level > 0, m_show_level > 1);
+				f.collectProgress(m_show_level);
+				auto mp = f.miningProgress();
 				{
 					Guard l(x_log);
 					loginfo << mp << f.getSolutionStats() << ' ' << f.farmLaunchedFormatted() << endl;
@@ -376,14 +363,14 @@ private:
 	unsigned m_openclPlatform = 0;
 	unsigned m_miningThreads = UINT_MAX;
 	bool m_shouldListDevices = false;
+	unsigned m_openclDeviceCount = 0;
+	unsigned m_cudaDeviceCount = 0;
 #if ETH_ETHASHCL
 	unsigned m_openclSelectedKernel = 0;  ///< A numeric value for the selected OpenCL kernel
-	unsigned m_openclDeviceCount = 0;
 	vector<unsigned> m_openclDevices = vector<unsigned>(MAX_MINERS, -1);
 	unsigned m_localWorkSize;
 #endif
 #if ETH_ETHASHCUDA
-	unsigned m_cudaDeviceCount = 0;
 	vector<unsigned> m_cudaDevices = vector<unsigned>(MAX_MINERS, -1);
 	unsigned m_numStreams;
 	unsigned m_cudaSchedule;
@@ -397,23 +384,15 @@ private:
 	/// Benchmarking params
 
 	PoolConnection m_endpoint;
-	string m_endpoint_url;
 
 	unsigned m_maxFarmRetries = 3;
-	unsigned m_farmRecheckPeriod = 500;
 	unsigned m_displayInterval = 5;
-	bool m_farmRecheckSet = false;
 	unsigned m_show_level = 0;
 #if API_CORE
 	unsigned m_api_port = 0;
 #endif
 
 };
-
-#ifndef ENABLE_VIRTUAL_TERMINAL_PROCESSING
-#define ENABLE_VIRTUAL_TERMINAL_PROCESSING 0x0004
-#endif
-
 
 int main(int argc, char** argv)
 {

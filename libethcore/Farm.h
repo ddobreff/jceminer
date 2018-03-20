@@ -115,15 +115,12 @@ public:
 		return m_isMining;
 	}
 
-	WorkingProgress const& miningProgress(bool hwmon = false, bool power = false) const
+	void collectProgress(unsigned level) const
 	{
 		Guard l(x_minerWork);
+
 		auto now = std::chrono::steady_clock::now();
-
 		auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(now - m_lastStart).count();
-		if (ms < 2000)
-			return m_progress;
-
 		m_lastStart = now;
 
 		m_progress.ms = ms;
@@ -134,7 +131,7 @@ public:
 			uint64_t minerHashCount = miner->hashCount();
 			m_progress.hashes += minerHashCount;
 			m_progress.minersHashes.push_back(minerHashCount);
-			if (hwmon) {
+			if (level > 0) {
 				HwMonitorInfo hwInfo = miner->hwmonInfo();
 				HwMonitor hw;
 				unsigned int tempC = 0, fanpcnt = 0, powerW = 0;
@@ -151,7 +148,7 @@ public:
 						}
 						wrap_nvml_get_tempC(nvmlh, typeidx, &tempC);
 						wrap_nvml_get_fanpcnt(nvmlh, typeidx, &fanpcnt);
-						if (power)
+						if (level > 1)
 							wrap_nvml_get_power_usage(nvmlh, typeidx, &powerW);
 					} else if (hwInfo.deviceType == HwMonitorInfoType::AMD && adlh) {
 						int typeidx = 0;
@@ -163,7 +160,7 @@ public:
 						}
 						wrap_adl_get_tempC(adlh, typeidx, &tempC);
 						wrap_adl_get_fanpcnt(adlh, typeidx, &fanpcnt);
-						if (power)
+						if (level > 1)
 							wrap_adl_get_power_usage(adlh, typeidx, &powerW);
 					}
 					// Overwrite with sysfs data if present
@@ -177,7 +174,7 @@ public:
 						}
 						wrap_amdsysfs_get_tempC(sysfsh, typeidx, &tempC);
 						wrap_amdsysfs_get_fanpcnt(sysfsh, typeidx, &fanpcnt);
-						if (power)
+						if (level > 1)
 							wrap_amdsysfs_get_power_usage(sysfsh, typeidx, &powerW);
 					}
 				}
@@ -187,7 +184,11 @@ public:
 				m_progress.minerMonitors.push_back(hw);
 			}
 		}
+	}
 
+	WorkingProgress const& miningProgress() const
+	{
+		Guard l(x_minerWork);
 		return m_progress;
 	}
 
