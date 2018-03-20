@@ -98,7 +98,7 @@ public:
 		("hash",      bool_switch()->default_value(false), "Report hashrate to pool.\n")
 		("intvl",     value<unsigned>(&m_displayInterval)->default_value(15), "statistics display interval.\n")
 		("level",     value<unsigned>(&m_show_level)->default_value(0),
-		 "statistics display interval. 0 - HR only, 1 - + fan & temp, 2 - + power.\n")
+		 "Metrics collection level. 0 - HR only, 1 - + fan & temp, 2 - + power.\n")
 		("pool,p",    value<string>(), poolDesc.str().c_str())
 		("dag",       value<unsigned>(&m_dagLoadMode)->default_value(0),
 		 "DAG load mode. 0 - parallel, 1 - sequential, 2 - single.\n")
@@ -336,7 +336,7 @@ public:
 		mgr.addConnection(m_endpoint);
 
 #if API_CORE
-		Api api(this->m_api_port, f);
+		Api api(m_api_port, f);
 #endif
 
 		// Start PoolManager
@@ -345,7 +345,8 @@ public:
 		// Run CLI in loop
 		while (true) {
 			if (mgr.isConnected()) {
-				auto mp = f.miningProgress(m_show_level > 0, m_show_level > 1);
+				f.collectProgress(m_show_level);
+				auto mp = f.miningProgress();
 				{
 					Guard l(x_log);
 					loginfo << mp << f.getSolutionStats() << ' ' << f.farmLaunchedFormatted() << endl;
@@ -395,6 +396,11 @@ private:
 
 int main(int argc, char** argv)
 {
+	// Set env vars controlling GPU driver behavior.
+	setenv("GPU_MAX_HEAP_SIZE", "100");
+	setenv("GPU_MAX_ALLOC_PERCENT", "100");
+	setenv("GPU_SINGLE_ALLOC_PERCENT", "100");
+
 	clog.imbue(std::locale(""));
 	MinerCLI m;
 

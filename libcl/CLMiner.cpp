@@ -46,7 +46,7 @@ typedef struct {
 
 std::map <std::string, clConfig> optimalConfigs = {
 //                      group   mult    threads tweak
-	{"opencl",          {256,   73728,  2,      0}},
+	{"opencl",          {256,   16000,  2,      0}},
 	{"ellesmere",       {64,    73728,  8,      7}}
 };
 
@@ -99,10 +99,6 @@ vector<int> CLMiner::s_devices(MAX_MINERS, -1);
 CLMiner::CLMiner(FarmFace& _farm, unsigned _index):
 	Miner("cl-", _farm, _index)
 {
-	// Set env vars controlling GPU driver behavior.
-	setenv("GPU_MAX_HEAP_SIZE", "100");
-	setenv("GPU_MAX_ALLOC_PERCENT", "100");
-	setenv("GPU_SINGLE_ALLOC_PERCENT", "100");
 }
 
 CLMiner::~CLMiner()

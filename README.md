@@ -16,76 +16,77 @@ For a full list of available command options, please run
 ```
 Options:
 
-  -h [ --help ]               produce help message.
-                              
-  -d [ --devs ]               List devices.
-                              
-  -v [ --vers ]               list version.
-                              
-  -f [ --file ] arg           Read parameters from file.
-                              
-  -r [ --retries ] arg (=3)   Connection retries.
-                              
-  -e [ --email ] arg          Stratum email.
-                              
-  -w [ --timeout ] arg (=180) Work timeout.
-                              
-  --hash                      Report hashrate to pool.
-                              
-  -s [ --s-intvl ] arg (=15)  statistics display interval.
-                              
-  -l [ --s-level ] arg (=0)   statistics display interval. 0 - HR only, 1 - + fan & temp, 2 - + power.
-                              
-  -p [ --pool ] arg           URL takes the form:
-                              scheme://[user[:password]@]hostname:port
-                              
-                              unsecured schemes: ethproxy+tcp nicehash+tcp stratum+tcp
-                              secured with any TLS: ethproxy+tls nicehash+tls stratum+tls
-                              secured with TLS 1.2: ethproxy+tls12 nicehash+tls12 stratum+tls12
-                              
-                              Example:
-                              stratum+tls://0x0123456...7890190123.miner1@ethermine.org:5555
-                              
-                              Stratum versions:
-                              stratum  - ethpool, ethermine, coinotron, mph, nanopool
-                              eth-proxy - dwarfpool, f2pool, nanopool (required for hashrate reporting to work with nanopool)
-                              nicehash - Ethereum Stratum
-                              
-  --dag arg (=0)              DAG load mode. 0 - parallel, 1 - sequential, 2 - single.
-                              
-  --switch                    Log job switch time.
-                              
-  --json                      Log formatted json messaging.
-                              
-  -G [ --cl ]                 Opencl mode.
-                              
-  -U [ --cu ]                 Cuda mode.
-                              
-  -X [ --mix ]                Mixed opencl and cuda mode. Use OpenCL + CUDA in a system with mixed AMD/Nvidia cards. May require setting --cl-plat 1 or 2.
-                              
-  --eval                      Enable software result evaluation. Use if you GPUs generate too many invalid shares.
-                              
-  -a [ --api-port ] arg (=0)  API port number. 0 - disable, < 0 - read-only.
-                              
-  --cl-plat arg (=0)          Opencl platform.
-                              
-  --cl-devs arg               Opencl device list.
-                              
-  --cl-kern arg (=0)          Opencl kernel. 0 - Opencl, 1 - binary.
-                              
-  --cu-grid arg (=8192)       Cuda grid size.
-                              
-  --cu-block arg (=128)       Cuda block size.
-                              
-  --cu-devs arg               Cuda device list.
-                              
-  --cu-para arg (=4)          Cuda parallel hashes.
-                              
-  --cu-sch arg (=4)           Cuda schedule mode. 0 - auto, 1 - spin, 2 - yield, 4 - sync
-                              
-  --cu-stream arg (=2)        Cuda streams
-                              
-  --stop arg (=0)             Stop after minutes. 0 - never stop.
+  -h [ --help ]             produce help message.
+                            
+  -l [ --list ]             List devices.
+                            
+  -v [ --version ]          list version.
+                            
+  -f [ --file ] arg         Read parameters from file.
+                            
+  -r [ --retries ] arg (=3) Connection retries.
+                            
+  --email arg               Stratum email.
+                            
+  --timeout arg (=180)      Work timeout.
+                            
+  --hash                    Report hashrate to pool.
+                            
+  --intvl arg (=15)         statistics display interval.
+                            
+  --level arg (=0)          Metrics collection level. 0 - HR only, 1 - + fan & 
+                            temp, 2 - + power.
+                            
+  -p [ --pool ] arg         URL takes the form:
+                            scheme://[user[:password]@]hostname:port
+                            
+                            unsecured schemes: ethproxy+tcp nicehash+tcp stratum+tcp
+                            secured with any TLS: ethproxy+tls nicehash+tls stratum+tls
+                            secured with TLS 1.2: ethproxy+tls12 nicehash+tls12 stratum+tls12
+                            
+                            Example:
+                            stratum+tls://0x0123456...7890190123.miner1@ethermine.org:5555
+                            
+                            Stratum versions:
+                            stratum  - ethpool, ethermine, coinotron, mph, nanopool
+                            eth-proxy - dwarfpool, f2pool, nanopool (required for hashrate reporting to work with nanopool)
+                            nicehash - Ethereum Stratum
+                            
+  --dag arg (=0)            DAG load mode. 0 - parallel, 1 - sequential, 2 - single.
+                            
+  --switch                  Log job switch time.
+                            
+  --json                    Log formatted json messaging.
+                            
+  -G [ --cl ]               Opencl mode.
+                            
+  -U [ --cu ]               Cuda mode.
+                            
+  -X [ --mix ]              Mixed opencl and cuda mode. Use OpenCL + CUDA in a system with mixed AMD/Nvidia cards. May require setting --cl-plat 1 or 2.
+                            
+  --eval                    Enable software result evaluation. Use if you GPUs generate too many invalid shares.
+                            
+  --api arg (=0)            API port number. 0 - disable, < 0 - read-only.
+                            
+  --cl-plat arg (=0)        Opencl platform.
+                            
+  --cl-devs arg             Opencl device list.
+                            
+  --cl-kern arg (=0)        Opencl kernel. 0 - Opencl, 1 - binary.
+                            
+  --cu-grid arg (=8192)     Cuda grid size.
+                            
+  --cu-blk arg (=128)       Cuda block size.
+                            
+  --cu-devs arg             Cuda device list.
+                            
+  --cu-para arg (=4)        Cuda parallel hashes.
+                            
+  --cu-sch arg (=4)         Cuda schedule mode. 0 - auto, 1 - spin, 2 - yield, 4 - sync
+                            
+  --cu-strm arg (=2)        Cuda streams
+                            
+  --stop arg (=0)           Stop after minutes. 0 - never stop.
 
 ```
 
