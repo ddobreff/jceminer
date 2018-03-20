@@ -98,7 +98,12 @@ vector<int> CLMiner::s_devices(MAX_MINERS, -1);
 
 CLMiner::CLMiner(FarmFace& _farm, unsigned _index):
 	Miner("cl-", _farm, _index)
-{}
+{
+	// Set env vars controlling GPU driver behavior.
+	setenv("GPU_MAX_HEAP_SIZE", "100");
+	setenv("GPU_MAX_ALLOC_PERCENT", "100");
+	setenv("GPU_SINGLE_ALLOC_PERCENT", "100");
+}
 
 CLMiner::~CLMiner()
 {
