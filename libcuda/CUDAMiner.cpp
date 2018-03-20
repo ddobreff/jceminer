@@ -468,7 +468,6 @@ void CUDAMiner::search(
 		if (found_count) {
 			for (unsigned j = 0; j < found_count; j++) {
 				if (!s_eval) {
-					cerr << "***\n";
 					farm.submitProof(workerName(), Solution{nonce[j], mix[j], w, m_new_work});
 				} else {
 					Result r = EthashAux::eval(w.seed, w.header, nonce[j]);

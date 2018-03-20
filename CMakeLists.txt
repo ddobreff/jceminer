@@ -43,7 +43,7 @@ endif()
 
 
 project(miner)
-set(PROJECT_VERSION 1.0.1.dev)
+set(PROJECT_VERSION 1.0.2)
 
 cable_set_build_type(DEFAULT Release CONFIGURATION_TYPES Release RelWithDebInfo Debug)
 
@@ -61,7 +61,7 @@ cmake_policy(SET CMP0054 NEW)
 
 option(ETHASHCL "Build with OpenCL mining" ON)
 option(ETHASHCUDA "Build with CUDA mining" ON)
-option(APICORE "Build with API Server support" OFF)
+option(APICORE "Build with API Server support" ON)
 
 # propagates CMake configuration options to the compiler
 function(configureProject)
