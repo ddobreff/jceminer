@@ -107,7 +107,8 @@ public:
 		("cu,U", bool_switch()->default_value(false), "Cuda mode.\n") // set m_minerType = MinerType::CUDA;
 		("mix,X", bool_switch()->default_value(false),
 		 "Mixed opencl and cuda mode. Use OpenCL + CUDA in a system with mixed AMD/Nvidia cards. May require setting --cl-plat 1 or 2.\n")
-		("noeval", bool_switch()->default_value(false), "Bypass software result evaluation.\n")
+		("eval", bool_switch()->default_value(false),
+		 "Enable software result evaluation. Use if you GPUs generate too many invalid shares.\n")
 #if API_CORE
 		("api-port,a", value<unsigned>(&m_api_port)->default_value(0), "API port number. 0 - disable, < 0 - read-only.\n")
 #endif
@@ -125,7 +126,7 @@ public:
 		 "Cuda schedule mode. 0 - auto, 1 - spin, 2 - yield, 4 - sync\n")
 		("cu-stream", value<unsigned>(&m_numStreams)->default_value(2), "Cuda streams\n")
 #endif
-		("stop", value<unsigned>(&g_stopAfter)->default_value(0), "Stop after seconds\n")
+		("stop", value<unsigned>(&g_stopAfter)->default_value(0), "Stop after minutes. 0 - never stop.\n")
 		;
 
 		variables_map vm;
@@ -186,7 +187,7 @@ public:
 		}
 		m_endpoint = PoolConnection(uri);
 
-		m_noEval = vm["noeval"].as<bool>();
+		m_eval = vm["eval"].as<bool>();
 
 #if ETH_ETHASHCUDA
 		if (vm.find("cu-devs") != vm.end()) {
@@ -283,7 +284,7 @@ public:
 			        m_openclPlatform,
 			        m_dagLoadMode,
 			        m_dagCreateDevice,
-			        m_noEval
+			        m_eval
 			    ))
 				exit(1);
 			CLMiner::setNumInstances(m_miningThreads);
@@ -308,7 +309,7 @@ public:
 			        0,
 			        m_dagLoadMode,
 			        m_dagCreateDevice,
-			        m_noEval
+			        m_eval
 			    ))
 				exit(1);
 
@@ -388,7 +389,7 @@ private:
 	unsigned m_cudaSchedule;
 	unsigned m_cudaGridSize;
 	unsigned m_cudaBlockSize;
-	bool m_noEval = false;
+	bool m_eval = false;
 	unsigned m_parallelHash    = 4;
 #endif
 	unsigned m_dagLoadMode = 0; // parallel
