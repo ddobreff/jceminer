@@ -46,7 +46,7 @@ typedef struct {
 
 std::map <std::string, clConfig> optimalConfigs = {
 //                      group   mult    threads tweak
-	{"opencl",          {256,   65536,  2,      0}},
+	{"opencl",          {256,   73728,  2,      0}},
 	{"ellesmere",       {64,    73728,  8,      7}}
 };
 
@@ -187,6 +187,7 @@ void CLMiner::workLoop()
 			// Report results while the kernel is running.
 			if (results.a.count > MAX_RESULTS)
 				results.a.count = MAX_RESULTS;
+			// Binary kernel hack. It doesn't support returning the mix hash with the new structure
 			if (s_clKernelName == CLKernelName::Binary)
 				results.a.rslt[0].gid = results.b[1];
 			for (unsigned i = 0; i < results.a.count; i++) {
@@ -216,11 +217,12 @@ void CLMiner::workLoop()
 
 			// Report hash count
 			addHashCount(m_workMultiplier * m_workgroupSize);
+
+			// Make sure the last buffer write has finished --
+			// it reads local variable.
+			m_queue.finish();
 		}
 
-		// Make sure the last buffer write has finished --
-		// it reads local variable.
-		m_queue.finish();
 	} catch (std::exception const& _e) {
 		logerror << workerName() << " - " << _e.what() << endl;
 		exit(-1);
@@ -248,44 +250,47 @@ unsigned CLMiner::getNumDevices()
 
 void CLMiner::listDevices()
 {
-	string outString = "\nListing OpenCL devices.\nFORMAT: [platformID] [deviceID] device.getInfo<CL_DEVICE_VERSION>()\n";
+	string outString = "\nListing OpenCL devices.\nFORMAT: [platformID] [deviceID] device name\n";
 	unsigned int i = 0;
 
-	vector<cl::Platform> platforms = getPlatforms();
-	if (platforms.empty())
-		return;
-	for (unsigned j = 0; j < platforms.size(); ++j) {
-		i = 0;
-		vector<cl::Device> devices = getDevices(platforms, j);
-		for (auto const& device : devices) {
-			outString += "[" + to_string(j) + "] [" + to_string(i) + "] " + device.getInfo<CL_DEVICE_NAME>() + "\n";
-			outString += "\tCL_DEVICE_TYPE: ";
-			switch (device.getInfo<CL_DEVICE_TYPE>()) {
-			case CL_DEVICE_TYPE_CPU:
-				outString += "CPU\n";
+	try {
+		vector<cl::Platform> platforms = getPlatforms();
+		if (platforms.empty())
+			return;
+		for (unsigned j = 0; j < platforms.size(); ++j) {
+			i = 0;
+			vector<cl::Device> devices = getDevices(platforms, j);
+			for (auto const& device : devices) {
+				outString += "[" + to_string(j) + "] [" + to_string(i) + "] " + device.getInfo<CL_DEVICE_NAME>() + "\n";
+				outString += "\tCL_DEVICE_TYPE: ";
+				switch (device.getInfo<CL_DEVICE_TYPE>()) {
+				case CL_DEVICE_TYPE_CPU:
+					outString += "CPU\n";
+					break;
+				case CL_DEVICE_TYPE_GPU: {
+					cl_uint maxCus;
+					clGetDeviceInfo(device(), CL_DEVICE_MAX_COMPUTE_UNITS, sizeof(maxCus), &maxCus, NULL);
+					stringstream ss;
+					ss << maxCus;
+					outString += "GPU #CUs = " + ss.str() + '\n';
+				}
 				break;
-			case CL_DEVICE_TYPE_GPU: {
-				cl_uint maxCus;
-				clGetDeviceInfo(device(), CL_DEVICE_MAX_COMPUTE_UNITS, sizeof(maxCus), &maxCus, NULL);
-				stringstream ss;
-				ss << maxCus;
-				outString += "GPU #CUs = " + ss.str() + '\n';
+				case CL_DEVICE_TYPE_ACCELERATOR:
+					outString += "ACCELERATOR\n";
+					break;
+				default:
+					outString += "DEFAULT\n";
+					break;
+				}
+				outString += "\tCL_DEVICE_GLOBAL_MEM_SIZE: " + to_string(device.getInfo<CL_DEVICE_GLOBAL_MEM_SIZE>()) + "\n";
+				outString += "\tCL_DEVICE_MAX_MEM_ALLOC_SIZE: " + to_string(device.getInfo<CL_DEVICE_MAX_MEM_ALLOC_SIZE>()) + "\n";
+				outString += "\tCL_DEVICE_MAX_WORK_GROUP_SIZE: " + to_string(device.getInfo<CL_DEVICE_MAX_WORK_GROUP_SIZE>()) + "\n";
+				++i;
 			}
-			break;
-			case CL_DEVICE_TYPE_ACCELERATOR:
-				outString += "ACCELERATOR\n";
-				break;
-			default:
-				outString += "DEFAULT\n";
-				break;
-			}
-			outString += "\tCL_DEVICE_GLOBAL_MEM_SIZE: " + to_string(device.getInfo<CL_DEVICE_GLOBAL_MEM_SIZE>()) + "\n";
-			outString += "\tCL_DEVICE_MAX_MEM_ALLOC_SIZE: " + to_string(device.getInfo<CL_DEVICE_MAX_MEM_ALLOC_SIZE>()) + "\n";
-			outString += "\tCL_DEVICE_MAX_WORK_GROUP_SIZE: " + to_string(device.getInfo<CL_DEVICE_MAX_WORK_GROUP_SIZE>()) + "\n";
-			++i;
 		}
+		std::cout << outString;
+	} catch (std::exception const&) {
 	}
-	std::cout << outString;
 }
 
 bool CLMiner::configureGPU(

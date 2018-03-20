@@ -88,15 +88,15 @@ public:
 		options_description desc("Options");
 		desc.add_options()
 		("help,h", bool_switch()->default_value(false), "produce help message.\n")
-		("devs,d", bool_switch()->default_value(false), "List devices.\n")
-		("vers,v", bool_switch()->default_value(false), "list version.\n")
+		("list,l", bool_switch()->default_value(false), "List devices.\n")
+		("version,v", bool_switch()->default_value(false), "list version.\n")
 		("file,f", value<string>(), "Read parameters from file.\n")
 		("retries,r", value<unsigned>(&m_maxFarmRetries)->default_value(3), "Connection retries.\n")
-		("email,e", value<string>(&g_email), "Stratum email.\n")
-		("timeout,w", value<unsigned>(&g_worktimeout)->default_value(180), "Work timeout.\n")
+		("email", value<string>(&g_email), "Stratum email.\n")
+		("timeout", value<unsigned>(&g_worktimeout)->default_value(180), "Work timeout.\n")
 		("hash", bool_switch()->default_value(false), "Report hashrate to pool.\n")
-		("s-intvl,s", value<unsigned>(&m_displayInterval)->default_value(15), "statistics display interval.\n")
-		("s-level,l", value<unsigned>(&m_show_level)->default_value(0),
+		("intvl", value<unsigned>(&m_displayInterval)->default_value(15), "statistics display interval.\n")
+		("level", value<unsigned>(&m_show_level)->default_value(0),
 		 "statistics display interval. 0 - HR only, 1 - + fan & temp, 2 - + power.\n")
 		("pool,p", value<string>(&m_endpoint_url), poolDesc.str().c_str())
 		("dag", value<unsigned>(&m_dagLoadMode)->default_value(0),
@@ -110,7 +110,7 @@ public:
 		("eval", bool_switch()->default_value(false),
 		 "Enable software result evaluation. Use if you GPUs generate too many invalid shares.\n")
 #if API_CORE
-		("api-port,a", value<unsigned>(&m_api_port)->default_value(0), "API port number. 0 - disable, < 0 - read-only.\n")
+		("api", value<unsigned>(&m_api_port)->default_value(0), "API port number. 0 - disable, < 0 - read-only.\n")
 #endif
 #if ETH_ETHASHCL
 		("cl-plat", value<unsigned>(&m_openclPlatform)->default_value(0), "Opencl platform.\n")
@@ -119,17 +119,18 @@ public:
 #endif
 #if ETH_ETHASHCUDA
 		("cu-grid", value<unsigned>(&m_cudaGridSize)->default_value(8192), "Cuda grid size.\n")
-		("cu-block", value<unsigned>(&m_cudaBlockSize)->default_value(128), "Cuda block size.\n")
+		("cu-blk", value<unsigned>(&m_cudaBlockSize)->default_value(128), "Cuda block size.\n")
 		("cu-devs", value<std::vector<unsigned>>()->multitoken(), "Cuda device list.\n")
 		("cu-para", value<unsigned>(&m_parallelHash)->default_value(4), "Cuda parallel hashes.\n")
 		("cu-sch", value<unsigned>(&m_cudaSchedule)->default_value(4),
 		 "Cuda schedule mode. 0 - auto, 1 - spin, 2 - yield, 4 - sync\n")
-		("cu-stream", value<unsigned>(&m_numStreams)->default_value(2), "Cuda streams\n")
+		("cu-strm", value<unsigned>(&m_numStreams)->default_value(2), "Cuda streams\n")
 #endif
 		("stop", value<unsigned>(&g_stopAfter)->default_value(0), "Stop after minutes. 0 - never stop.\n")
 		;
 
 		variables_map vm;
+
 		store(parse_command_line(argc, argv, desc), vm);
 
 		if (vm.find("file") != vm.end()) {
@@ -153,20 +154,20 @@ public:
 		}
 
 		notify(vm);
+
 		if (vm["help"].as<bool>()) {
 			cout << desc << "\n";
 			exit(0);
 		}
 
-		if (vm["vers"].as<bool>()) {
+		if (vm["version"].as<bool>()) {
 			cout << version() << "\n";
 			exit(0);
 		}
 
-		if (vm["devs"].as<bool>()) {
-			m_shouldListDevices = true;
+		m_shouldListDevices = vm["list"].as<bool>();
+		if (m_shouldListDevices)
 			return;
-		}
 
 		if (vm.count("pool") != 1) {
 			cerr << "Specify a single pool URL\n";
@@ -203,8 +204,8 @@ public:
 
 #if ETH_ETHASHCL
 		if (vm.find("cl-devs") != vm.end()) {
-			m_openclDeviceCount = vm["cl-devices"].as<vector<unsigned>>().size();
-			m_openclDevices = vm["cl-devices"].as<vector<unsigned>>();
+			m_openclDeviceCount = vm["cl-devs"].as<vector<unsigned>>().size();
+			m_openclDevices = vm["cl-devs"].as<vector<unsigned>>();
 		}
 
 		if (m_openclSelectedKernel > (unsigned)CLKernelName::Binary) {
@@ -249,7 +250,6 @@ public:
 			cerr << "Specify a miner type\n";
 			exit(-1);
 		}
-
 	}
 
 	void execute()

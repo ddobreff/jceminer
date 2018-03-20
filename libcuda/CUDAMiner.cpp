@@ -138,8 +138,8 @@ unsigned CUDAMiner::getNumDevices()
 
 void CUDAMiner::listDevices()
 {
+	cout << "\nListing CUDA devices.\nFORMAT: [deviceID] deviceName\n";
 	try {
-		cout << "\nListing CUDA devices.\nFORMAT: [deviceID] deviceName\n";
 		int numDevices = getNumDevices();
 		for (int i = 0; i < numDevices; ++i) {
 			cudaDeviceProp props;
@@ -151,8 +151,7 @@ void CUDAMiner::listDevices()
 			cout << "\tPci: " << setw(4) << setfill('0') << hex << props.pciDomainID << ':' << setw(2)
 			     << props.pciBusID << ':' << setw(2) << props.pciDeviceID << '\n';
 		}
-	} catch (std::exception const& err) {
-		logerror << "CUDA error: " << err.what() << endl;
+	} catch (std::exception const&) {
 	}
 }
 
