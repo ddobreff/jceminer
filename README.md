@@ -63,7 +63,7 @@ Options:
                               
   -X [ --mix ]                Mixed opencl and cuda mode. Use OpenCL + CUDA in a system with mixed AMD/Nvidia cards. May require setting --cl-plat 1 or 2.
                               
-  --noeval                    Bypass software result evaluation.
+  --eval                      Enable software result evaluation. Use if you GPUs generate too many invalid shares.
                               
   -a [ --api-port ] arg (=0)  API port number. 0 - disable, < 0 - read-only.
                               
@@ -85,7 +85,7 @@ Options:
                               
   --cu-stream arg (=2)        Cuda streams
                               
-  --stop arg (=0)             Stop after seconds
+  --stop arg (=0)             Stop after minutes. 0 - never stop.
 
 ```
 

@@ -91,7 +91,7 @@ std::vector<cl::Device> getDevices(std::vector<cl::Platform> const& _platforms, 
 }
 }
 
-bool CLMiner::s_noEval = false;
+bool CLMiner::s_eval = false;
 unsigned CLMiner::s_platformId = 0;
 unsigned CLMiner::s_numInstances = 0;
 vector<int> CLMiner::s_devices(MAX_MINERS, -1);
@@ -191,11 +191,7 @@ void CLMiner::workLoop()
 				results.a.rslt[0].gid = results.b[1];
 			for (unsigned i = 0; i < results.a.count; i++) {
 				uint64_t nonce = current.startNonce + results.a.rslt[i].gid;
-				if ((s_noEval) && (s_clKernelName == CLKernelName::Opencl)) {
-					h256 mix;
-					memcpy(mix.data(), results.a.rslt[i].mix, sizeof(results.a.rslt[i].mix));
-					farm.submitProof(workerName(), Solution{nonce, mix, current, current.header != w.header});
-				} else {
+				if (s_eval || (s_clKernelName != CLKernelName::Opencl)) {
 					Result r = EthashAux::eval(current.seed, current.header, nonce);
 					if (r.value < current.boundary) {
 						farm.submitProof(workerName(), Solution{nonce, r.mixHash, current, current.header != w.header});
@@ -206,6 +202,10 @@ void CLMiner::workLoop()
 							logerror << workerName() << " - discared incorrect result!\n";
 						}
 					}
+				} else {
+					h256 mix;
+					memcpy(mix.data(), results.a.rslt[i].mix, sizeof(results.a.rslt[i].mix));
+					farm.submitProof(workerName(), Solution{nonce, mix, current, current.header != w.header});
 				}
 			}
 
@@ -292,12 +292,12 @@ bool CLMiner::configureGPU(
     unsigned _platformId,
     unsigned _dagLoadMode,
     unsigned _dagCreateDevice,
-    bool _noEval
+    bool _eval
 )
 {
 	s_dagLoadMode = _dagLoadMode;
 	s_dagCreateDevice = _dagCreateDevice;
-	s_noEval = _noEval;
+	s_eval = _eval;
 
 	s_platformId = _platformId;
 

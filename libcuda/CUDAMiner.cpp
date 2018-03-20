@@ -164,7 +164,7 @@ bool CUDAMiner::configureGPU(
     uint64_t _currentBlock,
     unsigned _dagLoadMode,
     unsigned _dagCreateDevice,
-    bool _noeval
+    bool _eval
 )
 {
 	s_dagLoadMode = _dagLoadMode;
@@ -178,7 +178,7 @@ bool CUDAMiner::configureGPU(
 	        _numStreams,
 	        _scheduleFlag,
 	        _currentBlock,
-	        _noeval)
+	        _eval)
 	   ) {
 		cout << "No CUDA device with sufficient memory was found. Can't CUDA mine. Remove the -U argument" << endl;
 		return false;
@@ -199,7 +199,7 @@ bool CUDAMiner::cuda_configureGPU(
     unsigned _numStreams,
     unsigned _scheduleFlag,
     uint64_t _currentBlock,
-    bool _noeval
+    bool _eval
 )
 {
 	try {
@@ -207,7 +207,7 @@ bool CUDAMiner::cuda_configureGPU(
 		s_gridSize = _gridSize;
 		s_numStreams = _numStreams;
 		s_scheduleFlag = _scheduleFlag;
-		s_noeval = _noeval;
+		s_eval = _eval;
 
 		{
 			Guard l(x_log);
@@ -248,7 +248,7 @@ unsigned CUDAMiner::s_blockSize;
 unsigned CUDAMiner::s_gridSize;
 unsigned CUDAMiner::s_numStreams;
 unsigned CUDAMiner::s_scheduleFlag;
-bool CUDAMiner::s_noeval = false;
+bool CUDAMiner::s_eval = false;
 
 bool CUDAMiner::cuda_init(
     size_t numDevices,
@@ -459,25 +459,16 @@ void CUDAMiner::search(
 			for (unsigned j = 0; j < found_count; j++) {
 				volatile result* rslt = buffer->rslt + j;
 				nonce[j] = nonce_base + rslt->gid;
-				if (s_noeval) {
-					uint32_t* u = (uint32_t*)mix[j].data();
-					uint32_t* v = (uint32_t*)rslt->mix;
-					u[0] = v[0];
-					u[1] = v[1];
-					u[2] = v[2];
-					u[3] = v[3];
-					u[4] = v[4];
-					u[5] = v[5];
-					u[6] = v[6];
-					u[7] = v[7];
-				}
+				if (!s_eval)
+					memcpy(mix[j].data(), (const void*)rslt->mix, sizeof(rslt->mix));
 			}
 			buffer->count = 0;
 		}
 		run_ethash_search(s_gridSize, s_blockSize, stream, buffer, m_current_nonce, m_parallelHash);
 		if (found_count) {
 			for (unsigned j = 0; j < found_count; j++) {
-				if (s_noeval) {
+				if (!s_eval) {
+					cerr << "***\n";
 					farm.submitProof(workerName(), Solution{nonce[j], mix[j], w, m_new_work});
 				} else {
 					Result r = EthashAux::eval(w.seed, w.header, nonce[j]);

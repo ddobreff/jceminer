@@ -40,7 +40,7 @@ public:
 	    uint64_t _currentBlock,
 	    unsigned _dagLoadMode,
 	    unsigned _dagCreateDevice,
-	    bool _noeval
+	    bool _eval
 	);
 	static void setNumInstances(unsigned _instances);
 	static void setDevices(const vector<unsigned>& _devices, unsigned _selectedDeviceCount);
@@ -52,7 +52,7 @@ public:
 	    unsigned _numStreams,
 	    unsigned _scheduleFlag,
 	    uint64_t _currentBlock,
-	    bool _noeval
+	    bool _eval
 	);
 
 	static void cuda_setParallelHash(unsigned _parallelHash);
@@ -113,7 +113,7 @@ private:
 	static unsigned s_numInstances;
 	static vector<int> s_devices;
 
-	static bool s_noeval;
+	static bool s_eval;
 
 };
 
