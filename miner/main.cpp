@@ -187,6 +187,10 @@ public:
 			cerr << "Unknown URI scheme " << uri.Scheme() << endl;
 			exit(-1);
 		}
+		if (uri.Port() == 0) {
+			cerr << "Missing port number\n";
+			exit(-1);
+		}
 		m_endpoint = PoolConnection(uri);
 
 		m_eval = vm["eval"].as<bool>();
