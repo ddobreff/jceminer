@@ -251,17 +251,17 @@ typedef union {
 	uint16  uint16s[200 / sizeof(uint16)];
 } hash200_t;
 
-#define MAX_RESULTS 4
+#define MAX_RESULTS 2
 
 typedef struct {
-    unsigned gid;
-    unsigned mix[8];
-    unsigned pad[7];
+	unsigned gid;
+	unsigned mix[8];
+	unsigned pad[7];
 } result;
 
 typedef struct {
-    unsigned count;
-    result rslt[MAX_RESULTS];
+	unsigned count;
+	result rslt[MAX_RESULTS];
 } search_results;
 
 #if PLATFORM != OPENCL_PLATFORM_NVIDIA // use maxrregs on nv
@@ -367,7 +367,7 @@ __kernel void ethash_search(
 
 #if THREADS_PER_HASH == 2
 		share->uint4s[thread_id] =
-			(uint4)( FNV_REDUCE(mix.s0123), FNV_REDUCE(mix.s4567), FNV_REDUCE(mix.s89ab), FNV_REDUCE(mix.scdef));
+		    (uint4)(FNV_REDUCE(mix.s0123), FNV_REDUCE(mix.s4567), FNV_REDUCE(mix.s89ab), FNV_REDUCE(mix.scdef));
 #elif THREADS_PER_HASH == 4
 		share->uint2s[thread_id] = (uint2)(FNV_REDUCE(mix.lo), FNV_REDUCE(mix.hi));
 #elif THREADS_PER_HASH == 8

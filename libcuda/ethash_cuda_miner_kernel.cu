@@ -27,31 +27,35 @@
 template <uint32_t _PARALLEL_HASH>
 __global__ void
 ethash_search(
-        volatile search_results* g_output,
-        uint64_t start_nonce
+    volatile search_results* g_output,
+    uint64_t start_nonce
 )
 {
 	uint32_t const gid = blockIdx.x * blockDim.x + threadIdx.x;
 	uint2 mix[4];
 	if (!compute_hash<_PARALLEL_HASH>(start_nonce + gid, d_target, mix))
 		return;
-	uint32_t i = atomicInc((uint32_t*)&g_output->count, 0xffffffff);
+	uint32_t i = atomicInc((unsigned*)&g_output->count, 0xffffffff);
 	if (i >= MAX_RESULTS)
 		return;
-	volatile result* rslt = g_output->rslt + i;
-	rslt->gid = gid;
-	volatile uint32_t* m = rslt->mix;
-	m[0] = mix[0].x; m[1] = mix[0].y; m[2] = mix[1].x; m[3] = mix[1].y;
-	m[4] = mix[2].x; m[5] = mix[2].y; m[6] = mix[3].x; m[7] = mix[3].y;
+	g_output->rslt[i].gid = gid;
+	g_output->rslt[i].mix[0] = mix[0].x;
+	g_output->rslt[i].mix[1] = mix[0].y;
+	g_output->rslt[i].mix[2] = mix[1].x;
+	g_output->rslt[i].mix[3] = mix[1].y;
+	g_output->rslt[i].mix[4] = mix[2].x;
+	g_output->rslt[i].mix[5] = mix[2].y;
+	g_output->rslt[i].mix[6] = mix[3].x;
+	g_output->rslt[i].mix[7] = mix[3].y;
 }
 
 void run_ethash_search(
-        uint32_t blocks,
-        uint32_t threads,
-        cudaStream_t stream,
-        volatile search_results* g_output,
-        uint64_t start_nonce,
-        uint32_t parallelHash
+    uint32_t blocks,
+    uint32_t threads,
+    cudaStream_t stream,
+    volatile search_results* g_output,
+    uint64_t start_nonce,
+    uint32_t parallelHash
 )
 {
 	switch (parallelHash) {
@@ -110,11 +114,11 @@ ethash_calculate_dag_item(uint32_t start)
 }
 
 void ethash_generate_dag(
-        uint64_t dag_size,
-        uint32_t blocks,
-        uint32_t threads,
-        cudaStream_t stream,
-        int device
+    uint64_t dag_size,
+    uint32_t blocks,
+    uint32_t threads,
+    cudaStream_t stream,
+    int device
 )
 {
 	uint32_t const work = (uint32_t)(dag_size / sizeof(hash64_t));
@@ -130,10 +134,10 @@ void ethash_generate_dag(
 }
 
 void set_constants(
-        hash128_t* _dag,
-        uint32_t _dag_size,
-        hash64_t* _light,
-        uint32_t _light_size
+    hash128_t* _dag,
+    uint32_t _dag_size,
+    hash64_t* _light,
+    uint32_t _light_size
 )
 {
 	CUDA_SAFE_CALL(cudaMemcpyToSymbol(d_dag, &_dag, sizeof(hash128_t*)));
@@ -143,8 +147,8 @@ void set_constants(
 }
 
 void set_header_and_target(
-        hash32_t _header,
-        uint64_t _target
+    hash32_t _header,
+    uint64_t _target
 )
 {
 	CUDA_SAFE_CALL(cudaMemcpyToSymbol(d_header, &_header, sizeof(hash32_t)));

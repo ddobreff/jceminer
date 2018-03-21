@@ -374,14 +374,9 @@ void EthStratumClient::readResponse(const boost::system::error_code& ec, std::si
 		}
 		if (m_connected)
 			readline();
-	} else {
-		if (m_connected) {
-			{
-				Guard l(x_log);
-				logerror << "Read response failed: " + ec.message() << endl;
-			}
-			exit(-1);
-		}
+	} else if (m_connected) {
+		Guard l(x_log);
+		logerror << "Read response failed: " + ec.message() << endl;
 	}
 }
 
@@ -394,7 +389,7 @@ void EthStratumClient::processExtranonce(std::string& enonce)
 		loginfo << "Extranonce set to " + enonce << endl;
 	}
 
-	for (int i = enonce.length(); i < 16; ++i) enonce += "0";
+	enonce.resize(16, '0');
 	m_extraNonce = h64(enonce);
 }
 

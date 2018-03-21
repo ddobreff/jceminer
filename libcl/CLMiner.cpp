@@ -16,7 +16,7 @@ namespace dev
 namespace eth
 {
 
-#define MAX_RESULTS 4
+#define MAX_RESULTS 2
 
 typedef struct {
 	uint32_t gid;

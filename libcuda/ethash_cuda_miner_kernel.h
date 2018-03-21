@@ -14,7 +14,7 @@
 // one solution per stream hash calculation
 // Leave room for up to 4 results. A power
 // of 2 here will yield better CUDA optimization
-#define MAX_RESULTS 4
+#define MAX_RESULTS 2
 
 typedef struct {
 	uint32_t gid;
