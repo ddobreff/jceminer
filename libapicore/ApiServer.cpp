@@ -51,25 +51,27 @@ void ApiServer::getMinerStat1(const Json::Value& request, Json::Value& response)
 		gpuIndex++;
 	}
 
-	gpuIndex = 0;
-	numGpus = p.minerMonitors.size();
-	for (auto const& i : p.minerMonitors) {
-		tempAndFans << i.tempC << ";" << i.fanP << (((numGpus - 1) > gpuIndex) ? "; " : ""); // Fetching Temp and Fans
-		gpuIndex++;
+	int numMonGpus = p.minerMonitors.size();
+	for (int gpuIndex = 0; gpuIndex < numGpus; gpuIndex++) {
+		if (gpuIndex < numMonGpus) {
+			auto mon = p.minerMonitors[gpuIndex];
+			tempAndFans << mon.tempC << ";" << mon.fanP << ((gpuIndex < (numGpus - 1)) ? ";" : ""); // Fetching Temp and Fans
+		} else
+			tempAndFans << ((gpuIndex < (numGpus - 1)) ? "0;0;" : "0;0"); // Fetching Temp and Fans
 	}
 
 	response[0] = miner_get_buildinfo()->project_version;  //miner version.
 	response[1] = toString(runningTime.count()); // running time, in minutes.
 	response[2] =
 	    totalMhEth.str();              // total ETH hashrate in MH/s, number of ETH shares, number of ETH rejected shares.
-	response[3] = detailedMhEth.str();           // detailed ETH hashrate for all GPUs.
+	response[3] = detailedMhEth.str(); // detailed ETH hashrate for all GPUs.
 	response[4] =
 	    totalMhDcr.str();              // total DCR hashrate in MH/s, number of DCR shares, number of DCR rejected shares.
-	response[5] = detailedMhDcr.str();           // detailed DCR hashrate for all GPUs.
-	response[6] = tempAndFans.str();             // Temperature and Fan speed(%) pairs for all GPUs.
-	response[7] = poolAddresses.str();           // current mining pool. For dual mode, there will be two pools here.
+	response[5] = detailedMhDcr.str(); // detailed DCR hashrate for all GPUs.
+	response[6] = tempAndFans.str();   // Temperature and Fan speed(%) pairs for all GPUs.
+	response[7] = poolAddresses.str(); // current mining pool. For dual mode, there will be two pools here.
 	response[8] =
-	    invalidStats.str();            // number of ETH invalid shares, number of ETH pool switches, number of DCR invalid shares, number of DCR pool switches.
+	    invalidStats.str(); // number of ETH invalid shares, number of ETH pool switches, number of DCR invalid shares, number of DCR pool switches.
 }
 
 void ApiServer::getMinerStatHR(const Json::Value& request, Json::Value& response)
@@ -98,22 +100,28 @@ void ApiServer::getMinerStatHR(const Json::Value& request, Json::Value& response
 	int gpuIndex = 0;
 	for (auto const& i : p.minersHashes) {
 		detailedMhEth[gpuIndex] = (p.minerRate(i));
-		//detailedMhDcr[gpuIndex] = "off"; //Not supported
 		gpuIndex++;
 	}
 
-	gpuIndex = 0;
-	for (auto const& i : p.minerMonitors) {
-		temps[gpuIndex] = i.tempC ; // Fetching Temps
-		fans[gpuIndex] = i.fanP; // Fetching Fans
-		powers[gpuIndex] =  i.powerW; // Fetching Power
-		gpuIndex++;
+	int numGpus = gpuIndex;
+	int numMons = p.minerMonitors.size();
+	for (gpuIndex = 0; gpuIndex < numGpus; gpuIndex++) {
+		if (gpuIndex < numMons) {
+			auto mon = p.minerMonitors[gpuIndex];
+			temps[gpuIndex] = mon.tempC ; // Fetching Temps
+			fans[gpuIndex] = mon.fanP; // Fetching Fans
+			powers[gpuIndex] = int(mon.powerW); // Fetching Power
+		} else {
+			temps[gpuIndex] = 0; // Fetching Temps
+			fans[gpuIndex] = 0; // Fetching Fans
+			powers[gpuIndex] = 0; // Fetching Power
+		}
 	}
 
 	response["version"] = version.str();		// miner version.
 	response["runtime"] = runtime.str();		// running time, in minutes.
 	// total ETH hashrate in MH/s, number of ETH shares, number of ETH rejected shares.
-	response["ethhashrate"] = (p.rate());
+	response["ethhashrate"] = p.rate();
 	response["ethhashrates"] = detailedMhEth;
 	response["ethshares"] 	= s.getAccepts();
 	response["ethrejected"] = s.getRejects();
