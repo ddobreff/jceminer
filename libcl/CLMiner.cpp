@@ -11,6 +11,19 @@
 using namespace dev;
 using namespace eth;
 
+typedef struct {
+	unsigned workGroupSize;
+	unsigned workMultiplier;
+	unsigned workThreads;
+	unsigned workTweak;
+} clConfig;
+
+std::map <std::string, clConfig> optimalConfigs = {
+//                      group   mult    threads tweak
+	{"opencl",          {256,   16384,  2,      0}},
+	{"ellesmere",       {64,    73728,  8,      7}}
+};
+
 namespace dev
 {
 namespace eth
@@ -34,21 +47,6 @@ typedef union {
 
 
 CLKernelName CLMiner::s_clKernelName;
-
-constexpr size_t c_maxSearchResults = 1;
-
-typedef struct {
-	unsigned workGroupSize;
-	unsigned workMultiplier;
-	unsigned workThreads;
-	unsigned workTweak;
-} clConfig;
-
-std::map <std::string, clConfig> optimalConfigs = {
-//                      group   mult    threads tweak
-	{"opencl",          {256,   16000,  2,      0}},
-	{"ellesmere",       {64,    73728,  8,      7}}
-};
 
 namespace
 {
@@ -488,7 +486,7 @@ bool CLMiner::init(const h256& seed)
 		addDefinition(code, "DAG_SIZE", dagSize128);
 		addDefinition(code, "LIGHT_SIZE", lightSize64);
 		addDefinition(code, "ACCESSES", ETHASH_ACCESSES);
-		addDefinition(code, "MAX_OUTPUTS", c_maxSearchResults);
+		addDefinition(code, "MAX_OUTPUTS", MAX_RESULTS);
 		addDefinition(code, "PLATFORM", platformId);
 		addDefinition(code, "COMPUTE", computeCapability);
 		addDefinition(code, "THREADS_PER_HASH", m_threadsPerHash);

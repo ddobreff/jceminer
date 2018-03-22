@@ -73,8 +73,7 @@
 #define FNV(x, y)        ((x) * FNV_PRIME ^ (y))
 #define FNV_REDUCE(v)    FNV(FNV(FNV(v.x, v.y), v.z), v.w)
 
-#define mem_fence(x) barrier(x)
-
+#define mem_fence() barrier(CLK_LOCAL_MEM_FENCE)
 
 __constant ulong const Keccak_f1600_RC[24] = {
 	(0x0000000000000001UL), (0x0000000000008082UL), (0x800000000000808AUL), (0x8000000080008000UL),
@@ -200,19 +199,19 @@ static void keccak_f1600_round(ulong* a, const uint r, const uint outsz)
 	}
 }
 
-#define SHA3_512(s) { \
-    for (uint i = 8; i != 25; ++i){ \
-        s[i] = 0UL; \
-    } \
-    s[8] = 0x8000000000000001UL; \
-    keccak_f1600(s, 8); \
+#define SHA3_512(s) {                  	\
+    for (uint i = 8; i != 25; ++i){     \
+        s[i] = 0UL;                     \
+    }                                   \
+    s[8] = 0x8000000000000001UL;        \
+    keccak_f1600(s, 8);                 \
 }
 
-#define keccak_f1600(a, outsz) { \
-    for (uint r = 0; r < 23;) {\
+#define keccak_f1600(a, outsz) {        \
+    for (uint r = 0; r < 23;) {         \
         keccak_f1600_round(a, r++, 25); \
-    }\
-    keccak_f1600_round(a, 23, outsz);\
+    }                                   \
+    keccak_f1600_round(a, 23, outsz);   \
 }
 
 typedef struct {
@@ -222,7 +221,6 @@ typedef struct {
 typedef union {
 	ulong   ulongs[64 / sizeof(ulong)];
 	ulong4  ulong4s[64 / sizeof(ulong4)];
-
 	uint    uints[64 / sizeof(uint)];
 	uint2   uint2s[64 / sizeof(uint2)];
 	uint4   uint4s[64 / sizeof(uint4)];
@@ -234,7 +232,6 @@ typedef union {
 	ulong   ulongs[128 / sizeof(ulong)];
 	ulong4  ulong4s[128 / sizeof(ulong4)];
 	ulong8  ulong8s[128 / sizeof(ulong8)];
-
 	uint    uints[128 / sizeof(uint)];
 	uint2   uint2s[128 / sizeof(uint2)];
 	uint4   uint4s[128 / sizeof(uint4)];
@@ -244,14 +241,11 @@ typedef union {
 
 typedef union {
 	ulong   ulongs[200 / sizeof(ulong)];
-
 	uint    uints[200 / sizeof(uint)];
 	uint2   uint2s[200 / sizeof(uint2)];
 	uint8   uint8s[200 / sizeof(uint8)];
 	uint16  uint16s[200 / sizeof(uint16)];
 } hash200_t;
-
-#define MAX_RESULTS 2
 
 typedef struct {
 	unsigned gid;
@@ -261,7 +255,7 @@ typedef struct {
 
 typedef struct {
 	unsigned count;
-	result rslt[MAX_RESULTS];
+	result rslt[MAX_OUTPUTS];
 } search_results;
 
 #if PLATFORM != OPENCL_PLATFORM_NVIDIA // use maxrregs on nv
@@ -328,7 +322,7 @@ __kernel void ethash_search(
 	for (uint tid = 0; tid < THREADS_PER_HASH; tid++) {
 		if (tid == thread_id)
 			share->uint16s[0] = ((uint16*)state)[0];
-		mem_fence(CLK_LOCAL_MEM_FENCE);
+		mem_fence();
 
 #if THREADS_PER_HASH == 2
 		uint16 mix = share->uint16s[0];
@@ -339,10 +333,10 @@ __kernel void ethash_search(
 #elif THREADS_PER_HASH == 16
 		uint8 mix = share->uints[thread_id & 7];
 #endif
-		mem_fence(CLK_LOCAL_MEM_FENCE);
+		mem_fence();
 
 		uint init0 = share->uints[0];
-		mem_fence(CLK_LOCAL_MEM_FENCE);
+		mem_fence();
 
 #pragma unroll 1
 		for (uint a = 0; a < 64; a += ACCESS_INCREMENT) {
@@ -352,7 +346,7 @@ __kernel void ethash_search(
 			for (uint i = 0; i != ACCESS_INCREMENT; ++i) {
 				if (update_share)
 					share->uints[0] = FNV(init0 ^ (a + i), ((uint*)&mix)[i]) % DAG_SIZE;
-				mem_fence(CLK_LOCAL_MEM_FENCE);
+				mem_fence();
 
 #if THREADS_PER_HASH == 2
 				mix = FNV(mix, g_dag[share->uints[0]].uint16s[thread_id]);
@@ -361,7 +355,7 @@ __kernel void ethash_search(
 #elif THREADS_PER_HASH == 8
 				mix = FNV(mix, g_dag[share->uints[0]].uint4s[thread_id]);
 #endif
-				mem_fence(CLK_LOCAL_MEM_FENCE);
+				mem_fence();
 			}
 		}
 
@@ -373,11 +367,11 @@ __kernel void ethash_search(
 #elif THREADS_PER_HASH == 8
 		share->uints[thread_id] = FNV_REDUCE(mix);
 #endif
-		mem_fence(CLK_LOCAL_MEM_FENCE);
+		mem_fence();
 
 		if (tid == thread_id)
 			((ulong4*)state)[2] = share->ulong4s[0];
-		mem_fence(CLK_LOCAL_MEM_FENCE);
+		mem_fence();
 	}
 #endif
 
@@ -398,7 +392,7 @@ __kernel void ethash_search(
 
 	if (as_ulong(as_uchar8(state[0]).s76543210) < target) {
 		uint slot = atomic_inc(&g_output->count);
-		if (slot >= MAX_RESULTS)
+		if (slot >= MAX_OUTPUTS)
 			return;
 		g_output->rslt[slot].gid = gid;
 		g_output->rslt[slot].mix[0] = mixhash[0];
