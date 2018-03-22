@@ -1,5 +1,7 @@
 # ethminer
 
+[![Join the chat at https://gitter.im/miscellaneousbits/miner](https://badges.gitter.im/miscellaneousbits/miner.svg)](https://gitter.im/miscellaneousbits/miner?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 [![standard-readme compliant](https://img.shields.io/badge/readme%20style-standard-brightgreen.svg)](https://github.com/RichardLitt/standard-readme)
 
 > Ethereum miner with OpenCL, CUDA and stratum support. Cloned from ethrereum-mining/ethminer.
