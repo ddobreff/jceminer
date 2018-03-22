@@ -1,7 +1,5 @@
 # ethminer
 
-[![standard-readme compliant](https://img.shields.io/badge/readme%20style-standard-brightgreen.svg)](https://github.com/RichardLitt/standard-readme)
-
 > Ethereum miner with OpenCL, CUDA and stratum support. Cloned from ethrereum-mining/ethminer.
 
 This is adapted for personal use. I make no claims of viability, and likely won't respond to bug reports or requests. Should
