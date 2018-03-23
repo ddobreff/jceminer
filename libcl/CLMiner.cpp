@@ -29,20 +29,10 @@ namespace dev
 namespace eth
 {
 
-#define MAX_RESULTS 2
-
 typedef struct {
+	uint32_t count;
 	uint32_t gid;
-	uint32_t mix[8];
-	uint32_t pad[7];
-} result;
-
-typedef union {
-	struct {
-		uint32_t count;
-		result rslt[MAX_RESULTS];
-	} a;
-	uint32_t b[2];
+	uint64_t mix[4];
 } search_results;
 
 
@@ -171,10 +161,9 @@ void CLMiner::workLoop()
 			// Read results.
 			// TODO: could use pinned host pointer instead.
 			search_results results;
-			m_queue.enqueueReadBuffer(m_searchBuffer, CL_TRUE, 0, sizeof(results.a.count), &results);
+			m_queue.enqueueReadBuffer(m_searchBuffer, CL_TRUE, 0, sizeof(results), &results);
 
-			if (results.a.count > 0) {
-				m_queue.enqueueReadBuffer(m_searchBuffer, CL_TRUE, 0, sizeof(results), &results);
+			if (results.count) {
 				// Reset search buffer if any solution found.
 				m_queue.enqueueWriteBuffer(m_searchBuffer, CL_FALSE, 0, sizeof(c_zero), &c_zero);
 			}
@@ -184,27 +173,22 @@ void CLMiner::workLoop()
 			m_queue.enqueueNDRangeKernel(m_searchKernel, cl::NullRange, m_workMultiplier * m_workgroupSize, m_workgroupSize);
 
 			// Report results while the kernel is running.
-			if (results.a.count > MAX_RESULTS)
-				results.a.count = MAX_RESULTS;
-			// Binary kernel hack. It doesn't support returning the mix hash with the new structure
-			if (s_clKernelName == CLKernelName::Binary)
-				results.a.rslt[0].gid = results.b[1];
-			for (unsigned i = 0; i < results.a.count; i++) {
-				uint64_t nonce = current.startNonce + results.a.rslt[i].gid;
+			if (results.count) {
+				uint64_t nonce = current.startNonce + results.gid;
 				if (s_eval || (s_clKernelName != CLKernelName::Opencl)) {
 					Result r = EthashAux::eval(current.seed, current.header, nonce);
-					if (r.value < current.boundary) {
+					if (r.value < current.boundary)
 						farm.submitProof(workerName(), Solution{nonce, r.mixHash, current, current.header != w.header});
-					} else {
+					else {
 						farm.failedSolution();
 						{
 							Guard l(x_log);
-							logerror << workerName() << " - discared incorrect result!\n";
+							logerror << workerName() << " - discarded incorrect result!\n";
 						}
 					}
 				} else {
 					h256 mix;
-					memcpy(mix.data(), results.a.rslt[i].mix, sizeof(results.a.rslt[i].mix));
+					memcpy(mix.data(), results.mix, sizeof(results.mix));
 					farm.submitProof(workerName(), Solution{nonce, mix, current, current.header != w.header});
 				}
 			}
@@ -486,7 +470,6 @@ bool CLMiner::init(const h256& seed)
 		addDefinition(code, "DAG_SIZE", dagSize128);
 		addDefinition(code, "LIGHT_SIZE", lightSize64);
 		addDefinition(code, "ACCESSES", ETHASH_ACCESSES);
-		addDefinition(code, "MAX_OUTPUTS", MAX_RESULTS);
 		addDefinition(code, "PLATFORM", platformId);
 		addDefinition(code, "COMPUTE", computeCapability);
 		addDefinition(code, "THREADS_PER_HASH", m_threadsPerHash);

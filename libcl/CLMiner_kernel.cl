@@ -15,10 +15,6 @@
 #define GROUP_SIZE 128
 #endif
 
-#ifndef MAX_OUTPUTS
-#define MAX_OUTPUTS 63U
-#endif
-
 #ifndef PLATFORM
 #define PLATFORM OPENCL_PLATFORM_AMD
 #endif
@@ -248,14 +244,9 @@ typedef union {
 } hash200_t;
 
 typedef struct {
-	unsigned gid;
-	unsigned mix[8];
-	unsigned pad[7];
-} result;
-
-typedef struct {
 	unsigned count;
-	result rslt[MAX_OUTPUTS];
+	unsigned gid;
+	ulong mix[4];
 } search_results;
 
 #if PLATFORM != OPENCL_PLATFORM_NVIDIA // use maxrregs on nv
@@ -392,17 +383,13 @@ __kernel void ethash_search(
 
 	if (as_ulong(as_uchar8(state[0]).s76543210) < target) {
 		uint slot = atomic_inc(&g_output->count);
-		if (slot >= MAX_OUTPUTS)
+		if (slot)
 			return;
-		g_output->rslt[slot].gid = gid;
-		g_output->rslt[slot].mix[0] = mixhash[0];
-		g_output->rslt[slot].mix[1] = mixhash[0] >> 32;
-		g_output->rslt[slot].mix[2] = mixhash[1];
-		g_output->rslt[slot].mix[3] = mixhash[1] >> 32;
-		g_output->rslt[slot].mix[4] = mixhash[2];
-		g_output->rslt[slot].mix[5] = mixhash[2] >> 32;
-		g_output->rslt[slot].mix[6] = mixhash[3];
-		g_output->rslt[slot].mix[7] = mixhash[3] >> 32;
+		g_output->gid = gid;
+		g_output->mix[0] = mixhash[0];
+		g_output->mix[1] = mixhash[1];
+		g_output->mix[2] = mixhash[2];
+		g_output->mix[3] = mixhash[3];
 	}
 }
 
