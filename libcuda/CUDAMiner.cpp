@@ -447,37 +447,30 @@ void CUDAMiner::search(
 		cudaStream_t stream = m_streams[stream_index];
 		buffer = m_search_buf[stream_index];
 		uint32_t found_count = 0;
-		uint64_t nonce[MAX_RESULTS];
-		h256 mix[MAX_RESULTS];
+		uint64_t nonce;
+		h256 mix;
 		uint64_t nonce_base = m_current_nonce - s_numStreams * batch_size;
 		CUDA_SAFE_CALL(cudaStreamSynchronize(stream));
 		found_count = buffer->count;
 		if (found_count) {
-			if (found_count > MAX_RESULTS)
-				found_count = MAX_RESULTS;
-			for (unsigned j = 0; j < found_count; j++) {
-				volatile result* rslt = buffer->rslt + j;
-				nonce[j] = nonce_base + rslt->gid;
-				if (!s_eval)
-					memcpy(mix[j].data(), (const void*)rslt->mix, sizeof(rslt->mix));
-			}
+			nonce = nonce_base + buffer->gid;
+			if (!s_eval)
+				memcpy(mix.data(), (const void*)buffer->mix, sizeof(buffer->mix));
 			buffer->count = 0;
 		}
 		run_ethash_search(s_gridSize, s_blockSize, stream, buffer, m_current_nonce, m_parallelHash);
 		if (found_count) {
-			for (unsigned j = 0; j < found_count; j++) {
-				if (!s_eval) {
-					farm.submitProof(workerName(), Solution{nonce[j], mix[j], w, m_new_work});
-				} else {
-					Result r = EthashAux::eval(w.seed, w.header, nonce[j]);
-					if (r.value < w.boundary)
-						farm.submitProof(workerName(), Solution{nonce[j], r.mixHash, w, m_new_work});
-					else {
-						farm.failedSolution();
-						{
-							Guard l(x_log);
-							logwarn << workerName() << " - Incorrect result discarded!\n";
-						}
+			if (!s_eval) {
+				farm.submitProof(workerName(), Solution{nonce, mix, w, m_new_work});
+			} else {
+				Result r = EthashAux::eval(w.seed, w.header, nonce);
+				if (r.value < w.boundary)
+					farm.submitProof(workerName(), Solution{nonce, r.mixHash, w, m_new_work});
+				else {
+					farm.failedSolution();
+					{
+						Guard l(x_log);
+						logwarn << workerName() << " - Incorrect result discarded!\n";
 					}
 				}
 			}

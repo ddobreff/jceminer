@@ -12,19 +12,10 @@
 
 // It is virtually impossible to get more than
 // one solution per stream hash calculation
-// Leave room for up to 4 results. A power
-// of 2 here will yield better CUDA optimization
-#define MAX_RESULTS 2
-
-typedef struct {
-	uint32_t gid;
-	uint32_t mix[8];
-	uint32_t pad[7];
-} result;
-
 typedef struct {
 	uint32_t count;
-	result rslt[MAX_RESULTS];
+	uint32_t gid;
+	uint64_t mix[4];
 } search_results;
 
 #define ACCESSES 64
