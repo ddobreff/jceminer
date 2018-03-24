@@ -143,7 +143,7 @@ void EthStratumClient::resolve_handler(const boost::system::error_code& ec, tcp:
 			logwarn << "Could not resolve host " << m_connection.Host() << ':' << m_connection.Port() << ", " << ec.message() <<
 			        endl;
 		}
-		exit(-1);
+		throw runtime_error("Can't resolve");
 	}
 }
 
@@ -236,7 +236,7 @@ void EthStratumClient::connect_handler(const boost::system::error_code& ec, tcp:
 						loginfo << "* Disable certificate verification all-together via command-line option." << endl;
 					}
 				}
-				exit(-1);
+				throw runtime_error("No CA");
 			}
 		}
 
@@ -285,7 +285,7 @@ void EthStratumClient::connect_handler(const boost::system::error_code& ec, tcp:
 			logerror << "Could not connect to stratum server " << m_connection.Host() << ':' << m_connection.Port() << ", " <<
 			         ec.message() << endl;
 		}
-		exit(-1);
+		throw runtime_error("No connect");
 	}
 
 }
@@ -448,8 +448,7 @@ void EthStratumClient::processReponse(Json::Value& responseObject)
 				Guard l(x_log);
 				logerror << "Worker not authorized:" + m_connection.User() << endl;
 			}
-			exit(-1);
-			return;
+			throw runtime_error("Not authorized");
 		}
 		{
 			Guard l(x_log);
@@ -571,9 +570,9 @@ void EthStratumClient::stop_timeout_handler(const boost::system::error_code& ec)
 	if (!ec) {
 		{
 			Guard l(x_log);
-			logerror << "Sopping as requested.\n";
+			logerror << "Stopping as requested.\n";
 		}
-		exit(-1);
+		throw runtime_error("Stopping");
 	}
 }
 
@@ -584,7 +583,7 @@ void EthStratumClient::work_timeout_handler(const boost::system::error_code& ec)
 			Guard l(x_log);
 			logerror << "No new work received in " << g_worktimeout << " seconds.\n";
 		}
-		exit(-1);
+		throw runtime_error("Work timeout");
 	}
 }
 
@@ -595,7 +594,7 @@ void EthStratumClient::response_timeout_handler(const boost::system::error_code&
 			Guard l(x_log);
 			logerror << "No no response received in 2 seconds." << endl;
 		}
-		exit(-1);
+		throw runtime_error("Response timeout");
 	}
 }
 

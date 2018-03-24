@@ -2,12 +2,12 @@
     source code is made available under the terms and conditions
     of the accompanying GNU General Public License */
 
+#include <pthread.h>
+#include <signal.h>
+#include <boost/stacktrace.hpp>
 #include "Common.h"
 #include "Worker.h"
 #include "Log.h"
-#include <iostream>
-#include <chrono>
-#include <thread>
 
 using namespace std;
 using namespace dev;
@@ -29,11 +29,13 @@ void Worker::startWorking()
 				workLoop();
 			} catch (std::exception const& _e) {
 				logerror << "Exception thrown in Worker thread: " << _e.what() << endl;
+				boost::stacktrace::safe_dump_to("./miner.stacktrace");
 				exit(-1);
 			}
 
 			ex = m_state.exchange(WorkerState::Stopped);
 			logerror << "Worker unexpectedly stopped\n";
+			boost::stacktrace::safe_dump_to("./miner.stacktrace");
 			exit(-1);
 
 		}));

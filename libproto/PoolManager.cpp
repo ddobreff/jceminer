@@ -199,5 +199,5 @@ void PoolManager::tryReconnect()
 	}
 
 	logerror << "Could not connect.\n";
-	exit(-1);
+	throw runtime_error("Connect fail");
 }

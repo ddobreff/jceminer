@@ -56,7 +56,7 @@ bool CUDAMiner::init(const h256& seed)
 		return true;
 	} catch (std::exception const& _e) {
 		logerror << workerName() << " - Error CUDA mining: " << _e.what() << endl;
-		exit(-1);
+		throw;
 	}
 }
 
@@ -98,7 +98,7 @@ void CUDAMiner::workLoop()
 		CUDA_SAFE_CALL(cudaDeviceReset());
 	} catch (std::exception const& _e) {
 		logerror << workerName() << " - Fatal GPU error: " << _e.what() << endl;
-		exit(-1);
+		throw;
 	}
 }
 
@@ -238,7 +238,7 @@ bool CUDAMiner::cuda_configureGPU(
 		return true;
 	} catch (std::exception const& _e) {
 		logerror << "Error CUDA mining: " << _e.what() << endl;
-		exit(-1);
+		throw;
 	}
 }
 
@@ -358,7 +358,7 @@ bool CUDAMiner::cuda_init(
 						Guard l(x_log);
 						loginfo << workerName() << " - Generating DAG for GPU" << m_device_num << " with dagSize: " << dagSize << " bytes\n";
 					}
-					ethash_generate_dag(dagSize, s_gridSize, s_blockSize, m_streams[0], m_device_num);
+					ethash_generate_dag(dagSize, s_gridSize, s_blockSize, m_streams[0]);
 
 					if (_cpyToHost) {
 						uint8_t* memoryDAG = new uint8_t[dagSize];
@@ -390,7 +390,7 @@ bool CUDAMiner::cuda_init(
 		return true;
 	} catch (std::exception const& _e) {
 		logerror << workerName() << " - Error CUDA mining: " << _e.what() << endl;
-		exit(-1);
+		throw;
 	}
 }
 
