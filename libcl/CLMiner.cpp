@@ -20,8 +20,8 @@ typedef struct {
 
 std::map <std::string, clConfig> optimalConfigs = {
 //                      group   mult    threads tweak
-	{"opencl",          {256,   16384,  2,      0}},
-	{"ellesmere",       {64,    73728,  8,      7}}
+	{"opencl",          {256,   8192,  2,      0}},
+	{"ellesmere",       {64,    32768,  8,      7}}
 };
 
 namespace dev
@@ -224,7 +224,7 @@ void CLMiner::workLoop()
 
 	} catch (std::exception const& _e) {
 		logerror << workerName() << " - " << _e.what() << endl;
-		exit(-1);
+		throw;
 	}
 }
 
@@ -463,7 +463,7 @@ bool CLMiner::init(const h256& seed)
 			std::transform(name.begin(), name.end(), name.begin(), ::tolower);
 			if (optimalConfigs.find(name) == optimalConfigs.end()) {
 				logerror << workerName() << " - Can't find configuration for binary kernel " << name << endl;
-				exit(-1);
+				throw runtime_error("No kernel");
 			}
 			conf = optimalConfigs[name];
 		}
@@ -649,7 +649,7 @@ bool CLMiner::init(const h256& seed)
 		}
 	} catch (std::exception const& err) {
 		logerror << workerName() << " - OpenCL init failed: " << err.what() << endl;
-		exit(-1);
+		throw;
 	}
 	return true;
 }

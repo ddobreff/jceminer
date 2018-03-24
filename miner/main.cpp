@@ -11,11 +11,13 @@
 #include <random>
 #include <list>
 
+#include <boost/stacktrace.hpp>
 #include <boost/algorithm/string.hpp>
 #include <boost/algorithm/string/trim_all.hpp>
 #include <boost/optional.hpp>
 #include <boost/program_options.hpp>
 #include <boost/tokenizer.hpp>
+#include <boost/filesystem.hpp>
 
 #include <libethcore/MinerCommon.h>
 #include <libdevcore/SHA3.h>

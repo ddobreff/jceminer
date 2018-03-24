@@ -139,7 +139,7 @@ void ApiServer::doMinerRestart(const Json::Value& request, Json::Value& response
 	(void) request; // unused
 	(void) response; // unused
 	logerror << "Restart from API\n";
-	exit(-1);
+	throw runtime_error("Stopping");
 }
 
 void ApiServer::doMinerReboot(const Json::Value& request, Json::Value& response)
