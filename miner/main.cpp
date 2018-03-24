@@ -258,11 +258,6 @@ public:
 			exit(0);
 		}
 
-		{
-			Guard l(x_log);
-			loginfo << EthLime << version() << EthReset << endl;
-		}
-
 		if (m_minerType == MinerType::CL || m_minerType == MinerType::Mixed) {
 #if ETH_ETHASHCL
 			if (m_openclDeviceCount > 0) {
@@ -409,6 +404,20 @@ int main(int argc, char** argv)
 
 	clog.imbue(std::locale(""));
 	MinerCLI m;
+
+	stringstream ss;
+	for (int i = 0; i < argc; i++) {
+		ss << argv[i];
+		if (i < argc - 1)
+			ss << ' ';
+	}
+	{
+		Guard l(x_log);
+		loginfo << EthLime << version() << EthReset << endl;
+		loginfo << "cmd: " EthWhite << ss.str() << EthReset << endl;
+
+	}
+
 
 	try {
 		// Mining options:

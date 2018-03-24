@@ -572,7 +572,7 @@ void EthStratumClient::stop_timeout_handler(const boost::system::error_code& ec)
 			Guard l(x_log);
 			logerror << "Stopping as requested.\n";
 		}
-		throw runtime_error("Stopping");
+		exit(0);
 	}
 }
 

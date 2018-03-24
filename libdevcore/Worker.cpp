@@ -22,22 +22,17 @@ void Worker::startWorking()
 		m_state = WorkerState::Starting;
 		m_work.reset(new thread([&]() {
 			WorkerState ex = WorkerState::Starting;
-			bool ok = m_state.compare_exchange_strong(ex, WorkerState::Started);
-			(void)ok;
-
+			m_state.compare_exchange_strong(ex, WorkerState::Started);
 			try {
 				workLoop();
 			} catch (std::exception const& _e) {
-				logerror << "Exception thrown in Worker thread: " << _e.what() << endl;
-				boost::stacktrace::safe_dump_to("./miner.stacktrace");
-				exit(-1);
+				logerror << "Exception thrown in " << workerName() << ": " << _e.what() << endl;
+				abort();
 			}
 
 			ex = m_state.exchange(WorkerState::Stopped);
-			logerror << "Worker unexpectedly stopped\n";
-			boost::stacktrace::safe_dump_to("./miner.stacktrace");
-			exit(-1);
-
+			logerror << workerName() << " unexpectedly stopped\n";
+			abort();
 		}));
 	}
 	while (m_state == WorkerState::Starting)
