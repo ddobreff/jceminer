@@ -9,6 +9,7 @@
 #include <boost/asio.hpp>
 #include <boost/asio/ssl.hpp>
 #include <boost/bind.hpp>
+#include <boost/atomic.hpp>
 #include <json/json.h>
 #include <libdevcore/FixedHash.h>
 #include <libethcore/Farm.h>
@@ -20,6 +21,25 @@
 using namespace std;
 using namespace dev;
 using namespace dev::eth;
+
+class spinlock
+{
+private:
+	typedef enum {Locked, Unlocked} LockState;
+	boost::atomic<LockState> state;
+
+public:
+	spinlock() : state(Unlocked) {}
+
+	void lock()
+	{
+		while (state.exchange(Locked, boost::memory_order_acquire) == Locked); // busy-wait
+	}
+	void unlock()
+	{
+		state.store(Unlocked, boost::memory_order_release);
+	}
+};
 
 class EthStratumClient : public PoolClient
 {
@@ -88,6 +108,7 @@ private:
 	boost::asio::streambuf m_responseBuffer;
 	boost::asio::streambuf m_hrBuffer;
 	list<boost::asio::streambuf*> m_submitBuffers;
+	spinlock x_submit_spinlock;
 
 	boost::asio::deadline_timer m_worktimer;
 	boost::asio::deadline_timer m_responsetimer;

@@ -6,6 +6,7 @@
 #include "libdevcore/Log.h"
 #include <chrono>
 #include <sstream>
+#include <boost/multiprecision/cpp_int.hpp>
 
 using namespace std;
 using namespace dev;
@@ -13,7 +14,7 @@ using namespace eth;
 
 static string hashToString(double diff, bool rate)
 {
-	static const char* k[] = {" h", " Kh", " Mh", " Gh", " Th", " Ph"};
+	static const char* k[] = {" ", " K", " M", " G", " T", " P"};
 	uint32_t i = 0;
 	while ((diff > 1000.0) && (i < ((sizeof(k) / sizeof(char*)) - 2))) {
 		i++;
@@ -21,7 +22,7 @@ static string hashToString(double diff, bool rate)
 	}
 	stringstream ss;
 	ss.imbue(std::locale(""));
-	ss << fixed << setprecision(1) << diff << k[i] << (rate ? "/s" : "");
+	ss << fixed << setprecision(1) << diff << k[i] << (rate ? "h/s" : "");
 	return ss.str();
 }
 
@@ -75,12 +76,12 @@ PoolManager::PoolManager(PoolClient& client, Farm& farm, MinerType const& minerT
 			using namespace boost::multiprecision;
 
 			m_lastBoundary = wp.boundary;
-			static const uint512_t dividend("0x10000000000000000000000000000000000000000000000000000000000000000");
+			static const uint256_t dividend("0xffff000000000000000000000000000000000000000000000000000000000000");
 			const uint256_t divisor(string("0x") + m_lastBoundary.hex());
 			m_difficulty = double(dividend / divisor);
 			{
 				Guard l(x_log);
-				loginfo << "New pool difficulty: " << hashToString(m_difficulty, false) << endl;
+				loginfo << "New pool difficulty: " << hashToString(m_difficulty / 1000000.0, false) << endl;
 			}
 		}
 		{

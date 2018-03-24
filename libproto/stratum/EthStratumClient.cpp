@@ -364,7 +364,7 @@ void EthStratumClient::processExtranonce(std::string& enonce)
 
 	{
 		Guard l(x_log);
-		loginfo << "Extranonce set to " + enonce << endl;
+		logwarn << "Extranonce set to " << EthYellow << enonce << EthReset << endl;
 	}
 
 	enonce.resize(16, '0');
@@ -435,8 +435,10 @@ void EthStratumClient::processReponse(Json::Value& responseObject)
 		break;
 	case 4: {
 		m_responsetimer.cancel();
+		x_submit_spinlock.lock();
 		auto buf = m_submitBuffers.front();
 		m_submitBuffers.pop_front();
+		x_submit_spinlock.unlock();
 		delete buf;
 		m_response_pending = false;
 		if (responseObject.get("result", false).asBool()) {
@@ -523,7 +525,7 @@ void EthStratumClient::processReponse(Json::Value& responseObject)
 				if (m_nextWorkDifficulty <= 0.0001) m_nextWorkDifficulty = 0.0001;
 				{
 					Guard l(x_log);
-					loginfo << "Difficulty set to "  << m_nextWorkDifficulty << endl;
+					logwarn << "Difficulty set to "  << EthYellow << m_nextWorkDifficulty << EthReset << endl;
 				}
 			}
 		} else if (method == "mining.set_extranonce" && m_connection.Version() == EthStratumClient::ETHEREUMSTRATUM) {
@@ -640,12 +642,15 @@ void EthStratumClient::submitSolution(Solution solution)
 		break;
 	}
 
-	m_submitBuffers.push_back(new boost::asio::streambuf);
-	std::ostream os(m_submitBuffers.back());
+	auto buf = new boost::asio::streambuf;
+	x_submit_spinlock.lock();
+	m_submitBuffers.push_back(buf);
+	x_submit_spinlock.unlock();
+	std::ostream os(buf);
 	os << json;
 	m_stale = solution.stale;
 
-	async_write_with_response(*m_submitBuffers.back());
+	async_write_with_response(*buf);
 
 	if (g_logJson)
 		logJson(json);
