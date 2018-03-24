@@ -435,7 +435,9 @@ void EthStratumClient::processReponse(Json::Value& responseObject)
 		break;
 	case 4: {
 		m_responsetimer.cancel();
+		auto buf = m_submitBuffers.front();
 		m_submitBuffers.pop_front();
+		delete buf;
 		m_response_pending = false;
 		if (responseObject.get("result", false).asBool()) {
 			if (m_onSolutionAccepted)
