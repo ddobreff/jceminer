@@ -42,6 +42,7 @@ EthStratumClient::EthStratumClient() : PoolClient(),
 	m_worktimer(m_io_service),
 	m_responsetimer(m_io_service),
 	m_stoptimer(m_io_service),
+	m_hrtimer(m_io_service),
 	m_resolver(m_io_service)
 {
 	m_authorized = false;
@@ -163,14 +164,14 @@ static void logJson(string json)
 	loginfo << "JSON TX" << endl << txObject << endl;
 }
 
-void EthStratumClient::async_write_with_response()
+void EthStratumClient::async_write_with_response(boost::asio::streambuf& buf)
 {
 	if (m_connection.SecLevel() != SecureLevel::NONE) {
-		async_write(*m_securesocket, m_requestBuffer,
+		async_write(*m_securesocket, buf,
 		            boost::bind(&EthStratumClient::handleResponse, this,
 		                        boost::asio::placeholders::error));
 	} else {
-		async_write(*m_socket, m_requestBuffer,
+		async_write(*m_socket, buf,
 		            boost::bind(&EthStratumClient::handleResponse, this,
 		                        boost::asio::placeholders::error));
 	}
@@ -276,7 +277,7 @@ void EthStratumClient::connect_handler(const boost::system::error_code& ec, tcp:
 		}
 		std::ostream os(&m_requestBuffer);
 		os << json.str();
-		async_write_with_response();
+		async_write_with_response(m_requestBuffer);
 		if (g_logJson)
 			logJson(json.str());
 	} else {
@@ -306,29 +307,6 @@ void EthStratumClient::readline()
 
 		m_pending++;
 
-	}
-	string json;
-	{
-		Guard l(x_send);
-		if (m_pendingSends.size()) {
-			json = m_pendingSends.front();
-			m_pendingSends.pop_front();
-		}
-	}
-	if (!json.empty()) {
-		std::ostream os(&m_requestBuffer2);
-		os << json;
-		if (m_connection.SecLevel() != SecureLevel::NONE) {
-			async_write(*m_securesocket, m_requestBuffer2,
-			            boost::bind(&EthStratumClient::handleHashrateResponse, this,
-			                        boost::asio::placeholders::error));
-		} else {
-			async_write(*m_socket, m_requestBuffer2,
-			            boost::bind(&EthStratumClient::handleHashrateResponse, this,
-			                        boost::asio::placeholders::error));
-		}
-		if (g_logJson)
-			logJson(json);
 	}
 }
 
@@ -433,7 +411,7 @@ void EthStratumClient::processReponse(Json::Value& responseObject)
 		}
 		os << json.str();
 
-		async_write_with_response();
+		async_write_with_response(m_requestBuffer);
 		if (g_logJson)
 			logJson(json.str());
 
@@ -457,6 +435,7 @@ void EthStratumClient::processReponse(Json::Value& responseObject)
 		break;
 	case 4: {
 		m_responsetimer.cancel();
+		m_submitBuffers.pop_front();
 		m_response_pending = false;
 		if (responseObject.get("result", false).asBool()) {
 			if (m_onSolutionAccepted)
@@ -556,7 +535,7 @@ void EthStratumClient::processReponse(Json::Value& responseObject)
 			     "\"}\n";
 			os << json.str();
 
-			async_write_with_response();
+			async_write_with_response(m_requestBuffer);
 			if (g_logJson)
 				logJson(json.str());
 		}
@@ -598,18 +577,37 @@ void EthStratumClient::response_timeout_handler(const boost::system::error_code&
 	}
 }
 
+void EthStratumClient::hr_timeout_handler(const boost::system::error_code& ec)
+{
+	if (!ec) {
+		stringstream ss;
+		ss << "0x" << hex << m_rate;
+		// There is no stratum method to submit the hashrate so we use the rpc variant.
+		string json = "{\"id\": 6, \"jsonrpc\":\"2.0\", \"method\": \"eth_submitHashrate\", \"params\": [\"" +
+		              ss.str() + "\",\"0x" + m_submit_hashrate_id + "\"]}\n";
+		std::ostream os(&m_hrBuffer);
+		os << json;
+		if (m_connection.SecLevel() != SecureLevel::NONE) {
+			async_write(*m_securesocket, m_hrBuffer,
+			            boost::bind(&EthStratumClient::handleHashrateResponse, this,
+			                        boost::asio::placeholders::error));
+		} else {
+			async_write(*m_socket, m_hrBuffer,
+			            boost::bind(&EthStratumClient::handleHashrateResponse, this,
+			                        boost::asio::placeholders::error));
+		}
+		if (g_logJson)
+			logJson(json);
+	}
+}
+
 void EthStratumClient::submitHashrate(uint64_t rate)
 {
 	// Called by the pool manager thread.
-	// We cancel the timer that will serve as event
-	// to the stratum client.
-	stringstream ss;
-	ss << "0x" << hex << rate;
-	// There is no stratum method to submit the hashrate so we use the rpc variant.
-	string json = "{\"id\": 6, \"jsonrpc\":\"2.0\", \"method\": \"eth_submitHashrate\", \"params\": [\"" +
-	              ss.str() + "\",\"0x" + m_submit_hashrate_id + "\"]}\n";
-	Guard l(x_send);
-	m_pendingSends.push_back(json);
+	m_rate = rate;
+	m_hrtimer.cancel();
+	m_hrtimer.expires_from_now(boost::posix_time::milliseconds(10));
+	m_hrtimer.async_wait(boost::bind(&EthStratumClient::hr_timeout_handler, this, boost::asio::placeholders::error));
 }
 
 void EthStratumClient::submitSolution(Solution solution)
@@ -639,11 +637,13 @@ void EthStratumClient::submitSolution(Solution solution)
 		       nonceHex.substr(m_extraNonceHexSize, 16 - m_extraNonceHexSize) + "\"]}\n";
 		break;
 	}
-	std::ostream os(&m_requestBuffer);
+
+	m_submitBuffers.push_back(new boost::asio::streambuf);
+	std::ostream os(m_submitBuffers.back());
 	os << json;
 	m_stale = solution.stale;
 
-	async_write_with_response();
+	async_write_with_response(*m_submitBuffers.back());
 
 	if (g_logJson)
 		logJson(json);

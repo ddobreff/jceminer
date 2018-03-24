@@ -55,6 +55,7 @@ private:
 	void work_timeout_handler(const boost::system::error_code& ec);
 	void response_timeout_handler(const boost::system::error_code& ec);
 	void stop_timeout_handler(const boost::system::error_code& ec);
+	void hr_timeout_handler(const boost::system::error_code& ec);
 
 	void reset_work_timeout();
 	void readline();
@@ -62,7 +63,7 @@ private:
 	void handleHashrateResponse(const boost::system::error_code& ec);
 	void readResponse(const boost::system::error_code& ec, std::size_t bytes_transferred);
 	void processReponse(Json::Value& responseObject);
-	void async_write_with_response();
+	void async_write_with_response(boost::asio::streambuf& buff);
 
 	PoolConnection m_connection;
 
@@ -84,12 +85,14 @@ private:
 	boost::asio::ssl::stream<boost::asio::ip::tcp::socket>* m_securesocket;
 
 	boost::asio::streambuf m_requestBuffer;
-	boost::asio::streambuf m_requestBuffer2;
 	boost::asio::streambuf m_responseBuffer;
+	boost::asio::streambuf m_hrBuffer;
+	list<boost::asio::streambuf*> m_submitBuffers;
 
 	boost::asio::deadline_timer m_worktimer;
 	boost::asio::deadline_timer m_responsetimer;
 	boost::asio::deadline_timer m_stoptimer;
+	boost::asio::deadline_timer m_hrtimer;
 	bool m_response_pending = false;
 
 	boost::asio::ip::tcp::resolver m_resolver;
@@ -107,7 +110,5 @@ private:
 	void processExtranonce(std::string& enonce);
 
 	bool m_linkdown = true;
-
-	mutable std::mutex x_send;
-	list<std::string> m_pendingSends;
+	uint64_t m_rate;
 };
