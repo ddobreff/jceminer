@@ -76,11 +76,12 @@ private:
 	void response_timeout_handler(const boost::system::error_code& ec);
 	void stop_timeout_handler(const boost::system::error_code& ec);
 	void hr_timeout_handler(const boost::system::error_code& ec);
-
 	void reset_work_timeout();
+
 	void readline();
 	void handleResponse(const boost::system::error_code& ec);
-	void handleHashrateResponse(const boost::system::error_code& ec);
+	void handleHashrateResponse(const boost::system::error_code&) {};
+	void handleSubmitResponse(const boost::system::error_code& ec);
 	void readResponse(const boost::system::error_code& ec, std::size_t bytes_transferred);
 	void processReponse(Json::Value& responseObject);
 	void async_write_with_response(boost::asio::streambuf& buff);

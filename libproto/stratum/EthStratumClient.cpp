@@ -114,9 +114,8 @@ void EthStratumClient::connect()
 	setsockopt(m_socket->native_handle(), SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
 	setsockopt(m_socket->native_handle(), SOL_SOCKET, SO_SNDTIMEO, &tv, sizeof(tv));
 
-	m_resolver.async_resolve(q, boost::bind(&EthStratumClient::resolve_handler,
-	                                        this, boost::asio::placeholders::error,
-	                                        boost::asio::placeholders::iterator));
+	m_resolver.async_resolve(q, boost::bind(&EthStratumClient::resolve_handler, this,
+	                                        boost::asio::placeholders::error, boost::asio::placeholders::iterator));
 
 	if (m_serviceThread.joinable()) {
 		// If the service thread have been created try to reset the service.
@@ -134,9 +133,8 @@ void EthStratumClient::resolve_handler(const boost::system::error_code& ec, tcp:
 	//dev::setThreadName("stratum");
 	if (!ec) {
 		tcp::resolver::iterator end;
-		async_connect(*m_socket, i, end, boost::bind(&EthStratumClient::connect_handler,
-		              this, boost::asio::placeholders::error,
-		              boost::asio::placeholders::iterator));
+		async_connect(*m_socket, i, end, boost::bind(&EthStratumClient::connect_handler, this,
+		              boost::asio::placeholders::error, boost::asio::placeholders::iterator));
 	} else {
 		stringstream ss;
 		{
@@ -166,15 +164,12 @@ static void logJson(string json)
 
 void EthStratumClient::async_write_with_response(boost::asio::streambuf& buf)
 {
-	if (m_connection.SecLevel() != SecureLevel::NONE) {
+	if (m_connection.SecLevel() != SecureLevel::NONE)
 		async_write(*m_securesocket, buf,
-		            boost::bind(&EthStratumClient::handleResponse, this,
-		                        boost::asio::placeholders::error));
-	} else {
+		            boost::bind(&EthStratumClient::handleResponse, this, boost::asio::placeholders::error));
+	else
 		async_write(*m_socket, buf,
-		            boost::bind(&EthStratumClient::handleResponse, this,
-		                        boost::asio::placeholders::error));
-	}
+		            boost::bind(&EthStratumClient::handleResponse, this, boost::asio::placeholders::error));
 }
 
 void EthStratumClient::connect_handler(const boost::system::error_code& ec, tcp::resolver::iterator i)
@@ -295,24 +290,16 @@ void EthStratumClient::readline()
 {
 	Guard l(x_pending);
 	if (m_pending == 0) {
-		if (m_connection.SecLevel() != SecureLevel::NONE) {
+		if (m_connection.SecLevel() != SecureLevel::NONE)
 			async_read_until(*m_securesocket, m_responseBuffer, "\n",
 			                 boost::bind(&EthStratumClient::readResponse, this,
 			                             boost::asio::placeholders::error, boost::asio::placeholders::bytes_transferred));
-		} else {
+		else
 			async_read_until(*m_socket, m_responseBuffer, "\n",
 			                 boost::bind(&EthStratumClient::readResponse, this,
 			                             boost::asio::placeholders::error, boost::asio::placeholders::bytes_transferred));
-		}
-
 		m_pending++;
-
 	}
-}
-
-void EthStratumClient::handleHashrateResponse(const boost::system::error_code& ec)
-{
-	(void)ec;
 }
 
 void EthStratumClient::handleResponse(const boost::system::error_code& ec)
@@ -323,6 +310,20 @@ void EthStratumClient::handleResponse(const boost::system::error_code& ec)
 		Guard l(x_log);
 		logerror << "Handle response failed: " + ec.message() << endl;
 	}
+}
+
+void EthStratumClient::handleSubmitResponse(const boost::system::error_code& ec)
+{
+	handleResponse(ec);
+	x_submit_spinlock.lock();
+	if (m_submitBuffers.empty()) {
+		x_submit_spinlock.unlock();
+		return;
+	}
+	auto buf = m_submitBuffers.front();
+	m_submitBuffers.pop_front();
+	x_submit_spinlock.unlock();
+	delete buf;
 }
 
 void EthStratumClient::readResponse(const boost::system::error_code& ec, std::size_t bytes_transferred)
@@ -435,11 +436,6 @@ void EthStratumClient::processReponse(Json::Value& responseObject)
 		break;
 	case 4: {
 		m_responsetimer.cancel();
-		x_submit_spinlock.lock();
-		auto buf = m_submitBuffers.front();
-		m_submitBuffers.pop_front();
-		x_submit_spinlock.unlock();
-		delete buf;
 		m_response_pending = false;
 		if (responseObject.get("result", false).asBool()) {
 			if (m_onSolutionAccepted)
@@ -591,15 +587,12 @@ void EthStratumClient::hr_timeout_handler(const boost::system::error_code& ec)
 		              ss.str() + "\",\"0x" + m_submit_hashrate_id + "\"]}\n";
 		std::ostream os(&m_hrBuffer);
 		os << json;
-		if (m_connection.SecLevel() != SecureLevel::NONE) {
+		if (m_connection.SecLevel() != SecureLevel::NONE)
 			async_write(*m_securesocket, m_hrBuffer,
-			            boost::bind(&EthStratumClient::handleHashrateResponse, this,
-			                        boost::asio::placeholders::error));
-		} else {
+			            boost::bind(&EthStratumClient::handleHashrateResponse, this, boost::asio::placeholders::error));
+		else
 			async_write(*m_socket, m_hrBuffer,
-			            boost::bind(&EthStratumClient::handleHashrateResponse, this,
-			                        boost::asio::placeholders::error));
-		}
+			            boost::bind(&EthStratumClient::handleHashrateResponse, this, boost::asio::placeholders::error));
 		if (g_logJson)
 			logJson(json);
 	}
@@ -650,7 +643,12 @@ void EthStratumClient::submitSolution(Solution solution)
 	os << json;
 	m_stale = solution.stale;
 
-	async_write_with_response(*buf);
+	if (m_connection.SecLevel() != SecureLevel::NONE)
+		async_write(*m_securesocket, *buf,
+		            boost::bind(&EthStratumClient::handleSubmitResponse, this, boost::asio::placeholders::error));
+	else
+		async_write(*m_socket, *buf,
+		            boost::bind(&EthStratumClient::handleSubmitResponse, this, boost::asio::placeholders::error));
 
 	if (g_logJson)
 		logJson(json);
