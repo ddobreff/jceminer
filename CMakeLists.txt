@@ -43,7 +43,7 @@ endif()
 
 
 project(miner)
-set(PROJECT_VERSION VaporMiner.1.0.4.dev)
+set(PROJECT_VERSION NoNameMiner.1.0.4.dev)
 
 cable_set_build_type(DEFAULT Release CONFIGURATION_TYPES Release RelWithDebInfo Debug)
 
@@ -125,16 +125,12 @@ add_subdirectory(miner)
 
 
 set(CPACK_GENERATOR ZIP)
-set(CPACK_PACKAGE_FILE_NAME ${PROJECT_NAME}-${PROJECT_VERSION}-${CMAKE_SYSTEM_NAME})
+set(CPACK_PACKAGE_FILE_NAME ${PROJECT_VERSION}-${CMAKE_SYSTEM_NAME})
 set(CPACK_PACKAGE_CHECKSUM SHA256)
 set(CPACK_INCLUDE_TOPLEVEL_DIRECTORY FALSE)
 include(CPack)
 
 
 # Export some variables for CIs
-if(PROJECT_VERSION MATCHES "^([0-9]+)\\.([0-9]+)\\.([0-9]+)$")
-	set(PROJECT_VERSION_IS_PRERELEASE false)
-else()
-	set(PROJECT_VERSION_IS_PRERELEASE true)
-endif()
+set(PROJECT_VERSION_IS_PRERELEASE false)
 configure_file(cmake/variables.sh.in variables.sh)
