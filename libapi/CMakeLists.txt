@@ -1,5 +1,6 @@
 set(SOURCES
     api/Api.h api/Api.cpp api/ApiServer.h api/ApiServer.cpp
+	http/httpServer.cpp http/httpServer.h
 )
 
 hunter_add_package(mongoose)

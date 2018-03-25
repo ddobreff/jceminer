@@ -33,6 +33,7 @@
 #include <libproto/EthStratumClient.h>
 #if API_CORE
 #include <libapi/api/Api.h>
+#include <libapi/http/httpServer.h>
 #endif
 #include <libdevcore/Log.h>
 
@@ -113,7 +114,8 @@ public:
 		("eval",      bool_switch()->default_value(false),
 		 "Enable software result evaluation. Use if you GPUs generate too many invalid shares.\n")
 #if API_CORE
-		("api",       value<unsigned>(&m_api_port)->default_value(0), "API port number. 0 - disable, < 0 - read-only.\n")
+		("api",       value<unsigned>(&m_api_port)->default_value(0), "API server port number. 0 - disable, < 0 - read-only.\n")
+		("http",      value<unsigned>(&m_http_port)->default_value(0), "HTTP server port number. 0 - disable\n")
 #endif
 #if ETH_ETHASHCL
 		("cl-plat",   value<unsigned>(&m_openclPlatform)->default_value(0), "Opencl platform.\n")
@@ -338,6 +340,7 @@ public:
 
 #if API_CORE
 		Api api(m_api_port, f);
+		httpServer(m_http_port, f);
 #endif
 
 		// Start PoolManager
@@ -391,6 +394,7 @@ private:
 	unsigned m_show_level = 0;
 #if API_CORE
 	unsigned m_api_port = 0;
+	unsigned m_http_port = 0;
 #endif
 
 };
