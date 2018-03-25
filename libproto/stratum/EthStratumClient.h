@@ -11,7 +11,7 @@
 #include <boost/bind.hpp>
 #include <boost/atomic.hpp>
 #include <json/json.h>
-#include <thread_pool/mpsc_bounded_queue.hpp>
+#include <libdevcore/bounded_queue.h>
 #include <libdevcore/FixedHash.h>
 #include <libethcore/Farm.h>
 #include <libethcore/EthashAux.h>
