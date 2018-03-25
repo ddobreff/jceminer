@@ -53,7 +53,7 @@ string version()
 {
 	auto* bi = miner_get_buildinfo();
 	stringstream ss;
-	ss << string("miner version ") + bi->project_version + "+git." + string(bi->git_commit_hash).substr(0, 7);
+	ss << bi->project_version << "+git." << string(bi->git_commit_hash).substr(0, 7);
 	return ss.str();
 }
 
