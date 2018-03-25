@@ -118,7 +118,7 @@ if (ETHASHCUDA)
 	add_subdirectory(libcuda)
 endif ()
 if (APICORE)
-	add_subdirectory(libapicore)
+	add_subdirectory(libapi)
 endif()
 
 add_subdirectory(miner)
