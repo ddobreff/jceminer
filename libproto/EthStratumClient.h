@@ -16,7 +16,7 @@
 #include <libethcore/Farm.h>
 #include <libethcore/EthashAux.h>
 #include <libethcore/Miner.h>
-#include "../PoolClient.h"
+#include "PoolClient.h"
 
 
 using namespace std;
@@ -63,7 +63,7 @@ private:
 	void readline();
 	void handleResponse(const boost::system::error_code& ec);
 	void handleHashrateResponse(const boost::system::error_code&) {};
-	void handleSubmitResponse(const boost::system::error_code& ec);
+	void handleSubmitResponse(const boost::system::error_code& ec, void* buf);
 	void readResponse(const boost::system::error_code& ec, std::size_t bytes_transferred);
 	void processReponse(Json::Value& responseObject);
 	void async_write_with_response(boost::asio::streambuf& buff);
@@ -114,6 +114,5 @@ private:
 	bool m_linkdown = true;
 	uint64_t m_rate;
 
-	tp::MPMCBoundedQueue<boost::asio::streambuf*> m_submitBuffers;
-	tp::MPMCBoundedQueue<boost::asio::streambuf*> m_freeBuffers;
+	tp::BoundedQueue<void*> m_freeBuffers;
 };

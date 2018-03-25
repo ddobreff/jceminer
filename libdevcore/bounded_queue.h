@@ -45,35 +45,35 @@ namespace tp
 {
 
 /**
-    @brief The MPMCBoundedQueue class implements bounded
+    @brief The BoundedQueue class implements bounded
     multi-producers/multi-consumers lock-free queue.
     Doesn't accept non-movable types as T.
     Inspired by Dmitry Vyukov's mpmc queue.
     http://www.1024cores.net/home/lock-free-algorithms/queues/bounded-mpmc-queue
 */
 template <typename T>
-class MPMCBoundedQueue
+class BoundedQueue
 {
 	static_assert(
 	    std::is_move_constructible<T>::value, "Should be of movable type");
 
 public:
 	/**
-	    @brief MPMCBoundedQueue Constructor.
+	    @brief BoundedQueue Constructor.
 	    @param size Power of 2 number - queue length.
 	    @throws std::invalid_argument if size is bad.
 	*/
-	explicit MPMCBoundedQueue(size_t size);
+	explicit BoundedQueue(size_t size);
 
 	/**
 	    @brief Move ctor implementation.
 	*/
-	MPMCBoundedQueue(MPMCBoundedQueue&& rhs) noexcept;
+	BoundedQueue(BoundedQueue&& rhs) noexcept;
 
 	/**
 	    @brief Move assignment implementaion.
 	*/
-	MPMCBoundedQueue& operator=(MPMCBoundedQueue&& rhs) noexcept;
+	BoundedQueue& operator=(BoundedQueue&& rhs) noexcept;
 
 	/**
 	    @brief push Push data to queue.
@@ -131,7 +131,7 @@ private:
 /// Implementation
 
 template <typename T>
-inline MPMCBoundedQueue<T>::MPMCBoundedQueue(size_t size)
+inline BoundedQueue<T>::BoundedQueue(size_t size)
 	: m_buffer(size), m_buffer_mask(size - 1), m_enqueue_pos(0),
 	  m_dequeue_pos(0)
 {
@@ -144,13 +144,13 @@ inline MPMCBoundedQueue<T>::MPMCBoundedQueue(size_t size)
 }
 
 template <typename T>
-inline MPMCBoundedQueue<T>::MPMCBoundedQueue(MPMCBoundedQueue&& rhs) noexcept
+inline BoundedQueue<T>::BoundedQueue(BoundedQueue&& rhs) noexcept
 {
 	*this = rhs;
 }
 
 template <typename T>
-inline MPMCBoundedQueue<T>& MPMCBoundedQueue<T>::operator=(MPMCBoundedQueue&& rhs) noexcept
+inline BoundedQueue<T>& BoundedQueue<T>::operator=(BoundedQueue&& rhs) noexcept
 {
 	if (this != &rhs) {
 		m_buffer = std::move(rhs.m_buffer);
@@ -163,7 +163,7 @@ inline MPMCBoundedQueue<T>& MPMCBoundedQueue<T>::operator=(MPMCBoundedQueue&& rh
 
 template <typename T>
 template <typename U>
-inline bool MPMCBoundedQueue<T>::push(U&& data)
+inline bool BoundedQueue<T>::push(U&& data)
 {
 	Cell* cell;
 	size_t pos = m_enqueue_pos.load(std::memory_order_relaxed);
@@ -189,7 +189,7 @@ inline bool MPMCBoundedQueue<T>::push(U&& data)
 }
 
 template <typename T>
-inline bool MPMCBoundedQueue<T>::pop(T& data)
+inline bool BoundedQueue<T>::pop(T& data)
 {
 	Cell* cell;
 	size_t pos = m_dequeue_pos.load(std::memory_order_relaxed);

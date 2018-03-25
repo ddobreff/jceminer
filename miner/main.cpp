@@ -30,7 +30,7 @@
 #include <libcuda/CUDAMiner.h>
 #endif
 #include <libproto/PoolManager.h>
-#include <libproto/stratum/EthStratumClient.h>
+#include <libproto/EthStratumClient.h>
 #if API_CORE
 #include <libapicore/Api.h>
 #endif

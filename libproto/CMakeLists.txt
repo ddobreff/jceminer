@@ -2,7 +2,7 @@ set(SOURCES
 	PoolURI.cpp PoolURI.h
 	PoolClient.h
 	PoolManager.h PoolManager.cpp
-	stratum/EthStratumClient.h stratum/EthStratumClient.cpp
+	EthStratumClient.h EthStratumClient.cpp
 )
 
 hunter_add_package(OpenSSL)
