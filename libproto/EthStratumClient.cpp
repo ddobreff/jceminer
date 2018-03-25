@@ -318,8 +318,7 @@ void EthStratumClient::handleResponse(const boost::system::error_code& ec)
 void EthStratumClient::handleSubmitResponse(const boost::system::error_code& ec, void* buf)
 {
 	handleResponse(ec);
-	if (buf)
-		m_freeBuffers.push(buf);
+	m_freeBuffers.push(buf);
 }
 
 void EthStratumClient::readResponse(const boost::system::error_code& ec, std::size_t bytes_transferred)
@@ -631,8 +630,9 @@ void EthStratumClient::submitSolution(Solution solution)
 		break;
 	}
 
-	boost::asio::streambuf* buf;
-	if (m_freeBuffers.pop(buf)) {
+	void* bufv;
+	if (m_freeBuffers.pop(bufv)) {
+		auto buf = (boost::asio::streambuf*)bufv;
 		std::ostream os(buf);
 		os << json;
 		m_stale = solution.stale;
@@ -651,9 +651,7 @@ void EthStratumClient::submitSolution(Solution solution)
 		m_responsetimer.expires_from_now(boost::posix_time::seconds(2));
 		m_responsetimer.async_wait(boost::bind(&EthStratumClient::response_timeout_handler, this,
 		                                       boost::asio::placeholders::error));
-	} else {
-		m_freeBuffers.push(buf);
+	} else
 		logerror << "Dropped solution, buffer shortage\n";
-	}
 }
 
