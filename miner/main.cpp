@@ -32,7 +32,7 @@
 #include <libproto/PoolManager.h>
 #include <libproto/EthStratumClient.h>
 #if API_CORE
-#include <libapicore/Api.h>
+#include <libapi/api/Api.h>
 #endif
 #include <libdevcore/Log.h>
 

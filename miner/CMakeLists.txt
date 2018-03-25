@@ -13,7 +13,7 @@ add_executable(${EXECUTABLE} ${SRC_LIST} ${HEADERS})
 target_link_libraries(miner PRIVATE ethcore ethash proto devcore miner-buildinfo Boost::program_options)
 
 if(APICORE)
-	target_link_libraries(miner PRIVATE apicore)
+	target_link_libraries(miner PRIVATE api)
 endif()
 
 include(GNUInstallDirs)
