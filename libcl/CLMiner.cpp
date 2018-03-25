@@ -21,7 +21,9 @@ typedef struct {
 std::map <std::string, clConfig> optimalConfigs = {
 //                      group   mult    threads tweak
 	{"opencl",          {256,   8192,  2,      0}},
-	{"ellesmere",       {64,    32768,  8,      7}}
+        {"baffin",          {64,    32768,  8,      6}}
+        {"ellesmere",       {64,    32768,  8,      10}}
+        {"gfx900",          {64,    32768,  8,      16}}
 };
 
 namespace dev
