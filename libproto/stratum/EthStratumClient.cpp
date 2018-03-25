@@ -44,7 +44,8 @@ EthStratumClient::EthStratumClient() : PoolClient(),
 	m_stoptimer(m_io_service),
 	m_hrtimer(m_io_service),
 	m_resolver(m_io_service),
-	m_submitBuffers(MAX_MINERS)
+	m_submitBuffers(MAX_MINERS),
+	m_freeBuffers(MAX_MINERS)
 {
 	m_authorized = false;
 	m_pending = 0;
@@ -53,6 +54,8 @@ EthStratumClient::EthStratumClient() : PoolClient(),
 		m_stoptimer.expires_from_now(boost::posix_time::minutes(g_stopAfter));
 		m_stoptimer.async_wait(boost::bind(&EthStratumClient::stop_timeout_handler, this, boost::asio::placeholders::error));
 	}
+	for (unsigned i = 0; i < MAX_MINERS; i++)
+		m_freeBuffers.push(new boost::asio::streambuf);
 }
 
 EthStratumClient::~EthStratumClient()
@@ -318,7 +321,7 @@ void EthStratumClient::handleSubmitResponse(const boost::system::error_code& ec)
 	handleResponse(ec);
 	boost::asio::streambuf* buf;
 	if (m_submitBuffers.pop(buf))
-		delete buf;
+		m_freeBuffers.push(buf);
 }
 
 void EthStratumClient::readResponse(const boost::system::error_code& ec, std::size_t bytes_transferred)
@@ -630,25 +633,30 @@ void EthStratumClient::submitSolution(Solution solution)
 		break;
 	}
 
-	auto buf = new boost::asio::streambuf;
-	m_submitBuffers.push(buf);
-	std::ostream os(buf);
-	os << json;
-	m_stale = solution.stale;
+	boost::asio::streambuf* buf;
+	if (m_freeBuffers.pop(buf)) {
+		m_submitBuffers.push(buf);
+		std::ostream os(buf);
+		os << json;
+		m_stale = solution.stale;
 
-	if (m_connection.SecLevel() != SecureLevel::NONE)
-		async_write(*m_securesocket, *buf,
-		            boost::bind(&EthStratumClient::handleSubmitResponse, this, boost::asio::placeholders::error));
-	else
-		async_write(*m_socket, *buf,
-		            boost::bind(&EthStratumClient::handleSubmitResponse, this, boost::asio::placeholders::error));
+		if (m_connection.SecLevel() != SecureLevel::NONE)
+			async_write(*m_securesocket, *buf,
+			            boost::bind(&EthStratumClient::handleSubmitResponse, this, boost::asio::placeholders::error));
+		else
+			async_write(*m_socket, *buf,
+			            boost::bind(&EthStratumClient::handleSubmitResponse, this, boost::asio::placeholders::error));
 
-	if (g_logJson)
-		logJson(json);
+		if (g_logJson)
+			logJson(json);
 
-	m_response_pending = true;
-	m_responsetimer.expires_from_now(boost::posix_time::seconds(2));
-	m_responsetimer.async_wait(boost::bind(&EthStratumClient::response_timeout_handler, this,
-	                                       boost::asio::placeholders::error));
+		m_response_pending = true;
+		m_responsetimer.expires_from_now(boost::posix_time::seconds(2));
+		m_responsetimer.async_wait(boost::bind(&EthStratumClient::response_timeout_handler, this,
+		                                       boost::asio::placeholders::error));
+	} else {
+		m_freeBuffers.push(buf);
+		logerror << "Dropped solution, buffer shortage\n";
+	}
 }
 

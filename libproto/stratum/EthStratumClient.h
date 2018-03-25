@@ -115,4 +115,5 @@ private:
 	uint64_t m_rate;
 
 	tp::MPMCBoundedQueue<boost::asio::streambuf*> m_submitBuffers;
+	tp::MPMCBoundedQueue<boost::asio::streambuf*> m_freeBuffers;
 };
