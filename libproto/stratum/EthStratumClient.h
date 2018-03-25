@@ -11,6 +11,7 @@
 #include <boost/bind.hpp>
 #include <boost/atomic.hpp>
 #include <json/json.h>
+#include <thread_pool/mpsc_bounded_queue.hpp>
 #include <libdevcore/FixedHash.h>
 #include <libethcore/Farm.h>
 #include <libethcore/EthashAux.h>
@@ -21,25 +22,6 @@
 using namespace std;
 using namespace dev;
 using namespace dev::eth;
-
-class spinlock
-{
-private:
-	typedef enum {Locked, Unlocked} LockState;
-	boost::atomic<LockState> state;
-
-public:
-	spinlock() : state(Unlocked) {}
-
-	void lock()
-	{
-		while (state.exchange(Locked, boost::memory_order_acquire) == Locked); // busy-wait
-	}
-	void unlock()
-	{
-		state.store(Unlocked, boost::memory_order_release);
-	}
-};
 
 class EthStratumClient : public PoolClient
 {
@@ -108,8 +90,6 @@ private:
 	boost::asio::streambuf m_requestBuffer;
 	boost::asio::streambuf m_responseBuffer;
 	boost::asio::streambuf m_hrBuffer;
-	list<boost::asio::streambuf*> m_submitBuffers;
-	spinlock x_submit_spinlock;
 
 	boost::asio::deadline_timer m_worktimer;
 	boost::asio::deadline_timer m_responsetimer;
@@ -133,4 +113,6 @@ private:
 
 	bool m_linkdown = true;
 	uint64_t m_rate;
+
+	tp::MPMCBoundedQueue<boost::asio::streambuf*> m_submitBuffers;
 };

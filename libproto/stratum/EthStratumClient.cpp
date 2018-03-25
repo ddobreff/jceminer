@@ -23,9 +23,9 @@ static void diffToTarget(uint32_t* target, double diff)
 		diff /= 4294967296.0;
 	m = (uint64_t)(4294901760.0 / diff);
 	if (m == 0 && k == 6)
-		memset(target2, 0xff, 32);
+		memset(target2, 0xff, sizeof(target2));
 	else {
-		memset(target2, 0, 32);
+		memset(target2, 0, sizeof(target2));
 		target2[k] = (uint32_t)m;
 		target2[k + 1] = (uint32_t)(m >> 32);
 	}
@@ -43,7 +43,8 @@ EthStratumClient::EthStratumClient() : PoolClient(),
 	m_responsetimer(m_io_service),
 	m_stoptimer(m_io_service),
 	m_hrtimer(m_io_service),
-	m_resolver(m_io_service)
+	m_resolver(m_io_service),
+	m_submitBuffers(MAX_MINERS)
 {
 	m_authorized = false;
 	m_pending = 0;
@@ -315,15 +316,9 @@ void EthStratumClient::handleResponse(const boost::system::error_code& ec)
 void EthStratumClient::handleSubmitResponse(const boost::system::error_code& ec)
 {
 	handleResponse(ec);
-	x_submit_spinlock.lock();
-	if (m_submitBuffers.empty()) {
-		x_submit_spinlock.unlock();
-		return;
-	}
-	auto buf = m_submitBuffers.front();
-	m_submitBuffers.pop_front();
-	x_submit_spinlock.unlock();
-	delete buf;
+	boost::asio::streambuf* buf;
+	if (m_submitBuffers.pop(buf))
+		delete buf;
 }
 
 void EthStratumClient::readResponse(const boost::system::error_code& ec, std::size_t bytes_transferred)
@@ -636,9 +631,7 @@ void EthStratumClient::submitSolution(Solution solution)
 	}
 
 	auto buf = new boost::asio::streambuf;
-	x_submit_spinlock.lock();
-	m_submitBuffers.push_back(buf);
-	x_submit_spinlock.unlock();
+	m_submitBuffers.push(buf);
 	std::ostream os(buf);
 	os << json;
 	m_stale = solution.stale;
