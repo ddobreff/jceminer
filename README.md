@@ -32,8 +32,7 @@ Options:
                             
   --intvl arg (=15)         statistics display interval.
                             
-  --level arg (=0)          Metrics collection level. 0 - HR only, 1 - + fan & 
-                            temp, 2 - + power.
+  --level arg (=0)          Metrics collection level. 0 - HR only, 1 - + fan & temp, 2 - + power.
                             
   -p [ --pool ] arg         URL takes the form:
                             scheme://[user[:password]@]hostname:port
@@ -64,7 +63,9 @@ Options:
                             
   --eval                    Enable software result evaluation. Use if you GPUs generate too many invalid shares.
                             
-  --api arg (=0)            API port number. 0 - disable, < 0 - read-only.
+  --api arg (=0)            API server port number. 0 - disable, < 0 - read-only.
+                            
+  --http arg (=0)           HTTP server port number. 0 - disable
                             
   --cl-plat arg (=0)        Opencl platform.
                             

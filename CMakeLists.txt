@@ -43,7 +43,7 @@ endif()
 
 
 project(miner)
-set(PROJECT_VERSION NoNameMiner.1.0.4.dev)
+set(PROJECT_VERSION JCEMiner.1.0.4.dev)
 
 cable_set_build_type(DEFAULT Release CONFIGURATION_TYPES Release RelWithDebInfo Debug)
 
