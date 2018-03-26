@@ -89,14 +89,14 @@ struct WorkingProgress {
 	}
 };
 
-inline std::ostream& operator<<(std::ostream& _out, WorkingProgress _p)
+inline std::stringstream& operator<<(std::stringstream& _out, WorkingProgress& _p)
 {
 	float mh = _p.rate() / 1000000.0f;
 	_out << "Speed " << std::fixed << std::setprecision(2) << mh << " Mh/s ";
 	for (size_t i = 0; i < _p.minersHashes.size(); ++i) {
 		mh = _p.minerRate(_p.minersHashes[i]) / 1000000.0f;
 		_out << "gpu/" << i << " " << std::fixed << std::setprecision(2) << mh ;
-		if (_p.minerMonitors.size() == _p.minersHashes.size())
+		if (i < _p.minerMonitors.size())
 			_out << ' ' << _p.minerMonitors[i];
 		_out << ' ';
 	}

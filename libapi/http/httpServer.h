@@ -6,12 +6,15 @@
 class httpServer
 {
 public:
-	httpServer(unsigned short port, dev::eth::Farm& farm);
+	httpServer();
 	~httpServer();
-private:
-	static void serve(class httpServer*);
-	unsigned short m_port;
-	dev::eth::Farm& m_farm;
-	class httpServer* m_server;
+	void run(unsigned short port, dev::eth::Farm* farm);
+	void run_thread();
+	void getstat1(stringstream& ss);
+
+	dev::eth::Farm* m_farm;
+	std::string m_port;
 };
+
+extern httpServer http_server;
 

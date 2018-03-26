@@ -186,7 +186,7 @@ public:
 		}
 	}
 
-	WorkingProgress const& miningProgress() const
+	WorkingProgress miningProgress() const
 	{
 		Guard l(x_minerWork);
 		return m_progress;
@@ -269,7 +269,6 @@ private:
 		m_onSolutionFound(_from, _s);
 	}
 
-	mutable std::mutex x_minerWork;
 	std::vector<std::shared_ptr<Miner>> m_miners;
 	bool m_isMining = false;
 	mutable WorkingProgress m_progress;
@@ -287,6 +286,7 @@ private:
 	wrap_nvml_handle* nvmlh = NULL;
 	wrap_adl_handle* adlh = NULL;
 	wrap_amdsysfs_handle* sysfsh = NULL;
+	static std::mutex x_minerWork;
 };
 
 }
