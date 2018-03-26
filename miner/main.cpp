@@ -340,7 +340,8 @@ public:
 
 #if API_CORE
 		Api api(m_api_port, f);
-		httpServer(m_http_port, f);
+		if (m_http_port)
+			http_server.run(m_http_port, &f);
 #endif
 
 		// Start PoolManager
@@ -352,8 +353,10 @@ public:
 				f.collectProgress(m_show_level);
 				auto mp = f.miningProgress();
 				{
+					stringstream ss;
 					Guard l(x_log);
-					loginfo << mp << f.getSolutionStats() << ' ' << f.farmLaunchedFormatted() << endl;
+					ss << mp << f.getSolutionStats() << ' ' << f.farmLaunchedFormatted() << endl;
+					loginfo << ss.str();
 				}
 			}
 			this_thread::sleep_for(chrono::seconds(m_displayInterval));
