@@ -59,14 +59,7 @@ void httpServer::getstat1(stringstream& ss)
 	stringstream effRate;
 	m_pool->effectiveHR(effRate);
 	ss <<
-	   "<tr valign=top align=center><th colspan=5>" << effRate.str() << "</th></tr>";
-	ss <<
-	   "</table></body></html>";
-}
-
-static void static_getstat1(stringstream& ss)
-{
-	http_server.getstat1(ss);
+	   "<tr valign=top align=center><th colspan=5>" << effRate.str() << "</th></tr></table></body></html>";
 }
 
 void ev_handler(struct mg_connection* c, int ev, void* p)
@@ -84,7 +77,7 @@ void ev_handler(struct mg_connection* c, int ev, void* p)
 			mg_http_send_error(c, 404, nullptr);
 		else {
 			stringstream content;
-			static_getstat1(content);
+			http_server.getstat1(content);
 			mg_send_head(c, 200, (int)content.str().length(), "Content-Type: text/html");
 			mg_printf(c, "%.*s", (int)content.str().length(), content.str().c_str());
 		}
