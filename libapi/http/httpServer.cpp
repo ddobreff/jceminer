@@ -21,7 +21,7 @@ void httpServer::tableHeader(stringstream& ss, unsigned columns)
 	string l = m_farm->farmLaunchedFormatted();
 	ss <<
 	   "<head><title>" << hostName <<
-	   "</title></head><body><table width=\"50%\" border=1 cellpadding=2 cellspacing=0 align=center>"
+	   "</title> <meta http-equiv=refresh content=30></head><body><table width=\"50%\" border=1 cellpadding=2 cellspacing=0 align=center>"
 	   "<tr valign=top align=center><th colspan=" << columns << ">" << info->project_version <<
 	   " on " << hostName << " - " << l << "</th></tr>";
 }
