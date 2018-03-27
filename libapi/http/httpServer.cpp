@@ -24,7 +24,7 @@ void httpServer::getstat1(stringstream& ss)
 	SolutionStats s = m_farm->getSolutionStats();
 	string l = m_farm->farmLaunchedFormatted();
 	ss <<
-	   "<head><title>Miner Stats</title></head><body><table width=\"50%\" border=1 cellpadding=2 cellspacing=0 align=center>"
+	   "<head><title>" << hostName << "</title></head><body><table width=\"50%\" border=1 cellpadding=2 cellspacing=0 align=center>"
 	   "<tr valign=top align=center><th colspan=5>" << info->project_version <<
 	   " on " << hostName << "</th></tr>"
 	   "<tr valign=top align=center>"
