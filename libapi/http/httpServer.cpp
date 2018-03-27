@@ -13,20 +13,27 @@ using namespace eth;
 
 httpServer http_server;
 
+void httpServer::tableHeader(stringstream& ss, unsigned columns)
+{
+	auto info = miner_get_buildinfo();
+	char hostName[HOST_NAME_MAX + 1];
+	gethostname(hostName, HOST_NAME_MAX + 1);
+	string l = m_farm->farmLaunchedFormatted();
+	ss <<
+	   "<head><title>" << hostName <<
+	   "</title></head><body><table width=\"50%\" border=1 cellpadding=2 cellspacing=0 align=center>"
+	   "<tr valign=top align=center><th colspan=" << columns << ">" << info->project_version <<
+	   " on " << hostName << " - " << l << "</th></tr>";
+}
+
 
 void httpServer::getstat1(stringstream& ss)
 {
-	char hostName[HOST_NAME_MAX + 1];
-	gethostname(hostName, HOST_NAME_MAX + 1);
 	using namespace std::chrono;
-	auto info = miner_get_buildinfo();
 	WorkingProgress p = m_farm->miningProgress();
 	SolutionStats s = m_farm->getSolutionStats();
-	string l = m_farm->farmLaunchedFormatted();
+	tableHeader(ss, 5);
 	ss <<
-	   "<head><title>" << hostName << "</title></head><body><table width=\"50%\" border=1 cellpadding=2 cellspacing=0 align=center>"
-	   "<tr valign=top align=center><th colspan=5>" << info->project_version <<
-	   " on " << hostName << "</th></tr>"
 	   "<tr valign=top align=center>"
 	   "<th>GPU</th><th>Hash Rate (mh/s)</th><th>Temperature (C)</th><th>Fan Percent.</th><th>Power (W)</th></tr>";
 	double hashSum = 0.0;
@@ -47,8 +54,13 @@ void httpServer::getstat1(stringstream& ss)
 	}
 	ss <<
 	   "<tr valign=top align=center><th>Total</th><td>" <<
-	   fixed << setprecision(2) << hashSum << "</td><td colspan=2>" << s <<
-	   "</td><td>" << fixed << setprecision(0) << powerSum << "</td></tr>"
+	   fixed << setprecision(2) << hashSum << "</td><td colspan=2>Solutions: " << s <<
+	   "</td><td>" << fixed << setprecision(0) << powerSum << "</td></tr>";
+	stringstream effRate;
+	m_pool->effectiveHR(effRate);
+	ss <<
+	   "<tr valign=top align=center><th colspan=5>" << effRate.str() << "</th></tr>";
+	ss <<
 	   "</table></body></html>";
 }
 
@@ -79,9 +91,10 @@ void ev_handler(struct mg_connection* c, int ev, void* p)
 	}
 }
 
-void httpServer::run(unsigned short port, dev::eth::Farm* farm)
+void httpServer::run(unsigned short port, dev::eth::Farm* farm, dev::eth::PoolManager* pool)
 {
 	m_farm = farm;
+	m_pool = pool;
 	m_port = to_string(port);
 	new thread(bind(&httpServer::run_thread, this));
 }

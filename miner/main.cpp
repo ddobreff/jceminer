@@ -341,7 +341,7 @@ public:
 #if API_CORE
 		Api api(m_api_port, f);
 		if (m_http_port)
-			http_server.run(m_http_port, &f);
+			http_server.run(m_http_port, &f, &mgr);
 #endif
 
 		// Start PoolManager
@@ -355,7 +355,7 @@ public:
 				{
 					stringstream ss;
 					Guard l(x_log);
-					ss << mp << f.getSolutionStats() << ' ' << f.farmLaunchedFormatted() << endl;
+					ss << mp << '[' << f.getSolutionStats() << "] " << f.farmLaunchedFormatted() << endl;
 					loginfo << ss.str();
 				}
 			}

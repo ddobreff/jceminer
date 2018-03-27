@@ -6,6 +6,7 @@
 
 #include <iostream>
 #include <list>
+#include <mutex>
 #include <libdevcore/Worker.h>
 #include <libethcore/Farm.h>
 #include <libethcore/Miner.h>
@@ -36,6 +37,7 @@ public:
 	{
 		return m_difficulty;
 	};
+	void effectiveHR(std::stringstream& ss);
 
 private:
 	void tryReconnect();
@@ -50,7 +52,8 @@ private:
 	Farm& m_farm;
 	MinerType m_minerType;
 	std::chrono::steady_clock::time_point m_submit_time;
-	list<std::chrono::steady_clock::time_point> m_accepts;
+	std::list<std::chrono::steady_clock::time_point> m_accepts;
+	std::mutex x_list;
 	double m_difficulty;
 	bool m_farmStarted = false;
 };

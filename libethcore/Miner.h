@@ -165,8 +165,8 @@ private:
 
 inline std::ostream& operator<<(std::ostream& os, SolutionStats s)
 {
-	return os << "[A" << s.getAccepts() << "+" << s.getAcceptedStales() << ":R" << s.getRejects() << "+" <<
-	       s.getRejectedStales() << ":F" << s.getFailures() << "]";
+	return os << 'A' << s.getAccepts() << '+' << s.getAcceptedStales() << ":R" << s.getRejects() << '+' <<
+	       s.getRejectedStales() << ":F" << s.getFailures();
 }
 
 class Miner;

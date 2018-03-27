@@ -92,24 +92,19 @@ PoolManager::PoolManager(PoolClient& client, Farm& farm, MinerType const& minerT
 
 	m_client.onSolutionAccepted([&](bool const & stale) {
 		using namespace std::chrono;
-
 		m_farm.acceptedSolution(stale);
-		std::chrono::steady_clock::time_point now = steady_clock::now();
-		if (!stale)
+		steady_clock::time_point now = steady_clock::now();
+		if (!stale) {
+			Guard l(x_list);
 			m_accepts.push_back(now);
-		auto windowStart = now - hours(6);
-		while (m_accepts.size() && m_accepts.front() < windowStart)
-			m_accepts.pop_front();
-		if (windowStart < m_farm.farmLaunched())
-			windowStart = m_farm.farmLaunched();
+		}
+		stringstream effRate;
+		effectiveHR(effRate);
 		auto ms = duration_cast<milliseconds>(now - m_submit_time);
-		auto secs = duration_cast<seconds>(now - windowStart);
-		double EHR = (m_accepts.size()  * m_difficulty) / secs.count();
 		{
 			Guard l(x_log);
 			loginfo << string(stale ? EthYellow : EthLime) << "Accepted" << (stale ? " (stale)" : "") << " in " << ms.count() <<
-			        " ms." << " Effective HR (" << fixed << setprecision(2) << secs.count() / 3600.0 << "h. sma): " << hashToString(EHR,
-			                true) << EthReset << endl;
+			        " ms. " << effRate.str() << EthReset << endl;
 		}
 	});
 
@@ -139,6 +134,23 @@ PoolManager::PoolManager(PoolClient& client, Farm& farm, MinerType const& minerT
 
 		return false;
 	});
+}
+
+void PoolManager::effectiveHR(stringstream& ss)
+{
+	using namespace std::chrono;
+	steady_clock::time_point now = steady_clock::now();
+	auto windowStart = now - hours(6);
+	{
+		Guard l(x_list);
+		while (m_accepts.size() && m_accepts.front() < windowStart)
+			m_accepts.pop_front();
+	}
+	if (windowStart < m_farm.farmLaunched())
+		windowStart = m_farm.farmLaunched();
+	auto secs = duration_cast<seconds>(now - windowStart);
+	double EHR = (m_accepts.size()  * m_difficulty) / secs.count();
+	ss <<  "Effective HR (" << fixed << setprecision(2) << secs.count() / 3600.0 << "h. sma): " << hashToString(EHR, true);
 }
 
 void PoolManager::workLoop()
