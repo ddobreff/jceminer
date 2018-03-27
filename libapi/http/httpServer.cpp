@@ -80,7 +80,7 @@ void ev_handler(struct mg_connection* c, int ev, void* p)
 			uriLen = sizeof(uri) - 1;
 		memcpy(uri, hm->uri.p, uriLen);
 		uri[uriLen] = 0;
-		if (::strcmp(uri, "/getstat1"))
+		if ((::strcmp(uri, "/getstat1")) && (::strcmp(uri, "/")))
 			mg_http_send_error(c, 404, nullptr);
 		else {
 			stringstream content;
