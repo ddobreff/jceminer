@@ -87,7 +87,6 @@ private:
 	hash32_t m_current_header;
 	uint64_t m_current_target;
 	uint64_t m_current_nonce;
-	uint64_t m_starting_nonce;
 	uint32_t m_current_index;
 
 	///Constants on GPU
