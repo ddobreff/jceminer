@@ -81,7 +81,7 @@ PoolManager::PoolManager(PoolClient& client, Farm& farm, MinerType const& minerT
 			m_difficulty = double(dividend / divisor);
 			{
 				Guard l(x_log);
-				loginfo << "New pool difficulty: " << hashToString(m_difficulty / 1000000.0, false) << endl;
+				loginfo << "New pool difficulty: " EthYellow << hashToString(m_difficulty / 1000000.0, false) << EthReset "\n";
 			}
 		}
 		{

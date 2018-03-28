@@ -401,35 +401,17 @@ void CUDAMiner::search(
     uint64_t _startN,
     const dev::eth::WorkPackage& w)
 {
-	bool initialize = false;
-	if ((memcmp(&m_current_header, header, sizeof(hash32_t))) || (m_current_target != target)) {
-		m_current_header = *reinterpret_cast<hash32_t const*>(header);
-		m_current_target = target;
-		set_header_and_target(m_current_header, m_current_target);
-		initialize = true;
-	}
-	if (_ethStratum) {
-		if (initialize) {
-			m_starting_nonce = 0;
-			m_current_index = 0;
-			CUDA_SAFE_CALL(cudaDeviceSynchronize());
-			for (unsigned int i = 0; i < s_numStreams; i++)
-				m_search_buf[i]->count = 0;
-		}
-		if (m_starting_nonce != _startN) {
-			// reset nonce counter
-			m_starting_nonce = _startN;
-			m_current_nonce = m_starting_nonce;
-		}
-	} else {
-		if (initialize) {
-			m_current_nonce = get_start_nonce();
-			m_current_index = 0;
-			CUDA_SAFE_CALL(cudaDeviceSynchronize());
-			for (unsigned int i = 0; i < s_numStreams; i++)
-				m_search_buf[i]->count = 0;
-		}
-	}
+	m_current_header = *reinterpret_cast<hash32_t const*>(header);
+	m_current_target = target;
+	set_header_and_target(m_current_header, m_current_target);
+	m_current_index = 0;
+	if (_ethStratum)
+		m_current_nonce = _startN;
+	else
+		m_current_nonce = get_start_nonce();
+	CUDA_SAFE_CALL(cudaDeviceSynchronize());
+	for (unsigned int i = 0; i < s_numStreams; i++)
+		m_search_buf[i]->count = 0;
 	const uint32_t batch_size = s_gridSize * s_blockSize;
 	volatile search_results* buffer;
 	uint32_t stream_index;
@@ -447,21 +429,20 @@ void CUDAMiner::search(
 		stream_index = m_current_index % s_numStreams;
 		cudaStream_t stream = m_streams[stream_index];
 		buffer = m_search_buf[stream_index];
-		uint32_t found_count = 0;
-		uint64_t nonce;
-		h256 mix;
 		uint64_t nonce_base = m_current_nonce - s_numStreams * batch_size;
+
 		CUDA_SAFE_CALL(cudaStreamSynchronize(stream));
-		found_count = buffer->count;
-		if (found_count) {
-			nonce = nonce_base + buffer->gid;
-			if (!s_eval)
-				memcpy(mix.data(), (const void*)buffer->mix, sizeof(buffer->mix));
+		search_results r = *((search_results*)buffer);
+		if (r.count)
 			buffer->count = 0;
-		}
+
 		run_ethash_search(s_gridSize, s_blockSize, stream, buffer, m_current_nonce, m_parallelHash);
-		if (found_count) {
+
+		if (r.count) {
+			uint64_t nonce = nonce_base + r.gid;
 			if (!s_eval) {
+				h256 mix;
+				memcpy(mix.data(), r.mix, sizeof(r.mix));
 				farm.submitProof(workerName(), Solution{nonce, mix, w, m_new_work});
 			} else {
 				Result r = EthashAux::eval(w.seed, w.header, nonce);
@@ -469,10 +450,8 @@ void CUDAMiner::search(
 					farm.submitProof(workerName(), Solution{nonce, r.mixHash, w, m_new_work});
 				else {
 					farm.failedSolution();
-					{
-						Guard l(x_log);
-						logwarn << workerName() << " - Incorrect result discarded!\n";
-					}
+					Guard l(x_log);
+					logwarn << workerName() << " - Incorrect result discarded!\n";
 				}
 			}
 		}
