@@ -434,6 +434,7 @@ void CUDAMiner::search(
 	volatile search_results* buffer;
 	uint32_t stream_index;
 	while (m_current_index < s_numStreams) {
+		m_current_nonce += batch_size;
 		stream_index = m_current_index % s_numStreams;
 		cudaStream_t stream = m_streams[stream_index];
 		buffer = m_search_buf[stream_index];
