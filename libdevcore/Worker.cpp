@@ -26,12 +26,12 @@ void Worker::startWorking()
 			try {
 				workLoop();
 			} catch (std::exception const& _e) {
-				logerror << "Exception thrown in " << workerName() << ": " << _e.what() << endl;
+				logerror("Exception thrown in " << workerName() << ": " << _e.what());
 				abort();
 			}
 
 			ex = m_state.exchange(WorkerState::Stopped);
-			logerror << workerName() << " unexpectedly stopped\n";
+			logerror(workerName() << " unexpectedly stopped");
 			abort();
 		}));
 	}

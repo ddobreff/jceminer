@@ -138,7 +138,7 @@ void ApiServer::doMinerRestart(const Json::Value& request, Json::Value& response
 {
 	(void) request; // unused
 	(void) response; // unused
-	logerror << "Restart from API\n";
+	logerror("Restart from API");
 	exit(0);
 }
 
