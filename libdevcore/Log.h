@@ -16,7 +16,10 @@ extern std::string timestamp();
 
 extern std::mutex x_log;
 
-#define loginfo std::clog << EthWhite << timestamp() << EthReset << ' '
-#define logwarn std::clog << EthYellow << timestamp() << EthReset << ' '
-#define logerror std::clog << EthRed << timestamp() << EthReset << ' '
+#define loginfo(_x) \
+	{x_log.lock(); std::clog << EthWhite << timestamp() << EthReset << ' ' << _x << std::endl; x_log.unlock();}
+#define logwarn(_x) \
+	{x_log.lock(); std::clog << EthYellow << timestamp() << EthReset << ' ' << _x << std::endl; x_log.unlock();}
+#define logerror(_x) \
+	{x_log.lock(); std::clog << EthRed << timestamp() << EthReset << ' ' << _x << std::endl; x_log.unlock();}
 

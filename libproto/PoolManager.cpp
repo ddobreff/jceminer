@@ -38,16 +38,9 @@ PoolManager::PoolManager(PoolClient& client, Farm& farm, MinerType const& minerT
 			saddr << '(' << address << ')';
 		stringstream sport;
 		sport << m_connection.Port();
-		{
-			Guard l(x_log);
-			loginfo << "Connected to " << m_connection.Host() << saddr.str() << ':' <<
-			        sport.str() << endl;
-		}
+		loginfo("Connected to " << m_connection.Host() << saddr.str() << ':' << sport.str());
 		if (!m_farm.isMining()) {
-			{
-				Guard l(x_log);
-				loginfo << "Spinning up miners..." << endl;
-			}
+			loginfo("Spinning up miners...");
 			if (m_minerType == MinerType::CL)
 				m_farm.start("opencl", false);
 			else if (m_minerType == MinerType::CUDA)
@@ -61,10 +54,7 @@ PoolManager::PoolManager(PoolClient& client, Farm& farm, MinerType const& minerT
 	});
 
 	m_client.onDisconnected([&]() {
-		{
-			Guard l(x_log);
-			logwarn << "Disconnected from " + m_connection.Host() << endl;
-		}
+		logwarn("Disconnected from " + m_connection.Host());
 
 		tryReconnect();
 	});
@@ -79,15 +69,9 @@ PoolManager::PoolManager(PoolClient& client, Farm& farm, MinerType const& minerT
 			static const uint256_t dividend("0xffff000000000000000000000000000000000000000000000000000000000000");
 			const uint256_t divisor(string("0x") + m_lastBoundary.hex());
 			m_difficulty = double(dividend / divisor);
-			{
-				Guard l(x_log);
-				loginfo << "New pool difficulty: " EthYellow << hashToString(m_difficulty / 1000000.0, false) << EthReset "\n";
-			}
+			loginfo("New pool difficulty: " EthYellow << hashToString(m_difficulty / 1000000.0, false) << EthReset);
 		}
-		{
-			Guard l(x_log);
-			loginfo << "Received new job " << wp.header.hex().substr(0, 8) << ".." << endl;
-		}
+		loginfo("Received new job " << wp.header.hex().substr(0, 8) << "..");
 	});
 
 	m_client.onSolutionAccepted([&](bool const & stale) {
@@ -101,20 +85,14 @@ PoolManager::PoolManager(PoolClient& client, Farm& farm, MinerType const& minerT
 		stringstream effRate;
 		effectiveHR(effRate);
 		auto ms = duration_cast<milliseconds>(now - m_submit_time);
-		{
-			Guard l(x_log);
-			loginfo << string(stale ? EthYellow : EthLime) << "Accepted" << (stale ? " (stale)" : "") << " in " << ms.count() <<
-			        " ms. " << effRate.str() << EthReset << endl;
-		}
+		loginfo(string(stale ? EthYellow : EthLime) << "Accepted" << (stale ? " (stale)" : "") << " in " << ms.count() <<
+		        " ms. " << effRate.str() << EthReset);
 	});
 
 	m_client.onSolutionRejected([&](bool const & stale) {
 		using namespace std::chrono;
 		auto ms = duration_cast<milliseconds>(steady_clock::now() - m_submit_time);
-		{
-			Guard l(x_log);
-			loginfo << EthRed "Rejected" << (stale ? " (stale)" : "") << " in " << ms.count() << " ms." << EthReset << endl;
-		}
+		loginfo(EthRed "Rejected" << (stale ? " (stale)" : "") << " in " << ms.count() << " ms." << EthReset);
 		m_farm.rejectedSolution(stale);
 	});
 
@@ -123,13 +101,11 @@ PoolManager::PoolManager(PoolClient& client, Farm& farm, MinerType const& minerT
 		m_client.submitSolution(sol);
 
 		if (sol.stale) {
-			Guard l(x_log);
-			loginfo << EthYellow << from << " - stale nonce 0x" + toHex(sol.nonce) + " submitted to " +
-			        m_connection.Host() << EthReset << endl;
+			loginfo(EthYellow << from << " - stale nonce 0x" + toHex(sol.nonce) + " submitted to " +
+			        m_connection.Host() << EthReset);
 		} else {
-			Guard l(x_log);
-			loginfo << EthWhite << from << " - nonce 0x" + toHex(sol.nonce)
-			        + " submitted to " + m_connection.Host() << EthReset << endl;
+			loginfo(EthWhite << from << " - nonce 0x" + toHex(sol.nonce)
+			        + " submitted to " + m_connection.Host() << EthReset);
 		}
 
 		return false;
@@ -182,26 +158,18 @@ void PoolManager::start()
 		startWorking();
 		// Try to connect to pool
 		m_client.connect();
-	} else {
-		Guard l(x_log);
-		logerror << "Manager has no connections defined!" << endl;
-	}
+	} else
+		logerror("Manager has no connections defined!");
 }
 
 void PoolManager::tryReconnect()
 {
 	// No connections available, so why bother trying to reconnect
 	if (m_connection.Empty()) {
-		{
-			Guard l(x_log);
-			logerror << "Manager has no connections defined!" << endl;
-		}
+		logerror("Manager has no connections defined!");
 		return;
 	}
-	{
-		Guard l(x_log);
-		logwarn << "Retrying in 3 seconds.\n";
-	}
+	logwarn("Retrying in 3 seconds.");
 
 	this_thread::sleep_for(chrono::seconds(3));
 
@@ -211,6 +179,6 @@ void PoolManager::tryReconnect()
 		return;
 	}
 
-	logerror << "Could not connect.\n";
+	logerror("Could not connect.");
 	throw runtime_error("Connect fail");
 }

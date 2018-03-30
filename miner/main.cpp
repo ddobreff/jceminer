@@ -352,12 +352,9 @@ public:
 			if (mgr.isConnected()) {
 				f.collectProgress(m_show_level);
 				auto mp = f.miningProgress();
-				{
-					stringstream ss;
-					Guard l(x_log);
-					ss << mp << '[' << f.getSolutionStats() << "] " << f.farmLaunchedFormatted() << endl;
-					loginfo << ss.str();
-				}
+				stringstream ss;
+				ss << mp << '[' << f.getSolutionStats() << "] " << f.farmLaunchedFormatted();
+				loginfo(ss.str());
 			}
 			this_thread::sleep_for(chrono::seconds(m_displayInterval));
 		}
@@ -418,13 +415,8 @@ int main(int argc, char** argv)
 		if (i < argc - 1)
 			ss << ' ';
 	}
-	{
-		Guard l(x_log);
-		loginfo << EthLime << version() << EthReset << endl;
-		loginfo << "cmd: " EthWhite << ss.str() << EthReset << endl;
-
-	}
-
+	loginfo(EthLime << version() << EthReset);
+	loginfo("cmd: " EthWhite << ss.str() << EthReset);
 
 	try {
 		// Mining options:
