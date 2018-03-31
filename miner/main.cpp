@@ -34,6 +34,7 @@
 #if API_CORE
 #include <libapi/api/Api.h>
 #include <libapi/http/httpServer.h>
+#include <libapi/rest/restServer.h>
 #endif
 #include <libdevcore/Log.h>
 
@@ -61,14 +62,6 @@ string version()
 class MinerCLI
 {
 public:
-	enum class OperationMode {
-		None,
-		Benchmark,
-		Simulation,
-		Farm,
-		Stratum
-	};
-
 	MinerCLI() {}
 
 	void interpretOption(int argc, char** argv)
@@ -116,6 +109,8 @@ public:
 #if API_CORE
 		("api",       value<unsigned>(&m_api_port)->default_value(0), "API server port number. 0 - disable, < 0 - read-only.\n")
 		("http",      value<unsigned>(&m_http_port)->default_value(0), "HTTP server port number. 0 - disable\n")
+		("rest",      value<unsigned>(&m_rest_port)->default_value(0),
+		 "RESTFUL server port number. 0 - disable. Supported paths are /stats and /gpu/<n>\n")
 #endif
 #if ETH_ETHASHCL
 		("cl-plat",   value<unsigned>(&m_openclPlatform)->default_value(0), "Opencl platform.\n")
@@ -342,6 +337,8 @@ public:
 		Api api(m_api_port, f);
 		if (m_http_port)
 			http_server.run(m_http_port, &f, &mgr);
+		if (m_rest_port)
+			rest_server.run(m_rest_port, &f, &mgr);
 #endif
 
 		// Start PoolManager
@@ -395,6 +392,7 @@ private:
 #if API_CORE
 	unsigned m_api_port = 0;
 	unsigned m_http_port = 0;
+	unsigned m_rest_port = 0;
 #endif
 
 };

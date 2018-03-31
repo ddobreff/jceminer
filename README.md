@@ -9,8 +9,6 @@ If you're going to try to use this, the release branches (1.0.0, 1.0.1, etc...) 
 
 ## Usage
 
-For a full list of available command options, please run
-
 ```
 Options:
 
@@ -32,10 +30,10 @@ Options:
                             
   --intvl arg (=15)         statistics display interval.
                             
-  --level arg (=0)          Metrics collection level. 0 - HR only, 1 - + fan & temp, 2 - + power.
+  --level arg (=0)          Metrics collection level. 0 - HR only, 1 - + fan & 
+                            temp, 2 - + power.
                             
-  -p [ --pool ] arg         URL takes the form:
-                            scheme://[user[:password]@]hostname:port
+  -p [ --pool ] arg         URL takes the form: scheme://[user[:password]@]hostname:port
                             
                             unsecured schemes: ethproxy+tcp nicehash+tcp stratum+tcp
                             secured with any TLS: ethproxy+tls nicehash+tls stratum+tls
@@ -67,6 +65,8 @@ Options:
                             
   --http arg (=0)           HTTP server port number. 0 - disable
                             
+  --rest arg (=0)           RESTFUL server port number. 0 - disable. Supported paths are /stats and /gpu/<n>
+                            
   --cl-plat arg (=0)        Opencl platform.
                             
   --cl-devs arg             Opencl device list.
@@ -86,7 +86,6 @@ Options:
   --cu-strm arg (=2)        Cuda streams
                             
   --stop arg (=0)           Stop after minutes. 0 - never stop.
-
 ```
 
 ### Building from source

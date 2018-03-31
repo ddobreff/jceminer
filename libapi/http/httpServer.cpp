@@ -66,18 +66,12 @@ void httpServer::getstat1(stringstream& ss)
 	   "<tr valign=top align=center><th colspan=5>" << effRate.str() << "</th></tr></table></body></html>";
 }
 
-void ev_handler(struct mg_connection* c, int ev, void* p)
+static void ev_handler(struct mg_connection* c, int ev, void* p)
 {
 
 	if (ev == MG_EV_HTTP_REQUEST) {
 		struct http_message* hm = (struct http_message*) p;
-		char uri[32];
-		unsigned uriLen = hm->uri.len;
-		if (uriLen >= sizeof(uri) - 1)
-			uriLen = sizeof(uri) - 1;
-		memcpy(uri, hm->uri.p, uriLen);
-		uri[uriLen] = 0;
-		if ((::strcmp(uri, "/getstat1")) && (::strcmp(uri, "/")))
+		if (mg_vcmp(&hm->uri, "/getstat1") && mg_vcmp(&hm->uri, "/"))
 			mg_http_send_error(c, 404, nullptr);
 		else {
 			stringstream content;
