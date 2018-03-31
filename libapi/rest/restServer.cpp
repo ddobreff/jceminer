@@ -68,7 +68,7 @@ bool restServer::restgpu(stringstream& ss, unsigned index)
 	response["fanpercent"] = fan;
 	HwMonitorInfo& hw(m_farm->hwmoninfo(index));
 	response["name"] = hw.deviceName;
-	response["pci"] = hw.pciid;
+	response["id"] = hw.deviceId;
 	ss << response;
 	return true;
 }

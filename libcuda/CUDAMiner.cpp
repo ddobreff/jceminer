@@ -263,7 +263,7 @@ bool CUDAMiner::cuda_init(
 		stringstream ss;
 		ss << setw(4) << setfill('0') << hex << device_props.pciDomainID << ':' << setw(2)
 		   << device_props.pciBusID << ':' << setw(2) << device_props.pciDeviceID;
-		m_hwmoninfo.pciid = ss.str();
+		m_hwmoninfo.deviceId = ss.str();
 
 		m_search_buf = new volatile search_results *[s_numStreams];
 		m_streams = new cudaStream_t[s_numStreams];

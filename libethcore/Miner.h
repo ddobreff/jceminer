@@ -53,7 +53,7 @@ struct HwMonitorInfo {
 	HwMonitorIndexSource indexSource = HwMonitorIndexSource::UNKNOWN;
 	int deviceIndex = -1;
 	string deviceName;
-	string pciid;
+	string deviceId;
 };
 
 struct HwMonitor {
