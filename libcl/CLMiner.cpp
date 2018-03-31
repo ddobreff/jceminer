@@ -349,7 +349,9 @@ bool CLMiner::init(const h256& seed)
 		m_hwmoninfo.deviceIndex = deviceId % devices.size();
 		cl::Device& device = devices[deviceId % devices.size()];
 		string device_version = device.getInfo<CL_DEVICE_VERSION>();
-		loginfo(workerName() << " - Device: " << device.getInfo<CL_DEVICE_NAME>() << " / " << device_version);
+		string device_name = device.getInfo<CL_DEVICE_NAME>();
+		loginfo(workerName() << " - Device: " << device_name << " / " << device_version);
+		m_hwmoninfo.deviceName = device.getInfo<CL_DEVICE_VENDOR>() + " " + device_name;
 
 		string clVer = device_version.substr(7, 3);
 		if (clVer == "1.0" || clVer == "1.1") {

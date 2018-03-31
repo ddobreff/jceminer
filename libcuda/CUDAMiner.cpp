@@ -259,6 +259,7 @@ bool CUDAMiner::cuda_init(
 		loginfo(workerName() << " - Using device: " << device_props.name << " (Compute " + to_string(
 		            device_props.major) + "." + to_string(
 		            device_props.minor) + ")");
+		m_hwmoninfo.deviceName = device_props.name;
 
 		m_search_buf = new volatile search_results *[s_numStreams];
 		m_streams = new cudaStream_t[s_numStreams];
@@ -267,10 +268,7 @@ bool CUDAMiner::cuda_init(
 		uint32_t dagSize128   = (unsigned)(dagSize / ETHASH_MIX_BYTES);
 		uint32_t lightSize64 = (unsigned)(_lightSize / sizeof(node));
 
-
-
 		CUDA_SAFE_CALL(cudaSetDevice(m_device_num));
-		loginfo(workerName() << " - Set Device to current");
 		if (dagSize128 != m_dag_size || !m_dag) {
 			//Check whether the current device has sufficient memory everytime we recreate the dag
 			if (device_props.totalGlobalMem < dagSize) {

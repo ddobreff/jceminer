@@ -115,6 +115,11 @@ public:
 		return m_isMining;
 	}
 
+	HwMonitorInfo& hwmoninfo(unsigned index) const
+	{
+		return m_miners[index]->hwmonInfo();
+	}
+
 	void collectProgress(unsigned level) const
 	{
 		Guard l(x_minerWork);

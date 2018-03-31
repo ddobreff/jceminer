@@ -52,7 +52,7 @@ struct HwMonitorInfo {
 	HwMonitorInfoType deviceType = HwMonitorInfoType::UNKNOWN;
 	HwMonitorIndexSource indexSource = HwMonitorIndexSource::UNKNOWN;
 	int deviceIndex = -1;
-
+	string deviceName;
 };
 
 struct HwMonitor {
@@ -231,7 +231,7 @@ public:
 		return index;
 	};
 
-	HwMonitorInfo hwmonInfo()
+	HwMonitorInfo& hwmonInfo()
 	{
 		return m_hwmoninfo;
 	}
