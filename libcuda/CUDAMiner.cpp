@@ -260,6 +260,10 @@ bool CUDAMiner::cuda_init(
 		            device_props.major) + "." + to_string(
 		            device_props.minor) + ")");
 		m_hwmoninfo.deviceName = device_props.name;
+		stringstream ss;
+		ss << setw(4) << setfill('0') << hex << device_props.pciDomainID << ':' << setw(2)
+		   << device_props.pciBusID << ':' << setw(2) << device_props.pciDeviceID;
+		m_hwmoninfo.pciid = ss.str();
 
 		m_search_buf = new volatile search_results *[s_numStreams];
 		m_streams = new cudaStream_t[s_numStreams];
