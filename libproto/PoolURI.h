@@ -16,24 +16,24 @@ enum class SecureLevel {NONE = 0, TLS12, TLS};
 class URI : network::uri
 {
 public:
-	URI();
-	URI(const std::string uri);
+    URI();
+    URI(const std::string uri);
 
-	std::string	Scheme() const;
-	std::string	Host() const;
-	unsigned short	Port() const;
-	std::string	User() const;
-	std::string	Pswd() const;
-	SecureLevel	ProtoSecureLevel() const;
-	unsigned	ProtoVersion() const;
+    std::string Scheme() const;
+    std::string Host() const;
+    unsigned short  Port() const;
+    std::string User() const;
+    std::string Pswd() const;
+    SecureLevel ProtoSecureLevel() const;
+    unsigned    ProtoVersion() const;
 
-	bool		KnownScheme();
-	bool		Empty();
+    bool        KnownScheme();
+    bool        Empty();
 
-	static std::string KnownSchemes(SecureLevel secureLevel);
+    static std::string KnownSchemes(SecureLevel secureLevel);
 
 private:
-	network::uri   m_uri;
+    network::uri   m_uri;
 };
 
 }

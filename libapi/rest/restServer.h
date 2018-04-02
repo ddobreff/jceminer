@@ -11,16 +11,16 @@
 class restServer
 {
 public:
-	restServer();
-	~restServer();
-	void run(unsigned short port, dev::eth::Farm* farm, dev::eth::PoolManager* pool);
-	void run_thread();
-	void reststats(stringstream& ss);
-	bool restgpu(stringstream& ss, unsigned index);
+    restServer();
+    ~restServer();
+    void run(unsigned short port, dev::eth::Farm* farm, dev::eth::PoolManager* pool);
+    void run_thread();
+    void reststats(stringstream& ss);
+    bool restgpu(stringstream& ss, unsigned index);
 
-	dev::eth::Farm* m_farm;
-	dev::eth::PoolManager* m_pool;
-	std::string m_port;
+    dev::eth::Farm* m_farm;
+    dev::eth::PoolManager* m_pool;
+    std::string m_port;
 };
 
 extern restServer rest_server;

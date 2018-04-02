@@ -20,21 +20,21 @@ bool sha3(bytesConstRef _input, bytesRef o_output);
 /// Calculate SHA3-256 hash of the given input, returning as a 256-bit hash.
 inline h256 sha3(bytesConstRef _input)
 {
-	h256 ret;
-	sha3(_input, ret.ref());
-	return ret;
+    h256 ret;
+    sha3(_input, ret.ref());
+    return ret;
 }
 
 /// Calculate SHA3-256 hash of the given input, returning as a 256-bit hash.
 inline h256 sha3(bytes const& _input)
 {
-	return sha3(bytesConstRef(&_input));
+    return sha3(bytesConstRef(&_input));
 }
 
 /// Calculate SHA3-256 hash of the given input (presented as a FixedHash), returns a 256-bit hash.
 template<unsigned N> inline h256 sha3(FixedHash<N> const& _input)
 {
-	return sha3(_input.ref());
+    return sha3(_input.ref());
 }
 
 }
