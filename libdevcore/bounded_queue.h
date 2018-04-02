@@ -54,77 +54,77 @@ namespace tp
 template <typename T>
 class BoundedQueue
 {
-	static_assert(
-	    std::is_move_constructible<T>::value, "Should be of movable type");
+    static_assert(
+        std::is_move_constructible<T>::value, "Should be of movable type");
 
 public:
-	/**
-	    @brief BoundedQueue Constructor.
-	    @param size Power of 2 number - queue length.
-	    @throws std::invalid_argument if size is bad.
-	*/
-	explicit BoundedQueue(size_t size);
+    /**
+        @brief BoundedQueue Constructor.
+        @param size Power of 2 number - queue length.
+        @throws std::invalid_argument if size is bad.
+    */
+    explicit BoundedQueue(size_t size);
 
-	/**
-	    @brief Move ctor implementation.
-	*/
-	BoundedQueue(BoundedQueue&& rhs) noexcept;
+    /**
+        @brief Move ctor implementation.
+    */
+    BoundedQueue(BoundedQueue&& rhs) noexcept;
 
-	/**
-	    @brief Move assignment implementaion.
-	*/
-	BoundedQueue& operator=(BoundedQueue&& rhs) noexcept;
+    /**
+        @brief Move assignment implementaion.
+    */
+    BoundedQueue& operator=(BoundedQueue&& rhs) noexcept;
 
-	/**
-	    @brief push Push data to queue.
-	    @param data Data to be pushed.
-	    @return true on success.
-	*/
-	template <typename U>
-	bool push(U&& data);
+    /**
+        @brief push Push data to queue.
+        @param data Data to be pushed.
+        @return true on success.
+    */
+    template <typename U>
+    bool push(U&& data);
 
-	/**
-	    @brief pop Pop data from queue.
-	    @param data Place to store popped data.
-	    @return true on sucess.
-	*/
-	bool pop(T& data);
-
-private:
-	struct Cell {
-		std::atomic<size_t> sequence;
-		T data;
-
-		Cell() = default;
-
-		Cell(const Cell&) = delete;
-		Cell& operator=(const Cell&) = delete;
-
-		Cell(Cell&& rhs)
-			: sequence(rhs.sequence.load()), data(std::move(rhs.data))
-		{
-		}
-
-		Cell& operator=(Cell&& rhs)
-		{
-			sequence = rhs.sequence.load();
-			data = std::move(rhs.data);
-
-			return *this;
-		}
-	};
+    /**
+        @brief pop Pop data from queue.
+        @param data Place to store popped data.
+        @return true on sucess.
+    */
+    bool pop(T& data);
 
 private:
-	typedef char Cacheline[64];
+    struct Cell {
+        std::atomic<size_t> sequence;
+        T data;
 
-	Cacheline pad0;
-	std::vector<Cell> m_buffer;
-	/* const */ size_t m_buffer_mask;
-	Cacheline pad1;
-	std::atomic<size_t> m_enqueue_pos;
-	Cacheline pad2;
-	std::atomic<size_t> m_dequeue_pos;
-	Cacheline pad3;
+        Cell() = default;
+
+        Cell(const Cell&) = delete;
+        Cell& operator=(const Cell&) = delete;
+
+        Cell(Cell&& rhs)
+            : sequence(rhs.sequence.load()), data(std::move(rhs.data))
+        {
+        }
+
+        Cell& operator=(Cell&& rhs)
+        {
+            sequence = rhs.sequence.load();
+            data = std::move(rhs.data);
+
+            return *this;
+        }
+    };
+
+private:
+    typedef char Cacheline[64];
+
+    Cacheline pad0;
+    std::vector<Cell> m_buffer;
+    /* const */ size_t m_buffer_mask;
+    Cacheline pad1;
+    std::atomic<size_t> m_enqueue_pos;
+    Cacheline pad2;
+    std::atomic<size_t> m_dequeue_pos;
+    Cacheline pad3;
 };
 
 
@@ -132,87 +132,89 @@ private:
 
 template <typename T>
 inline BoundedQueue<T>::BoundedQueue(size_t size)
-	: m_buffer(size), m_buffer_mask(size - 1), m_enqueue_pos(0),
-	  m_dequeue_pos(0)
+    : m_buffer(size), m_buffer_mask(size - 1), m_enqueue_pos(0),
+      m_dequeue_pos(0)
 {
-	bool size_is_power_of_2 = (size >= 2) && ((size & (size - 1)) == 0);
-	if (!size_is_power_of_2)
-		throw std::invalid_argument("buffer size should be a power of 2");
+    bool size_is_power_of_2 = (size >= 2) && ((size & (size - 1)) == 0);
+    if (!size_is_power_of_2)
+        throw std::invalid_argument("buffer size should be a power of 2");
 
-	for (size_t i = 0; i < size; ++i)
-		m_buffer[i].sequence = i;
+    for (size_t i = 0; i < size; ++i)
+        m_buffer[i].sequence = i;
 }
 
 template <typename T>
 inline BoundedQueue<T>::BoundedQueue(BoundedQueue&& rhs) noexcept
 {
-	*this = rhs;
+    *this = rhs;
 }
 
 template <typename T>
 inline BoundedQueue<T>& BoundedQueue<T>::operator=(BoundedQueue&& rhs) noexcept
 {
-	if (this != &rhs) {
-		m_buffer = std::move(rhs.m_buffer);
-		m_buffer_mask = std::move(rhs.m_buffer_mask);
-		m_enqueue_pos = rhs.m_enqueue_pos.load();
-		m_dequeue_pos = rhs.m_dequeue_pos.load();
-	}
-	return *this;
+    if (this != &rhs) {
+        m_buffer = std::move(rhs.m_buffer);
+        m_buffer_mask = std::move(rhs.m_buffer_mask);
+        m_enqueue_pos = rhs.m_enqueue_pos.load();
+        m_dequeue_pos = rhs.m_dequeue_pos.load();
+    }
+    return *this;
 }
 
 template <typename T>
 template <typename U>
 inline bool BoundedQueue<T>::push(U&& data)
 {
-	Cell* cell;
-	size_t pos = m_enqueue_pos.load(std::memory_order_relaxed);
-	for (;;) {
-		cell = &m_buffer[pos & m_buffer_mask];
-		size_t seq = cell->sequence.load(std::memory_order_acquire);
-		intptr_t dif = (intptr_t)seq - (intptr_t)pos;
-		if (dif == 0) {
-			if (m_enqueue_pos.compare_exchange_weak(
-			        pos, pos + 1, std::memory_order_relaxed))
-				break;
-		} else if (dif < 0)
-			return false;
-		else
-			pos = m_enqueue_pos.load(std::memory_order_relaxed);
-	}
+    Cell* cell;
+    size_t pos = m_enqueue_pos.load(std::memory_order_relaxed);
+    for (;;) {
+        cell = &m_buffer[pos & m_buffer_mask];
+        size_t seq = cell->sequence.load(std::memory_order_acquire);
+        intptr_t dif = (intptr_t)seq - (intptr_t)pos;
+        if (dif == 0) {
+            if (m_enqueue_pos.compare_exchange_weak(
+                    pos, pos + 1, std::memory_order_relaxed))
+                break;
+        }
+        else if (dif < 0)
+            return false;
+        else
+            pos = m_enqueue_pos.load(std::memory_order_relaxed);
+    }
 
-	cell->data = std::forward<U>(data);
+    cell->data = std::forward<U>(data);
 
-	cell->sequence.store(pos + 1, std::memory_order_release);
+    cell->sequence.store(pos + 1, std::memory_order_release);
 
-	return true;
+    return true;
 }
 
 template <typename T>
 inline bool BoundedQueue<T>::pop(T& data)
 {
-	Cell* cell;
-	size_t pos = m_dequeue_pos.load(std::memory_order_relaxed);
-	for (;;) {
-		cell = &m_buffer[pos & m_buffer_mask];
-		size_t seq = cell->sequence.load(std::memory_order_acquire);
-		intptr_t dif = (intptr_t)seq - (intptr_t)(pos + 1);
-		if (dif == 0) {
-			if (m_dequeue_pos.compare_exchange_weak(
-			        pos, pos + 1, std::memory_order_relaxed))
-				break;
-		} else if (dif < 0)
-			return false;
-		else
-			pos = m_dequeue_pos.load(std::memory_order_relaxed);
-	}
+    Cell* cell;
+    size_t pos = m_dequeue_pos.load(std::memory_order_relaxed);
+    for (;;) {
+        cell = &m_buffer[pos & m_buffer_mask];
+        size_t seq = cell->sequence.load(std::memory_order_acquire);
+        intptr_t dif = (intptr_t)seq - (intptr_t)(pos + 1);
+        if (dif == 0) {
+            if (m_dequeue_pos.compare_exchange_weak(
+                    pos, pos + 1, std::memory_order_relaxed))
+                break;
+        }
+        else if (dif < 0)
+            return false;
+        else
+            pos = m_dequeue_pos.load(std::memory_order_relaxed);
+    }
 
-	data = std::move(cell->data);
+    data = std::move(cell->data);
 
-	cell->sequence.store(
-	    pos + m_buffer_mask + 1, std::memory_order_release);
+    cell->sequence.store(
+        pos + m_buffer_mask + 1, std::memory_order_release);
 
-	return true;
+    return true;
 }
 
 }

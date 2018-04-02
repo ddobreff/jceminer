@@ -5,12 +5,12 @@
 #pragma once
 
 typedef struct {
-	int sysfs_gpucount;
-	int opencl_gpucount;
-	int* card_sysfs_device_id;  /* map cardidx to filesystem card idx */
-	int* sysfs_hwmon_id;        /* filesystem card idx to filesystem hwmon idx */
-	int* sysfs_opencl_device_id;          /* map ADL dev to OPENCL dev */
-	int* opencl_sysfs_device_id;          /* map OPENCL dev to ADL dev */
+    int sysfs_gpucount;
+    int opencl_gpucount;
+    int* card_sysfs_device_id;  /* map cardidx to filesystem card idx */
+    int* sysfs_hwmon_id;        /* filesystem card idx to filesystem hwmon idx */
+    int* sysfs_opencl_device_id;          /* map ADL dev to OPENCL dev */
+    int* opencl_sysfs_device_id;          /* map OPENCL dev to ADL dev */
 } wrap_amdsysfs_handle;
 
 wrap_amdsysfs_handle* wrap_amdsysfs_create();

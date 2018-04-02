@@ -16,9 +16,9 @@ using namespace dev::eth;
 class Api
 {
 public:
-	Api(const int& port, Farm& farm);
+    Api(const int& port, Farm& farm);
 private:
-	ApiServer* m_server;
-	Farm& m_farm;
+    ApiServer* m_server;
+    Farm& m_farm;
 };
 

@@ -1,6 +1,6 @@
 set(SOURCES
 	EthashAux.h EthashAux.cpp
-	Farm.h
+	Farm.cpp Farm.h
 	Miner.h Miner.cpp
 )
 
