@@ -22,7 +22,7 @@ static string hashToString(double diff, bool rate)
     }
     stringstream ss;
     ss.imbue(std::locale(""));
-    ss << fixed << diff << ' ' << k[i] << (rate ? "h/s" : "");
+    ss << fixed << setprecision(2) << diff << ' ' << k[i] << (rate ? "h/s" : "");
     return ss.str();
 }
 
