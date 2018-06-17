@@ -14,9 +14,14 @@
 
 #define FNV_PRIME   0x01000193
 
-#define fnv(x,y) ((x) * FNV_PRIME ^(y))
+__device__ __forceinline__
+uint32_t fnv(uint32_t x, uint32_t y)
+{
+    return ((x) * FNV_PRIME ^ (y));
+}
 
-__device__ uint4 fnv4(uint4 a, uint4 b)
+__device__ __forceinline__
+uint4 fnv4(uint4 a, uint4 b)
 {
     uint4 c;
     c.x = a.x * FNV_PRIME ^ b.x;
@@ -26,7 +31,8 @@ __device__ uint4 fnv4(uint4 a, uint4 b)
     return c;
 }
 
-__device__ uint32_t fnv_reduce(uint4 v)
+__device__ __forceinline__
+uint32_t fnv_reduce(uint4 v)
 {
     return fnv(fnv(fnv(v.x, v.y), v.z), v.w);
 }

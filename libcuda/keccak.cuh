@@ -30,6 +30,7 @@ uint2 xor5(const uint2 a, const uint2 b, const uint2 c, const uint2 d, const uin
 {
     return a ^ b ^ c ^ d ^ e;
 }
+
 __device__ __forceinline__
 uint2 xor3(const uint2 a, const uint2 b, const uint2 c)
 {
@@ -39,7 +40,7 @@ uint2 xor3(const uint2 a, const uint2 b, const uint2 c)
 __device__ __forceinline__
 uint2 chi(const uint2 a, const uint2 b, const uint2 c)
 {
-    return a ^ (~b) & c;
+    return a ^ ((~b) & c);
 }
 
 __device__ __forceinline__ void keccak_f1600_init(uint2* state)
@@ -47,15 +48,15 @@ __device__ __forceinline__ void keccak_f1600_init(uint2* state)
     uint2 s[25];
     uint2 t[5], u, v;
 
-    s[4] = state[4];
-
     devectorize2(d_header.uint4s[0], s[0], s[1]);
     devectorize2(d_header.uint4s[1], s[2], s[3]);
-
-    for (uint32_t i = 5; i < 25; i++)
+    s[4] = state[4];
+    s[5] = make_uint2(1, 0);
+    s[6] = make_uint2(0, 0);
+    s[7] = make_uint2(0, 0);
+    s[8] = make_uint2(0, 0x80000000);
+    for (uint32_t i = 9; i < 25; i++)
         s[i] = make_uint2(0, 0);
-    s[5].x = 1;
-    s[8].y = 0x80000000;
 
     /* theta: c = a[0,i] ^ a[1,i] ^ .. a[4,i] */
     t[0].x = s[0].x ^ s[5].x;
