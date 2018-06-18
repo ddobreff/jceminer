@@ -15,10 +15,12 @@ extern std::string timestamp();
 #define fgYellow   "\x1b[93m"  // Yellow
 #define fgWhite    "\x1b[97m"  // White
 
+extern std::mutex xLogMtx;
+
 #define loginfo(_x) \
-    {std::clog << fgWhite << timestamp() << fgReset << ' ' << _x << std::endl;}
+    {std::lock_guard<std::mutex> lock(xLogMtx); std::clog << fgWhite << timestamp() << fgReset << ' ' << _x << std::endl;}
 #define logwarn(_x) \
-    {std::clog << fgYellow << timestamp() << fgReset << ' ' << _x << std::endl;}
+    {std::lock_guard<std::mutex> lock(xLogMtx); std::clog << fgYellow << timestamp() << fgReset << ' ' << _x << std::endl;}
 #define logerror(_x) \
-    {std::clog << fgRed << timestamp() << fgReset << ' ' << _x << std::endl;}
+    {std::lock_guard<std::mutex> lock(xLogMtx); std::clog << fgRed << timestamp() << fgReset << ' ' << _x << std::endl;}
 

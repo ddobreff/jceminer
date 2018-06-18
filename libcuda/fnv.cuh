@@ -12,7 +12,7 @@
         along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#define FNV_PRIME   0x01000193
+const uint32_t FNV_PRIME = 0x01000193;
 
 __device__ __forceinline__
 uint32_t fnv(uint32_t x, uint32_t y)

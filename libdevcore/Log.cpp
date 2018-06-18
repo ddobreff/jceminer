@@ -6,6 +6,8 @@
 #include <chrono>
 #include <ctime>
 
+std::mutex xLogMtx;
+
 std::string timestamp()
 {
     using std::chrono::system_clock;
