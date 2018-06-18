@@ -362,7 +362,8 @@ int main(int argc, char** argv)
             ss << ' ';
     }
     loginfo(fgLime << version() << fgReset);
-    loginfo("cmd: " fgWhite << ss.str() << fgReset);
+	string s = ss.str();
+    loginfo("cmd: " fgWhite << s << fgReset);
 
     try {
         // Mining options:
