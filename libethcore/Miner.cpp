@@ -19,4 +19,15 @@ uint8_t* dev::eth::Miner::s_dagInHostMemory = NULL;
 bool g_logSwitchTime = false;
 bool g_logJson = false;
 
+std::ostream& operator<<(std::ostream& os, HwMonitor _hw)
+{
+    string power = "";
+    if (_hw.powerW != 0) {
+        ostringstream stream;
+        stream << fixed << setprecision(0) << _hw.powerW << "W";
+        power = stream.str();
+    }
+    os << _hw.tempC << "C " << _hw.fanP << "% " << power;
+    return os;
+}
 

@@ -16,11 +16,17 @@ extern std::string timestamp();
 #define fgWhite    "\x1b[97m"  // White
 
 extern std::mutex xLogMtx;
+extern std::locale logLocale;
 
-#define loginfo(_x) \
-    {std::lock_guard<std::mutex> lock(xLogMtx); std::clog << fgWhite << timestamp() << fgReset << ' ' << _x << std::endl;}
-#define logwarn(_x) \
-    {std::lock_guard<std::mutex> lock(xLogMtx); std::clog << fgYellow << timestamp() << fgReset << ' ' << _x << std::endl;}
-#define logerror(_x) \
-    {std::lock_guard<std::mutex> lock(xLogMtx); std::clog << fgRed << timestamp() << fgReset << ' ' << _x << std::endl;}
+#define logLevel(_x, _l) \
+{ \
+    std::stringstream ss; \
+    ss.imbue(logLocale); \
+    ss << _l << timestamp() << fgReset << ' ' << _x << std::endl; \
+    std::clog << ss.str(); \
+}
+
+#define loginfo(_x) logLevel(_x, fgWhite)
+#define logwarn(_x) logLevel(_x, fgYellow)
+#define logerror(_x) logLevel(_x, fgRed)
 

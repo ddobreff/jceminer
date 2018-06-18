@@ -192,7 +192,7 @@ public:
         }
     }
 
-    WorkingProgress miningProgress() const
+    WorkingProgress miningProgress()
     {
         Guard l(x_minerWork);
         return m_progress;

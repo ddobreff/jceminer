@@ -304,10 +304,8 @@ public:
         while (true) {
             if (mgr.isConnected()) {
                 f.collectProgress(m_show_level);
-                auto mp = f.miningProgress();
-                stringstream ss;
-                ss << mp << '[' << f.getSolutionStats() << "] " << f.farmLaunchedFormatted();
-                loginfo(ss.str());
+                auto p = f.miningProgress();
+                loginfo(p << '[' << f.getSolutionStats() << "] " << f.farmLaunchedFormatted());
             }
             this_thread::sleep_for(chrono::seconds(m_displayInterval));
         }
@@ -355,7 +353,6 @@ int main(int argc, char** argv)
     setenv("GPU_MAX_ALLOC_PERCENT", "100");
     setenv("GPU_SINGLE_ALLOC_PERCENT", "100");
 
-    clog.imbue(std::locale(""));
     MinerCLI m;
 
     stringstream ss;

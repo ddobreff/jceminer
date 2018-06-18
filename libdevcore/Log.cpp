@@ -7,6 +7,7 @@
 #include <ctime>
 
 std::mutex xLogMtx;
+std::locale logLocale = std::locale("");
 
 std::string timestamp()
 {

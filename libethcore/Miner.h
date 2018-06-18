@@ -63,15 +63,12 @@ struct HwMonitor {
     double powerW = 0;
 };
 
-inline std::ostream& operator<<(std::ostream& os, HwMonitor _hw)
+inline std::ostream& operator<<(std::ostream& os, HwMonitor& _hw)
 {
-    string power = "";
-    if (_hw.powerW != 0) {
-        ostringstream stream;
-        stream << fixed << setprecision(0) << _hw.powerW << "W";
-        power = stream.str();
-    }
-    return os << _hw.tempC << "C " << _hw.fanP << "% " << power;
+    os << _hw.tempC << "C " << _hw.fanP << "%";
+    if (_hw.powerW != 0)
+        os << ' ' << fixed << setprecision(0) << _hw.powerW << "W";
+    return os;
 }
 
 /// Describes the progress of a mining operation.
@@ -91,19 +88,22 @@ struct WorkingProgress {
     }
 };
 
-inline std::stringstream& operator<<(std::stringstream& _out, WorkingProgress& _p)
+inline std::ostream& operator<<(std::ostream& os, WorkingProgress& _p)
 {
     float mh = _p.rate() / 1000000.0f;
-    _out << "Speed " fgWhite << std::fixed << std::setprecision(2) << mh << fgReset " Mh/s ";
+    os << "Speed " fgWhite << std::fixed << std::setprecision(2) << mh << fgReset " Mh/s ";
     for (size_t i = 0; i < _p.minersHashes.size(); ++i) {
         mh = _p.minerRate(_p.minersHashes[i]) / 1000000.0f;
-        _out << "gpu" << i << " " fgWhite << std::fixed << std::setprecision(2) << mh << fgReset;
-        if (i < _p.minerMonitors.size())
-            _out << ' ' << _p.minerMonitors[i];
-        _out << ' ';
+        os << "gpu" << i << " " fgWhite << std::fixed << std::setprecision(2) << mh << fgReset;
+
+        if (i < _p.minerMonitors.size()) {
+            auto m = _p.minerMonitors[i];
+            os << ' ' << m;
+        }
+        os << ' ';
     }
 
-    return _out;
+    return os;
 }
 
 class SolutionStats
