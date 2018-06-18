@@ -126,14 +126,10 @@ public:
     {
         acceptedStales++;
     }
-    void rejectedStale()
-    {
-        rejectedStales++;
-    }
 
     void reset()
     {
-        accepts = rejects = failures = acceptedStales = rejectedStales = 0;
+        accepts = rejects = failures = acceptedStales = 0;
     }
 
     unsigned getAccepts()
@@ -152,23 +148,24 @@ public:
     {
         return acceptedStales;
     }
-    unsigned getRejectedStales()
-    {
-        return rejectedStales;
-    }
 private:
     unsigned accepts  = 0;
     unsigned rejects  = 0;
     unsigned failures = 0;
 
     unsigned acceptedStales = 0;
-    unsigned rejectedStales = 0;
 };
 
 inline std::ostream& operator<<(std::ostream& os, SolutionStats s)
 {
-    return os << 'A' << s.getAccepts() << '+' << s.getAcceptedStales() << ":R" << s.getRejects() << '+' <<
-           s.getRejectedStales() << ":F" << s.getFailures();
+    os << 'A' << s.getAccepts();
+    if (s.getAcceptedStales())
+        os << '+' << s.getAcceptedStales();
+    if (s.getRejects())
+        os << ":R" << s.getRejects();
+    if (s.getFailures())
+        os << ":F" << s.getFailures();
+    return os;
 }
 
 class Miner;

@@ -216,12 +216,9 @@ public:
             m_solutionStats.acceptedStale();
     }
 
-    void rejectedSolution(bool _stale)
+    void rejectedSolution()
     {
-        if (!_stale)
-            m_solutionStats.rejected();
-        else
-            m_solutionStats.rejectedStale();
+        m_solutionStats.rejected();
     }
 
     using SolutionFound = std::function<void(Solution const&)>;

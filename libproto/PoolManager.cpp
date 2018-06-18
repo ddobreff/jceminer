@@ -67,9 +67,9 @@ PoolManager::PoolManager(PoolClient& client, Farm& farm, MinerType const& minerT
 
             if (m_lastBoundary != wp.boundary) {
                 m_effStartTime = std::chrono::steady_clock::now();
-				m_10_accepts.clear();
-				m_60_accepts.clear();
-				m_360_accepts.clear();
+                m_10_accepts.clear();
+                m_60_accepts.clear();
+                m_360_accepts.clear();
                 m_lastBoundary = wp.boundary;
                 static const uint256_t dividend("0xffff000000000000000000000000000000000000000000000000000000000000");
                 const uint256_t divisor(string("0x") + m_lastBoundary.hex());
@@ -99,7 +99,7 @@ PoolManager::PoolManager(PoolClient& client, Farm& farm, MinerType const& minerT
         using namespace std::chrono;
         auto ms = duration_cast<milliseconds>(steady_clock::now() - m_submit_time);
         loginfo(fgRed "Rejected" << (stale ? " (stale)" : "") << " in " << ms.count() << " ms." << fgReset << " " << msg);
-        m_farm.rejectedSolution(stale);
+        m_farm.rejectedSolution();
     });
 
     m_farm.onSolutionFound([&](Solution sol) {
