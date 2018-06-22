@@ -111,15 +111,7 @@ PoolManager::PoolManager(PoolClient& client, Farm& farm, MinerType const& minerT
 	m_farm.onSolutionFound([&](Solution sol) {
 		m_submit_time = std::chrono::steady_clock::now();
 		m_client.submitSolution(sol);
-
-		if (sol.stale) {
-			loginfo(fgYellow << sol.gpu << " stale 0x" + toHex(sol.nonce) + " submitted to " +
-			        m_connection.Host() << fgReset);
-		} else {
-			loginfo(fgWhite << sol.gpu << " 0x" + toHex(sol.nonce)
-			        + " submitted to " + m_connection.Host() << fgReset);
-		}
-
+		loginfo(string(sol.stale ? fgYellow : fgWhite) << sol.gpu << " stale 0x" + toHex(sol.nonce) + " submitted" << fgReset);
 		return false;
 	});
 }
