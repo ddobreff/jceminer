@@ -85,23 +85,25 @@ PoolManager::PoolManager(PoolClient& client, Farm& farm, MinerType const& minerT
 		loginfo("Header: " fgWhite "0x" << wp.header.hex().substr(0, 15) << ".." fgReset);
 	});
 
-	m_client.onSolutionAccepted([&](bool const & stale) {
+	m_client.onSolutionAccepted([&](bool stale) {
 		using namespace std::chrono;
 		m_farm.acceptedSolution(stale);
 		steady_clock::time_point now = steady_clock::now();
 		auto ms = duration_cast<milliseconds>(now - m_submit_time);
 		if (!stale && g_display_effective) {
-			Guard l(x_list);
-			m_10_accepts.push_back(now);
 			stringstream effRate;
-			effectiveHR(effRate);
+			{
+				Guard l(x_list);
+				m_10_accepts.push_back(now);
+				effectiveHR(effRate);
+			}
 			loginfo(effRate.str());
 		}
 		loginfo(string(stale ? fgYellow : fgLime) << "Accepted" << (stale ? " (stale)" : "") << " in " << ms.count() <<
 		        " ms. " << fgReset);
 	});
 
-	m_client.onSolutionRejected([&](bool const & stale, string const & msg) {
+	m_client.onSolutionRejected([&](bool stale, string const & msg) {
 		using namespace std::chrono;
 		auto ms = duration_cast<milliseconds>(steady_clock::now() - m_submit_time);
 		loginfo(fgRed "Rejected" << (stale ? " (stale)" : "") << " in " << ms.count() << " ms." << fgReset << " " << msg);
@@ -111,7 +113,8 @@ PoolManager::PoolManager(PoolClient& client, Farm& farm, MinerType const& minerT
 	m_farm.onSolutionFound([&](Solution sol) {
 		m_submit_time = std::chrono::steady_clock::now();
 		m_client.submitSolution(sol);
-		loginfo(string(sol.stale ? fgYellow : fgWhite) << sol.gpu << " stale 0x" + toHex(sol.nonce) + " submitted" << fgReset);
+		loginfo(string(sol.stale ? fgYellow : fgWhite) << sol.gpu << (sol.stale ? " (stale)" : "") << " 0x" + toHex(
+		            sol.nonce) + " submitted" << fgReset);
 		return false;
 	});
 }
@@ -125,7 +128,6 @@ void PoolManager::effectiveHR(stringstream& ss)
 	auto windowStart360 = now - hours(6);
 	size_t s10, s60, s360;
 	{
-		Guard l(x_list);
 		while (m_10_accepts.size() && (m_10_accepts.front() < windowStart10)) {
 			m_60_accepts.push_back(m_10_accepts.front());
 			m_10_accepts.pop_front();
@@ -194,7 +196,8 @@ void PoolManager::start()
 		startWorking();
 		// Try to connect to pool
 		m_client.connect();
-	} else
+	}
+	else
 		logerror("Manager has no connections defined!");
 }
 
