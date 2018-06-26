@@ -1,23 +1,8 @@
-/*      This program is free software: you can redistribute it and/or modify
-        it under the terms of the GNU General Public License as published by
-        the Free Software Foundation, either version 3 of the License, or
-        (at your option) any later version.
-
-        This program is distributed in the hope that it will be useful,
-        but WITHOUT ANY WARRANTY; without even the implied warranty of
-        MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-        GNU General Public License for more details.
-
-        You should have received a copy of the GNU General Public License
-        along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
-
 #include "../libethcore/MinerCommon.h"
 #include "ethash_cuda_miner_kernel.h"
 #include "ethash_cuda_miner_kernel_globals.h"
 #include "cuda_helper.h"
 #include "fnv.cuh"
-#include <stdio.h>
 
 #define copy(dst, src, count) for (int i = 0; i != count; ++i) { (dst)[i] = (src)[i]; }
 
@@ -71,72 +56,74 @@ void run_ethash_search(
 __global__ void
 ethash_calculate_dag_item(uint32_t start)
 {
-	uint32_t const node_index = start + blockIdx.x * blockDim.x + threadIdx.x;
-	if (node_index >= d_dag_size * 2) return;
+	uint32_t nodes = d_dag_size * 2;
+	uint32_t node_index = start + blockIdx.x * blockDim.x + threadIdx.x;
+
+	if (node_index >= nodes)
+		return;
 
 	hash200_t dag_node;
 	copy(dag_node.uint4s, d_light[node_index % d_light_size].uint4s, 4);
 	dag_node.words[0] ^= node_index;
+
 	SHA3_512(dag_node.uint2s);
 
-	const int thread_id = threadIdx.x & 3;
-
-	for (uint32_t i = 0; i != ETHASH_DATASET_PARENTS; ++i) {
-		uint32_t parent_index = fnv(node_index ^ i, dag_node.words[i % NODE_WORDS]) % d_light_size;
-		for (uint32_t t = 0; t < 4; t++) {
-
-			uint32_t shuffle_index = shuffl4(parent_index, t);
-
-			uint4 p4 = d_light[shuffle_index].uint4s[thread_id];
-			for (int w = 0; w < 4; w++) {
-				uint4 s4 = make_uint4(shuffl4(p4.x, w), shuffl4(p4.y, w), shuffl4(p4.z, w), shuffl4(p4.w, w));
-				if (t == thread_id)
-					dag_node.uint4s[w] = fnv4(dag_node.uint4s[w], s4);
-			}
-		}
-	}
-	SHA3_512(dag_node.uint2s);
 	hash64_t* dag_nodes = (hash64_t*)d_dag;
 
-	for (uint32_t t = 0; t < 4; t++) {
-		uint32_t shuffle_index = shuffl4(node_index, t);
-		uint4 s[4];
-		for (uint32_t w = 0; w < 4; w++)
-			s[w] = make_uint4(shuffl4(dag_node.uint4s[w].x, t), shuffl4(dag_node.uint4s[w].y, t), shuffl4(dag_node.uint4s[w].z, t),
-			                  shuffl4(dag_node.uint4s[w].w, t));
-		dag_nodes[shuffle_index].uint4s[thread_id] = s[thread_id];
+	if (node_index <= (nodes & 0xfffffffc)) {
+
+		int thread_id = threadIdx.x & 3;
+
+		for (uint32_t i = 0; i != ETHASH_DATASET_PARENTS; ++i) {
+
+			uint32_t parent_index = fnv(node_index ^ i, dag_node.words[i % NODE_WORDS]) % d_light_size;
+
+			for (uint32_t t = 0; t < 4; t++) {
+
+				uint32_t shuffle_index = shuffl4(parent_index, t);
+				uint4 p4 = d_light[shuffle_index].uint4s[thread_id];
+
+				for (int w = 0; w < 4; w++) {
+					uint4 s4 = make_uint4(shuffl4(p4.x, w), shuffl4(p4.y, w), shuffl4(p4.z, w), shuffl4(p4.w, w));
+					if (t == thread_id)
+						dag_node.uint4s[w] = fnv4(dag_node.uint4s[w], s4);
+				}
+			}
+		}
+
+		SHA3_512(dag_node.uint2s);
+
+		for (uint32_t t = 0; t < 4; t++) {
+			uint4 s[4];
+			for (uint32_t w = 0; w < 4; w++)
+				s[w] = make_uint4(shuffl4(dag_node.uint4s[w].x, t), shuffl4(dag_node.uint4s[w].y, t), shuffl4(dag_node.uint4s[w].z, t),
+				                  shuffl4(dag_node.uint4s[w].w, t));
+			uint32_t shuffle_index = shuffl4(node_index, t);
+			dag_nodes[shuffle_index].uint4s[thread_id] = s[thread_id];
+		}
+
+	}
+	else {
+
+		for (uint32_t i = 0; i != ETHASH_DATASET_PARENTS; ++i) {
+
+			uint32_t parent_index = fnv(node_index ^ i, dag_node.words[i % NODE_WORDS]) % d_light_size;
+			uint32_t shuffle_index = parent_index % d_light_size;
+
+			for (uint32_t t = 0; t < 4; t++)
+				dag_node.uint4s[t] = fnv4(dag_node.uint4s[t], d_light[shuffle_index].uint4s[t]);
+		}
+
+		SHA3_512(dag_node.uint2s);
+
+		copy(dag_nodes[node_index].uint4s, dag_node.uint4s, 4);
+
 	}
 }
 
 __global__ void
 ethash_calculate_dag_item_single(uint32_t start)
 {
-	// index limited to 4G
-	uint32_t const node_index = start + blockIdx.x * blockDim.x + threadIdx.x;
-	if (node_index >= d_dag_size * 2) return;
-
-	hash200_t dag_node;
-	copy(dag_node.uint4s, d_light[node_index % d_light_size].uint4s, 4);
-	dag_node.words[0] ^= node_index;
-	SHA3_512(dag_node.uint2s);
-
-	const int thread_id = threadIdx.x & 3;
-
-	for (uint32_t i = 0; i != ETHASH_DATASET_PARENTS; ++i) {
-		uint32_t parent_index = fnv(node_index ^ i, dag_node.words[i % NODE_WORDS]) % d_light_size;
-		for (uint32_t t = 0; t < 4; t++) {
-			uint32_t shuffle_index = parent_index % d_light_size;
-			dag_node.uint4s[t] = fnv4(dag_node.uint4s[t], d_light[shuffle_index].uint4s[t]);
-		}
-	}
-	SHA3_512(dag_node.uint2s);
-	hash64_t* dag_nodes = (hash64_t*)d_dag;
-
-	for (uint32_t t = 0; t < 4; t++) {
-		uint32_t shuffle_index;
-		shuffle_index = node_index;
-		dag_nodes[shuffle_index].uint4s[t] = dag_node.uint4s[t];
-	}
 }
 
 void ethash_generate_dag(
@@ -146,21 +133,12 @@ void ethash_generate_dag(
     cudaStream_t stream
 )
 {
-	const uint32_t work = (uint32_t)(dag_size / sizeof(hash64_t));
-	const uint32_t run = blocks * threads;
-	const uint32_t runs = work / run;
-	uint32_t base = 0;
-	uint32_t r;
-	for (r = 0; r < runs; r++) {
+	uint32_t work = (uint32_t)(dag_size / sizeof(hash64_t));
+	uint32_t run = blocks * threads;
+	for (uint32_t base = 0; base < work; base += run) {
 		ethash_calculate_dag_item <<<blocks, threads, 0, stream>>>(base);
 		CUDA_SAFE_CALL(cudaStreamSynchronize(stream));
-		base += run;
 	}
-	if (base < work) {
-		ethash_calculate_dag_item_single <<<blocks, threads, 0, stream>>>(base);
-		CUDA_SAFE_CALL(cudaStreamSynchronize(stream));
-	}
-
 	CUDA_SAFE_CALL(cudaGetLastError());
 }
 
