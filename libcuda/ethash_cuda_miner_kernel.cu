@@ -121,11 +121,6 @@ ethash_calculate_dag_item(uint32_t start)
 	}
 }
 
-__global__ void
-ethash_calculate_dag_item_single(uint32_t start)
-{
-}
-
 void ethash_generate_dag(
     uint64_t dag_size,
     uint32_t blocks,
