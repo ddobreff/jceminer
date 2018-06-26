@@ -70,7 +70,7 @@ ethash_calculate_dag_item(uint32_t start)
 
 	hash64_t* dag_nodes = (hash64_t*)d_dag;
 
-	if (node_index <= (nodes & 0xfffffffc)) {
+	if (node_index < (nodes & (~31))) {
 
 		int thread_id = threadIdx.x & 3;
 
