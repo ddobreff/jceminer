@@ -59,7 +59,7 @@ ethash_calculate_dag_item(uint32_t start)
 	uint32_t nodes = d_dag_size * 2;
 	uint32_t node_index = start + blockIdx.x * blockDim.x + threadIdx.x;
 
-	if (node_index >= nodes)
+	if ((node_index & (~3)) >= nodes)
 		return;
 
 	hash200_t dag_node;
@@ -70,54 +70,35 @@ ethash_calculate_dag_item(uint32_t start)
 
 	hash64_t* dag_nodes = (hash64_t*)d_dag;
 
-	if (node_index < (nodes & (~3))) {
+	int thread_id = threadIdx.x & 3;
 
-		int thread_id = threadIdx.x & 3;
+	for (uint32_t i = 0; i != ETHASH_DATASET_PARENTS; ++i) {
 
-		for (uint32_t i = 0; i != ETHASH_DATASET_PARENTS; ++i) {
-
-			uint32_t parent_index = fnv(node_index ^ i, dag_node.words[i % NODE_WORDS]) % d_light_size;
-
-			for (uint32_t t = 0; t < 4; t++) {
-
-				uint32_t shuffle_index = shuffl4(parent_index, t);
-				uint4 p4 = d_light[shuffle_index].uint4s[thread_id];
-
-				for (int w = 0; w < 4; w++) {
-					uint4 s4 = make_uint4(shuffl4(p4.x, w), shuffl4(p4.y, w), shuffl4(p4.z, w), shuffl4(p4.w, w));
-					if (t == thread_id)
-						dag_node.uint4s[w] = fnv4(dag_node.uint4s[w], s4);
-				}
-			}
-		}
-
-		SHA3_512(dag_node.uint2s);
+		uint32_t parent_index = fnv(node_index ^ i, dag_node.words[i % NODE_WORDS]) % d_light_size;
 
 		for (uint32_t t = 0; t < 4; t++) {
-			uint4 s[4];
-			for (uint32_t w = 0; w < 4; w++)
-				s[w] = make_uint4(shuffl4(dag_node.uint4s[w].x, t), shuffl4(dag_node.uint4s[w].y, t), shuffl4(dag_node.uint4s[w].z, t),
-				                  shuffl4(dag_node.uint4s[w].w, t));
-			uint32_t shuffle_index = shuffl4(node_index, t);
-			dag_nodes[shuffle_index].uint4s[thread_id] = s[thread_id];
-		}
 
+			uint32_t shuffle_index = shuffl4(parent_index, t);
+			uint4 p4 = d_light[shuffle_index].uint4s[thread_id];
+
+			for (int w = 0; w < 4; w++) {
+				uint4 s4 = make_uint4(shuffl4(p4.x, w), shuffl4(p4.y, w), shuffl4(p4.z, w), shuffl4(p4.w, w));
+				if (t == thread_id)
+					dag_node.uint4s[w] = fnv4(dag_node.uint4s[w], s4);
+			}
+		}
 	}
-	else {
 
-		for (uint32_t i = 0; i != ETHASH_DATASET_PARENTS; ++i) {
+	SHA3_512(dag_node.uint2s);
 
-			uint32_t parent_index = fnv(node_index ^ i, dag_node.words[i % NODE_WORDS]) % d_light_size;
-			uint32_t shuffle_index = parent_index % d_light_size;
-
-			for (uint32_t t = 0; t < 4; t++)
-				dag_node.uint4s[t] = fnv4(dag_node.uint4s[t], d_light[shuffle_index].uint4s[t]);
-		}
-
-		SHA3_512(dag_node.uint2s);
-
-		copy(dag_nodes[node_index].uint4s, dag_node.uint4s, 4);
-
+	for (uint32_t t = 0; t < 4; t++) {
+		uint4 s[4];
+		for (uint32_t w = 0; w < 4; w++)
+			s[w] = make_uint4(shuffl4(dag_node.uint4s[w].x, t), shuffl4(dag_node.uint4s[w].y, t), shuffl4(dag_node.uint4s[w].z, t),
+			                  shuffl4(dag_node.uint4s[w].w, t));
+		uint32_t shuffle_index = shuffl4(node_index, t);
+		if (shuffle_index < nodes)
+			dag_nodes[shuffle_index].uint4s[thread_id] = s[thread_id];
 	}
 }
 
