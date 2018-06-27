@@ -27,7 +27,7 @@ public:
 	std::string Path() const;
 	SecureLevel ProtoSecureLevel() const;
 	unsigned    ProtoVersion() const;
-	bool		Empty();
+	bool        Empty();
 	bool        KnownScheme();
 
 	static std::string KnownSchemes(SecureLevel secureLevel);

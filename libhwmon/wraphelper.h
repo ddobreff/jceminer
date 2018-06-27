@@ -29,17 +29,17 @@
 #endif
 
 typedef union {
-    struct {
-        cl_uint type;
-        cl_uint data[5];
-    } raw;
-    struct {
-        cl_uint type;
-        cl_char unused[17];
-        cl_char bus;
-        cl_char device;
-        cl_char function;
-    } pcie;
+	struct {
+		cl_uint type;
+		cl_uint data[5];
+	} raw;
+	struct {
+		cl_uint type;
+		cl_char unused[17];
+		cl_char bus;
+		cl_char device;
+		cl_char function;
+	} pcie;
 } cl_device_topology_amd;
 
 #endif

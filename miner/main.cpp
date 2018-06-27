@@ -143,7 +143,8 @@ public:
 		URI uri;
 		try {
 			uri = url;
-		} catch (std::exception const& e) {
+		}
+		catch (std::exception const& e) {
 			cerr << "Bad endpoint address: " << url << " - " << e.what() << endl;
 			exit(-1);
 		}
@@ -371,14 +372,16 @@ int main(int argc, char** argv)
 		// Mining options:
 		m.interpretOption(argc, argv);
 
-	} catch (std::exception const& ex) {
+	}
+	catch (std::exception const& ex) {
 		cerr << "Error parsing arguments: " << ex.what() << "\n";
 		exit(-1);
 	}
 
 	try {
 		m.execute();
-	} catch (std::exception& ex) {
+	}
+	catch (std::exception& ex) {
 		cerr << "Error running miner: " << ex.what() << "\n";
 		exit(-1);
 	}

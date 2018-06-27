@@ -26,25 +26,25 @@ extern "C" {
 #include <stdint.h>
 
 typedef union node {
-    uint8_t bytes[NODE_WORDS * 4];
-    uint32_t words[NODE_WORDS];
-    uint64_t double_words[NODE_WORDS / 2];
+	uint8_t bytes[NODE_WORDS * 4];
+	uint32_t words[NODE_WORDS];
+	uint64_t double_words[NODE_WORDS / 2];
 
 #if defined(_M_X64) && ENABLE_SSE
-    __m128i xmm[NODE_WORDS / 4];
+	__m128i xmm[NODE_WORDS / 4];
 #endif
 
 } node;
 
 static inline void ethash_h256_reset(ethash_h256_t* hash)
 {
-    memset(hash, 0, 32);
+	memset(hash, 0, 32);
 }
 
 struct ethash_light {
-    void* cache;
-    uint64_t cache_size;
-    uint64_t block_number;
+	void* cache;
+	uint64_t cache_size;
+	uint64_t block_number;
 };
 
 /**

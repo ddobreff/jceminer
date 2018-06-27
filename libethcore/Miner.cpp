@@ -21,13 +21,13 @@ bool g_logJson = false;
 
 std::ostream& operator<<(std::ostream& os, HwMonitor _hw)
 {
-    string power = "";
-    if (_hw.powerW != 0) {
-        ostringstream stream;
-        stream << fixed << setprecision(0) << _hw.powerW << "W";
-        power = stream.str();
-    }
-    os << _hw.tempC << "C " << _hw.fanP << "% " << power;
-    return os;
+	string power = "";
+	if (_hw.powerW != 0) {
+		ostringstream stream;
+		stream << fixed << setprecision(0) << _hw.powerW << "W";
+		power = stream.str();
+	}
+	os << _hw.tempC << "C " << _hw.fanP << "% " << power;
+	return os;
 }
 

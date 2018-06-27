@@ -22,12 +22,12 @@ decsha3(512)
 
 static inline void SHA3_256(struct ethash_h256 const* ret, uint8_t const* data, size_t const size)
 {
-    sha3_256((uint8_t*)ret, 32, data, size);
+	sha3_256((uint8_t*)ret, 32, data, size);
 }
 
 static inline void SHA3_512(uint8_t* ret, uint8_t const* data, size_t const size)
 {
-    sha3_512(ret, 64, data, size);
+	sha3_512(ret, 64, data, size);
 }
 
 #ifdef __cplusplus

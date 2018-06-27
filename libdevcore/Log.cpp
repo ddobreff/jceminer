@@ -11,9 +11,9 @@ std::locale logLocale = std::locale("");
 
 std::string timestamp()
 {
-    using std::chrono::system_clock;
-    time_t rawTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
-    char buf[24];
-    strftime(buf, 24, "%X", localtime(&rawTime));
-    return std::string(buf);
+	using std::chrono::system_clock;
+	time_t rawTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+	char buf[24];
+	strftime(buf, 24, "%X", localtime(&rawTime));
+	return std::string(buf);
 }
