@@ -572,6 +572,16 @@ bool CLMiner::init(const h256& seed)
 		}
 		auto endDAG = std::chrono::steady_clock::now();
 
+		{
+			uint8_t *buf = new uint8_t[dagSize];
+			m_queue.enqueueReadBuffer(m_dag, CL_TRUE, 0, dagSize, buf);
+			std::fstream myfile;
+    		myfile = std::fstream("dag.binary", std::ios::out | std::ios::binary);
+			myfile.write((char*)buf, dagSize);
+    		myfile.close();
+			delete [] buf;
+		}
+
 		auto dagTime = std::chrono::duration_cast<std::chrono::milliseconds>(endDAG - startDAG);
 		float gb = (float)dagSize / (1024 * 1024 * 1024);
 		loginfo(workerName() << " - " << gb << " GB of DAG data generated in " << dagTime.count() << " ms.");
