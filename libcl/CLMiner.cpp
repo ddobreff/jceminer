@@ -17,14 +17,13 @@ using namespace boost::multiprecision;
 typedef struct {
 	unsigned workGroupSize;
 	unsigned workIntensity;
-	unsigned workIterations;
 } clConfig;
 
 std::map <std::string, clConfig> optimalConfigs = {
-//                     work,intensity,iterations
-	{"opencl",          {192,   1024,  1}},
-	{"ellesmere",       {192,   1024,  1}},
-	{"baffin",          {192,   1024,  1}}
+//                      work,  intensity
+	{"opencl",          {192,   512}},
+	{"ellesmere",       {192,   512}},
+	{"baffin",          {192,   512}}
 };
 
 namespace dev
@@ -130,7 +129,7 @@ void CLMiner::workLoop()
 
 					loginfo(workerName() << " - New seed " << w.seed);
 					init(w.seed);
-					Run = m_workIterations * m_workIntensity * m_computeUnits * m_workgroupSize;
+					Run = m_workIntensity * m_computeUnits * m_workgroupSize;
 				}
 
 				// Upper 64 bits of the boundary.
@@ -157,7 +156,7 @@ void CLMiner::workLoop()
 				m_searchKernel.setArg(3, m_dagSize128);
 				m_searchKernel.setArg(5, target);
 				m_searchKernel.setArg(6, 0xffffffff);
-				m_searchKernel.setArg(7, m_workIterations);
+				m_searchKernel.setArg(7, 1);
 			}
 
 			// Read results.
@@ -420,15 +419,13 @@ bool CLMiner::init(const h256& seed)
 		}
 		m_workgroupSize = conf.workGroupSize;
 		m_workIntensity = conf.workIntensity;
-		m_workIterations = conf.workIterations;
 
 		m_computeUnits = device.getInfo<CL_DEVICE_MAX_COMPUTE_UNITS>();
 		// Apparently some 36 CU devices return a bogus 14!!!
 		m_computeUnits = m_computeUnits == 14 ? 36 : m_computeUnits;
 		logwarn(workerName()
 		        << " - work group " << m_workgroupSize
-		        << ", work intensity " << m_workIntensity
-		        << ", work iterations " << m_workIterations);
+		        << ", work intensity " << m_workIntensity);
 
 		uint32_t lightSize64 = (unsigned)(light->data().size() / sizeof(node));
 		addDefinition(code, "WORKSIZE", m_workgroupSize);

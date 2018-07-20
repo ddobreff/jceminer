@@ -92,7 +92,6 @@ private:
 	cl::Buffer m_searchBuffer;
 	unsigned m_dagSize128;
 	unsigned m_workIntensity;
-	unsigned m_workIterations;
 	unsigned m_workgroupSize;
 	unsigned m_computeUnits;
 
