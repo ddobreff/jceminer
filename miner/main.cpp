@@ -29,6 +29,12 @@
 #include <libproto/EthStratumClient.h>
 #include <libdevcore/Log.h>
 
+#if API_CORE
+#include <libapi/api/Api.h>
+#include <libapi/http/httpServer.h>
+#include <libapi/rest/restServer.h>
+#endif
+
 using namespace std;
 using namespace dev;
 using namespace dev::eth;
@@ -97,6 +103,13 @@ public:
 		 "Mixed opencl and cuda mode. Use OpenCL + CUDA in a system with mixed AMD/Nvidia cards. May require setting --cl-plat 1 or 2.\n")
 		("eval",      bool_switch()->default_value(false),
 		 "Enable software result evaluation. Use if you GPUs generate too many invalid shares.\n")
+#if API_CORE
+	        ("api",       value<unsigned>(&m_api_port)->default_value(0), "API server port number. 0 - disable, < 0 - read-only.\n")
+        	("http",      value<unsigned>(&m_http_port)->default_value(0), "HTTP server port number. 0 - disable\n")
+	        ("rest",      value<unsigned>(&m_rest_port)->default_value(0),
+        	 "RESTFUL server port number. 0 - disable. Supported paths are /stats and /gpu/<n>\n")
+#endif
+
 #if ETH_ETHASHCL
 		("cl-plat",   value<unsigned>(&m_openclPlatform)->default_value(0), "Opencl platform.\n")
 		("cl-devs",   value<std::vector<unsigned>>()->multitoken(), "Opencl device list.\n")
@@ -300,6 +313,13 @@ public:
 
 		mgr.addConnection(m_endpoint);
 
+#if API_CORE
+        	Api api(m_api_port, f);
+	        if (m_http_port)
+	            http_server.run(m_http_port, &f, &mgr);
+        	if (m_rest_port)
+	            rest_server.run(m_rest_port, &f, &mgr);
+#endif
 		// Start PoolManager
 		mgr.start();
 
@@ -346,6 +366,13 @@ private:
 	unsigned m_maxFarmRetries = 3;
 	unsigned m_displayInterval = 5;
 	unsigned m_show_level = 0;
+
+#if API_CORE
+	unsigned m_api_port = 0;
+        unsigned m_http_port = 0;
+        unsigned m_rest_port = 0;
+#endif
+
 
 };
 
