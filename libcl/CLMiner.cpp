@@ -533,8 +533,7 @@ bool CLMiner::init(const h256& seed)
 		m_dagKernel.setArg(1, m_light);
 		m_dagKernel.setArg(2, m_dag);
 		m_dagKernel.setArg(3, lightSize64);
-		m_dagKernel.setArg(4, m_dagSize128 * 2);
-		m_dagKernel.setArg(5, 0xffffffff);
+		m_dagKernel.setArg(4, 0xffffffff);
 		auto startDAG = std::chrono::steady_clock::now();
 		for (uint32_t i = 0; i < work; i += Run) {
 			m_dagKernel.setArg(0, i);

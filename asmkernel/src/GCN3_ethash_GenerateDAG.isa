@@ -21,7 +21,6 @@
         .arg _Cache, "uint16*", uint16*, global, const, rdonly
         .arg _DAG, "uint16*", uint16*, global, 
         .arg LIGHT_SIZE, "uint", uint
-        .arg DAG_SIZE, "uint", uint
         .arg isolate, "uint", uint
     .text
 /*000000000000: c0020102 00000004*/ s_load_dword    s4, s[4:5], 0x4

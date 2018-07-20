@@ -358,13 +358,11 @@ static void SHA3_512(uint2* s, uint isolate)
 }
 
 __kernel void GenerateDAG(uint start, __global const uint16* _Cache, __global uint16* _DAG, uint LIGHT_SIZE,
-                          uint dag_size, uint isolate)
+                          uint isolate)
 {
 	__global const Node* Cache = (__global const Node*) _Cache;
 	__global Node* DAG = (__global Node*) _DAG;
 	uint NodeIdx = start + get_global_id(0);
-	if (NodeIdx >= dag_size)
-		return;
 
 	Node DAGNode = Cache[NodeIdx % LIGHT_SIZE];
 
