@@ -23,7 +23,7 @@ typedef struct {
 std::map <std::string, clConfig> optimalConfigs = {
 //                     work,intensity,iterations
 	{"opencl",          {192,   1024,  1}},
-	{"ellesmere",       {192,   2048,  1}},
+	{"ellesmere",       {192,   1024,  1}},
 	{"baffin",          {192,   1024,  1}}
 };
 
@@ -459,7 +459,7 @@ bool CLMiner::init(const h256& seed)
 			/* Open kernels/{device.getInfo<CL_DEVICE>}.bin */
 			std::string name = device.getInfo<CL_DEVICE_NAME>();
 			std::transform(name.begin(), name.end(), name.begin(), ::tolower);
-			fname_strm << boost::dll::program_location().parent_path().string() << "/kernels/" << name << ".bin";
+			fname_strm << boost::dll::program_location().parent_path().string() << "/kernels/" << name << m_workgroupSize << ".bin";
 
 			kernel_file.open(
 			    fname_strm.str(),

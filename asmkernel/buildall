@@ -4,3 +4,7 @@
 ./build ellesmere 128
 ./build ellesmere 192
 ./build ellesmere 256 
+./build baffin 64
+./build baffin 128
+./build baffin 192
+./build baffin 256 
