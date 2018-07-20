@@ -161,10 +161,10 @@ void CLMiner::workLoop()
 
 			// Read results.
 			// TODO: could use pinned host pointer instead.
-			uint32_t count, gid;
+			uint32_t count, gid[255];
 			m_queue.enqueueReadBuffer(m_searchBuffer, CL_TRUE, MAX_OUTPUTS * sizeof(count), sizeof(count), &count);
 			if (count) {
-				m_queue.enqueueReadBuffer(m_searchBuffer, CL_TRUE, 0, sizeof(gid), &gid);
+				m_queue.enqueueReadBuffer(m_searchBuffer, CL_TRUE, 0, sizeof(uint32_t) * count, gid);
 				// Reset search buffer if any solution found.
 				m_queue.enqueueWriteBuffer(m_searchBuffer, CL_FALSE, MAX_OUTPUTS * sizeof(c_zero), sizeof(c_zero), &c_zero);
 			}
@@ -176,13 +176,15 @@ void CLMiner::workLoop()
 
 			// Report results while the kernel is running.
 			if (count) {
-				uint64_t nonce = current.startNonce + gid;
-				Result r = EthashAux::eval(current.seed, current.header, nonce);
-				if (r.value <= current.boundary)
-					farm.submitProof(Solution{workerName().c_str(), nonce, r.mixHash, current, current.header != w.header});
-				else {
-					farm.failedSolution();
-					logerror(workerName() << " - discarded incorrect result!");
+				for (uint32_t i = 0; i < count; i++) {
+					uint64_t nonce = current.startNonce + gid[i];
+					Result r = EthashAux::eval(current.seed, current.header, nonce);
+					if (r.value <= current.boundary)
+						farm.submitProof(Solution{workerName().c_str(), nonce, r.mixHash, current, current.header != w.header});
+					else {
+						farm.failedSolution();
+						logerror(workerName() << " - discarded incorrect result!");
+					}
 				}
 			}
 
