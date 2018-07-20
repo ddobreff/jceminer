@@ -1,0 +1,6 @@
+#!/bin/bash
+
+./build ellesmere 64
+./build ellesmere 128
+./build ellesmere 192
+./build ellesmere 256 

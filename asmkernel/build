@@ -1,0 +1,4 @@
+#!/bin/bash
+
+clrxasm src/GCN3_ethash_LWS${2}.isa -I src -g $1 -6 -b amdcl2 -o bin/$1$2.bin
+

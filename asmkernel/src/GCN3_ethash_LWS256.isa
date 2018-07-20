@@ -1,0 +1,8 @@
+worksize = 256
+
+.amdcl2
+.64bit
+.driver_version 200406
+.include "GCN_ethash_globaldata.isa"
+.include "GCN3_ethash_search.isa"
+.include "GCN3_ethash_GenerateDAG.isa"
